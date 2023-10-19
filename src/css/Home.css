@@ -1,0 +1,21 @@
+.home__container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.home__container-item {
+    width: 100%;
+}
+
+.home__container-item__header {
+    font-size: 2.7rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.home__container-item__subheader {
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
