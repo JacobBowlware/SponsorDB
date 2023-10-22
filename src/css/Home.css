@@ -1,21 +1,38 @@
 .home__container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
 
 .home__container-item {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.home__container-item__btn {
+    font-weight: 500;
+    width: 20rem;
+    background: var(--var-color-tertiary);
+    color: var(--var-color-text-light);
 }
 
 .home__container-item__header {
-    font-size: 2.7rem;
-    font-weight: 600;
+    font-size: 2.6rem;
+    font-weight: 700;
     margin-bottom: 1rem;
+    text-align: center;
+    max-width: 65rem;
 }
 
-.home__container-item__subheader {
+.home__container-item__p {
     font-size: 1.4rem;
-    font-weight: 500;
+    font-weight: 300;
     margin-bottom: 1rem;
+    text-align: center;
+    opacity: .8;
+    max-width: 40rem;
 }

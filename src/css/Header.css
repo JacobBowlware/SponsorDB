@@ -1,0 +1,35 @@
+.navbar {
+    margin-bottom: 5rem;
+    width: 100%;
+    max-width: 1600px;
+    flex-direction: row;
+    padding-top: 1rem;
+}
+
+#navbarNav {
+    justify-content: flex-end;
+}
+
+.nav-item {
+    margin: 0rem;
+    padding: .3rem;
+}
+
+.nav-link {
+    color: var(--var-color-text) !important;
+    font-weight: 600;
+    padding: .5rem 1rem;
+    font-size: 1rem;
+}
+
+.nav-link:hover {
+    opacity: 0.6;
+}
+
+.navbar-brand {
+    font-size: 1.6rem;
+    font-weight: 700 !important;
+    color: var(--var-color-text) !important;
+}
+
+.nav-item__highlight {}
