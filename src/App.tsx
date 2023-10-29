@@ -17,6 +17,10 @@ import Home from './pages/Home';
 import Header from './components/common/Header'
 import Footer from './components/common/Footer';
 
+/**
+ * TODO: 
+ * - Finish Home Page.
+ */
 function App() {
   const Root = () => {
     return <>

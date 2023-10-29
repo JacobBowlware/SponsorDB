@@ -1,5 +1,5 @@
 :root {
-  --var-color-primary: #fff;
+  --var-color-primary: #f1f1f1;
   --var-color-secondary: #2929CC;
   --var-color-tertiary: #6677CC;
   --var-color-background: #fff;
@@ -46,19 +46,23 @@ html {
 }
 
 .web-section-dark {
-  background: var(--var-color-background);
+  background: var(--var-color-primary);
 }
 
 .web-section-content {
   max-width: 1440px;
 }
 
-
 .web-section__container {
   width: 100%;
 }
 
-.web-section-header {}
+.web-section__container-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 2.2rem;
+}
+
 
 @media screen and (min-width: 1024px) {
   .web-section {
