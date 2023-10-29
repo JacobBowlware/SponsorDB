@@ -1,5 +1,5 @@
 .home {
-    margin-bottom: 4rem;
+    margin-bottom: 6rem;
 }
 
 .home__container {
@@ -17,16 +17,6 @@
     align-items: center;
 }
 
-.home__container-item__btn {
-    font-weight: 500;
-    width: 20rem;
-    background: var(--var-color-tertiary);
-    color: var(--var-color-text-light);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
 .home__container-item__btn-arrow-icon {
     position: relative;
     top: 0.1rem;
@@ -34,21 +24,36 @@
 }
 
 .home__container-item__header {
-    font-size: 2.6rem;
+    font-size: 2.3rem;
     font-weight: 700;
     margin-bottom: 1rem;
     text-align: center;
     max-width: 65rem;
 }
 
-
 .home__container-item__p {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 300;
     margin-bottom: 1rem;
     text-align: center;
     opacity: .8;
     max-width: 40rem;
+}
+
+.home__container-item__btn {
+    font-weight: 500;
+    width: 22rem;
+    background: var(--var-color-tertiary);
+    color: var(--var-color-text-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@media screen and (min-width: 768px) {
+    .home__container-item__header {
+        font-size: 2.6rem;
+    }
 }
 
 /* Features Section */
@@ -57,32 +62,52 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: 5rem;
     height: 100%;
 }
 
 .home__features-list__item {
+    align-items: center;
+    background: var(--var-color-background);
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    margin-bottom: 2rem;
     height: 100%;
+    justify-content: center;
+    margin: 0 0 2rem 0;
+    padding: 2rem;
+    width: 100%;
 }
 
-.home__features-list__item-text {
+.home__features-list__item--highlighted {
+    background: var(--var-color-tertiary);
+    color: var(--var-color-text-light);
+}
+
+.home__features-list__item-header {
     font-size: 1.4rem;
-    font-weight: 400;
-    margin-top: 1rem;
+    font-weight: 700;
     text-align: center;
-    opacity: .8;
     max-width: 15rem;
 }
 
+.home__features-list__item-text {
+    font-size: 1.1rem;
+    font-weight: 400;
+    text-align: center;
+    max-width: 15rem;
+    height: 100%;
+    margin: 0;
+    opacity: .9;
+}
+
 .home__features-list__item-icon {
-    font-size: 5rem;
+    font-size: 4.5rem;
     color: var(--var-color-tertiary);
     margin-bottom: 1rem;
+}
+
+.home__features-list__item-icon--highlighted {
+    color: var(--var-color-text-light);
 }
 
 @media screen and (min-width: 768px) {

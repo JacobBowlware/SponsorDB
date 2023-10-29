@@ -1,6 +1,7 @@
 // Font Awesome Icons
-import { faArrowRight, faClipboard, faClock, faSliders } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faBell, faClipboard, faClock, faSliders } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import FeatureCard from "../components/FeatureCard";
 
 
 /**
@@ -28,29 +29,15 @@ const Home = () => {
                     </div>
                 </div>
             </div>
-            <div className="web-section web-section-dark" id="features">
+            <div className="web-section" id="features">
                 <div className="web-section__container">
                     <h2 className="web-section__container-header">
                         Features
                     </h2>
                     <div className="home__features-list">
-                        <div className="home__features-list__item">
-                            <FontAwesomeIcon className="home__features-list__item-icon" icon={faClock} />
-                            <p className="home__features-list__item-text">
-                                Real-Time Activity Tracking
-                            </p>
-                        </div>
-                        <div className="home__features-list__item">
-                            <FontAwesomeIcon className="home__features-list__item-icon" icon={faClipboard} />
-                            <p className="home__features-list__item-text">
-                                Detailed Usage Reports
-                            </p>
-                        </div> <div className="home__features-list__item">
-                            <FontAwesomeIcon className="home__features-list__item-icon" icon={faSliders} />
-                            <p className="home__features-list__item-text">
-                                Customizable Alerts and Goals
-                            </p>
-                        </div>
+                        <FeatureCard icon={faClock} header="Activity Tracking" text="Real-time monitoring of your online actions." />
+                        <FeatureCard icon={faBell} header="Alerts and Goals" text="Set goals and receive alerts to manage screen time effectively." />
+                        <FeatureCard highlighted={true} icon={faClipboard} header="Usage Reports" text="Detailed reports on browsing habits, showing most-visited sites and daily usage." />
                     </div>
                 </div>
             </div>
