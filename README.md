@@ -11,3 +11,7 @@ Sponsor trail is the...
 
 ### Project Summary:
 During this project, I was given ample opportunity to...
+
+
+### Future Developments:
+- Implement new feature "X"
