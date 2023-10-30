@@ -4,6 +4,8 @@
     max-width: 1600px;
     flex-direction: row;
     padding-top: 1rem;
+    padding-bottom: 1rem;
+    background: var(--var-color-background);
 }
 
 #navbarNav {

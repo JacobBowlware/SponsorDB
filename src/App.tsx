@@ -2,7 +2,6 @@ import {
   createBrowserRouter, createRoutesFromElements,
   RouterProvider, Route, Outlet
 } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 
 // CSS
 import './css/App.css';
@@ -19,7 +18,14 @@ import Footer from './components/common/Footer';
 
 /**
  * TODO: 
- * - Finish Home Page.
+ * - Change App to SponsorTrail
+ * - Add Pages:
+ * - - Home
+ * - - Login
+ * - - Register
+ * - - Dashboard
+ * - - Profile
+ * - - Settings
  */
 function App() {
   const Root = () => {

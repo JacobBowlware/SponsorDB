@@ -7,7 +7,6 @@ import FeatureCard from "../components/FeatureCard";
 /**
  * TODO:
  * - Add "Features" section. - DONE
- * - Make "Features" section dark.
  * - Add "How it works" section.
  * - Add "Testimonials" section.
  */
@@ -18,13 +17,14 @@ const Home = () => {
                 <div className="web-section__container home__container">
                     <div className="home__container-item">
                         <h2 className="home__container-item__header">
-                            Track your online activity
+                            Maximize Your Podcast Sponsorships
                         </h2>
                         <p className="home__container-item__p">
-                            The chrome extension that tracks your online surfing and gives you a report of your online activity.
+                            Let SponsorTrail scower the web for you, finding the best sponsorships for your podcast.
                         </p>
                         <button className="btn home__container-item__btn">
-                            Start tracking now <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                            Learn More
+                            <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                         </button>
                     </div>
                 </div>
