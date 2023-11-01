@@ -72,7 +72,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    justify-content: center;
+    justify-content: flex-start;
     margin: 0 0 2rem 0;
     padding: 2rem;
     width: 100%;
@@ -108,6 +108,13 @@
 
 .home__features-list__item-icon--highlighted {
     color: var(--var-color-text-light);
+}
+
+.home__features-list__item-header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
 }
 
 @media screen and (min-width: 768px) {
