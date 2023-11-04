@@ -124,3 +124,55 @@
         gap: 1rem;
     }
 }
+
+/* Testimonials */
+.home__testimonials-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.home__testimonials-list__item {
+    background: var(--var-color-background);
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 2rem;
+}
+
+.home__testimonials-list__item-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: .5rem;
+}
+
+.home__testimonials-list__item-quote {
+    font-size: 1.1rem;
+    font-weight: 400;
+    padding-bottom: 1.5rem;
+    opacity: .9;
+    font-style: italic;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.home__testimonials-list__item-quote-icon {
+    font-size: 3rem;
+    margin-right: .5rem;
+    margin-bottom: 1rem;
+    color: var(--var-color-tertiary);
+}
+
+.home__testimonials-list__item-affiliation {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: .8;
+    margin-bottom: 0;
+}
+
+@media screen and (min-width: 768px) {
+    .home__testimonials-list {
+        grid-template-columns: 1fr 1fr;
+    }
+}
