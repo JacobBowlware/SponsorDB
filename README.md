@@ -1,6 +1,6 @@
 # Sopnsor Trail
 
-### What is Sponsor Trail:
+## Project Summary:
 Sponsor trail is the...
 
 ### Technology Stack:
@@ -8,10 +8,6 @@ Sponsor trail is the...
 - TypeScript
 - ReactJS
 - Firebase
-
-### Project Summary:
-During this project, I was given ample opportunity to...
-
 
 ### Future Developments:
 - Implement new feature "X"
