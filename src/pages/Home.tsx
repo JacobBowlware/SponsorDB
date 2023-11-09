@@ -48,17 +48,6 @@ const Home = () => {
                     </div>
                 </div>
             </div>
-            <div className="web-section" id="testimonials">
-                <div className="web-section__container web-section-content">
-                    <h2 className="web-section__container-header-sm">
-                        What People Are Saying
-                    </h2>
-                    <div className="home__testimonials-list">
-                        <TestimonialCard name="John Doe" affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
-                        <TestimonialCard name="Demarcus Oslow" affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
-                    </div>
-                </div>
-            </div>
             <div className="web-section" id="how-it-works">
                 <div className="web-section__container web-section-content">
                     <h2 className="web-section__container-header-sm">
@@ -70,7 +59,7 @@ const Home = () => {
                                 Step 1: We Gather Data
                             </h3>
                             <p className="home__how-it-works-container__item-text">
-                                Our custom software will scower the web and gather important data on podcast sponsors.
+                                Our software runs constantly, gathering information about real podcast sponsorships. We then organize this info into our database, considering things like the date, company, and podcast.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img" src={search} alt="A team searching the web and gathering data on potential podcast sponsors for our clients." />
@@ -80,18 +69,28 @@ const Home = () => {
                                 Step 2: We Send You a List
                             </h3>
                             <p className="home__how-it-works-container__item-text">
-                                After we've gathered the data, we'll send you a list of potential sponsors. You will recieve a new list every week, so you never miss out on a sponsorship opportunity.
-                            </p>
+                                Every week, we put together a list of companies that have been sponsoring podcasts recently. We sort this list based on factors like podcast views and current sponsorship trends.                            </p>
                         </div>
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
                                 Step 3: You Apply
                             </h3>
                             <p className="home__how-it-works-container__item-text">
-                                With the list of potential sponsors, you can apply to the ones you're interested in. Waste no time searching for sponsors, and focus on what matters most: your podcast.
+                                Now, it's your turn to reach out to these companies. You can send them a message or email to discuss sponsorship opportunities for your podcast. This way, you can grow your podcast's earnings and reach more listeners.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img" src={list} alt="Person applying themselves and applying for Podcast sponsorships." />
+                    </div>
+                </div>
+            </div>
+            <div className="web-section" id="testimonials">
+                <div className="web-section__container web-section-content">
+                    <h2 className="web-section__container-header-sm">
+                        What People Are Saying
+                    </h2>
+                    <div className="home__testimonials-list">
+                        <TestimonialCard name="John Doe" affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="Demarcus Oslow" affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
                 </div>
             </div>
