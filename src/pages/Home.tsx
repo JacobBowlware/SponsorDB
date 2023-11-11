@@ -1,12 +1,16 @@
+// Components
+import FeatureCard from "../components/FeatureCard";
+import TestimonialCard from "../components/TestimonialCard";
+
 // Font Awesome Icons
 import { faArrowRight, faBook, faMoneyBill, faRocket } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import FeatureCard from "../components/FeatureCard";
-import TestimonialCard from "../components/TestimonialCard";
 
 // Images
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
+import growth from './../assets/images/growth.png';
+import { useState } from "react";
 
 /**
  * TODO:
@@ -18,6 +22,21 @@ import list from './../assets/images/list.png';
  * - Add "Email 
  */
 const Home = () => {
+    const [email, setEmail] = useState('');
+
+    const handleSubmit = (e: any) => {
+        e.preventDefault();
+
+        /* 
+            1. Add email to database.
+            2. Thank user for joining the waitlist.
+            3. Send email to user with confirmation.
+            4. If they cannot find the email, tell them to check their spam folder.
+        */
+
+        console.log(email);
+    }
+
     return (
         <div className="web-page">
             <div className="web-section home" id="hero">
@@ -29,10 +48,15 @@ const Home = () => {
                         <p className="home__container-item__p">
                             Let SponsorTrail do the legwork for you, uncovering top-tier sponsorships to boost your podcast and revenue potential.
                         </p>
-                        <button className="btn home__container-item__btn">
-                            Learn More
-                            <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
-                        </button>
+                        <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)}>
+                            <div className="home__container-item__input-wrapper">
+                                <input type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
+                                <button className="btn home__container-item__btn" type="submit">
+                                    Join The Waitlist
+                                    <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -79,7 +103,7 @@ const Home = () => {
                                 Now, it's your turn to reach out to these companies. You can send them a message or email to discuss sponsorship opportunities for your podcast. This way, you can grow your podcast's earnings and reach more listeners.
                             </p>
                         </div>
-                        <img className="home__how-it-works-container__img" src={list} alt="Person applying themselves and applying for Podcast sponsorships." />
+                        <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
                     </div>
                 </div>
             </div>

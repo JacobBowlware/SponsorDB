@@ -34,7 +34,14 @@
     color: var(--var-color-text) !important;
 }
 
-.nav-item__highlight {}
+.nav-item__highlight {
+    background: var(--var-color-primary);
+    width: auto;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
 @media screen and (min-width: 768px) {
     .navbar {
