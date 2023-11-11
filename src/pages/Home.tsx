@@ -51,7 +51,7 @@ const Home = () => {
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)}>
                             <div className="home__container-item__input-wrapper">
                                 <input type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
-                                <button className="btn home__container-item__btn" type="submit">
+                                <button className="home__container-item__input home__container-item__btn" type="submit">
                                     Join The Waitlist
                                     <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                                 </button>

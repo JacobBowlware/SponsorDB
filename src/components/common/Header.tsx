@@ -1,10 +1,17 @@
+import { useState } from "react";
+
+// Font Awesome Icons
+import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const Header = () => {
+    const [navOpen, setNavOpen] = useState(false);
+
     return (
         <nav className="web-section navbar navbar-expand-lg navbar-light sticky-top" >
             <a className="navbar-brand" href="/">SponsorTrail</a>
-            <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span className="navbar-toggler-icon"></span>
+            <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <FontAwesomeIcon className="nav-icon" icon={navOpen ? faXmark : faBars} />
             </button>
             <div className="collapse navbar-collapse" id="navbarNav">
                 <ul className="navbar-nav">
@@ -17,8 +24,8 @@ const Header = () => {
                     <li className="nav-item">
                         <a className="nav-link" href="/login">Testimonials</a>
                     </li>
-                    <li className="btn nav-item  nav-item__highlight">
-                        <a className="nav-link" href="/get-started">Get SponsorTrail</a>
+                    <li className="nav-item  nav-item__highlight">
+                        <a className="nav-link" href="/get-started">Join Waitlist</a>
                     </li>
                 </ul>
             </div>
