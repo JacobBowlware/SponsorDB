@@ -24,7 +24,7 @@
 }
 
 .home__container-item__header {
-    font-size: 2.3rem;
+    font-size: 2.1rem;
     font-weight: 700;
     margin-bottom: 1rem;
     text-align: center;
@@ -32,7 +32,7 @@
 }
 
 .home__container-item__p {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 300;
     margin-bottom: 1rem;
     text-align: center;
@@ -44,43 +44,67 @@
     display: flex;
     /* border-radius: 15px; */
     overflow: hidden;
+    width: 100%;
 }
 
 .home__container-item__input {
     flex: 1;
     height: 3rem;
     border: 1px solid var(--var-color-tertiary);
-    /* border-radius: 15px 0 0 15px; */
-    padding: 0 1rem;
-    font-size: 1.1rem;
+    border-radius: 0;
+    padding: 0 .7rem;
+    font-size: .9rem;
     font-weight: 400;
+    width: 100%;
+}
+
+.home__container-item__input:focus {
+    border-radius: 0;
+    outline: none;
+    border: 1px solid var(--var-color-tertiary);
 }
 
 .home__container-item__btn {
-    width: 12rem;
     height: 3rem;
     font-weight: 500;
-    font-size: 1rem;
+    font-size: .9rem;
     background: var(--var-color-tertiary);
-    color: var(--var-color-text-light);
+    color: #fff;
     border: none;
     /* border-radius: 0 15px 15px 0; */
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: all .3s;
+    width: 10rem;
 }
 
+.home__container-item__btn:hover {
+    cursor: pointer;
+    opacity: .8;
+}
 
 .home__container-item__form {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    max-width: 40rem;
 }
 
 @media screen and (min-width: 768px) {
     .home__container-item__header {
         font-size: 2.6rem;
+    }
+
+    .home__container-item__input {
+        font-size: 1.1rem;
+    }
+
+    .home__container-item__btn {
+        font-size: 1.1rem;
+
     }
 }
 
@@ -91,6 +115,7 @@
     justify-content: center;
     align-items: center;
     height: 100%;
+    margin-top: 0;
 }
 
 .home__features-list__item {
@@ -108,18 +133,18 @@
 
 .home__features-list__item--highlighted {
     background: var(--var-color-tertiary);
-    color: var(--var-color-text-light);
+    color: #fff;
 }
 
 .home__features-list__item-header {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 700;
     text-align: center;
     max-width: 15rem;
 }
 
 .home__features-list__item-text {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 400;
     text-align: center;
     max-width: 15rem;
@@ -135,7 +160,7 @@
 }
 
 .home__features-list__item-icon--highlighted {
-    color: var(--var-color-text-light);
+    color: #fff;
 }
 
 .home__features-list__item-header-container {
@@ -150,8 +175,19 @@
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 1rem;
+        margin-top: 3rem;
+    }
+
+    .home__features-list__item-header {
+        font-size: 1.4rem;
+    }
+
+    .home__features-list__item-text {
+        font-size: 1.1rem;
     }
 }
+
+
 
 /* Testimonials */
 .home__testimonials-list {
@@ -171,22 +207,22 @@
 }
 
 .home__testimonials-list__item-name {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 700;
     margin-bottom: .5rem;
 }
 
 .home__testimonials-list__item-quote {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 400;
     padding-bottom: 1.5rem;
     opacity: .9;
     font-style: italic;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .home__testimonials-list__item-quote-icon {
-    font-size: 3rem;
+    font-size: 2.4rem;
     margin-right: .5rem;
     margin-bottom: 1rem;
     color: var(--var-color-tertiary);
@@ -203,6 +239,18 @@
     .home__testimonials-list {
         grid-template-columns: 1fr 1fr;
     }
+
+    .home__testimonials-list__item-quote {
+        font-size: 1.1rem;
+    }
+
+    .home__testimonials-list__item-quote-icon {
+        font-size: 3rem;
+    }
+
+    .home__testimonials-list__item-name {
+        font-size: 1.4rem;
+    }
 }
 
 /* How It Works */
@@ -212,7 +260,7 @@
     justify-items: center;
     box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
     /* border-radius: 15px; */
-    padding: 2rem;
+    padding: .7rem;
 }
 
 .home__how-it-works-container__item {
@@ -222,23 +270,28 @@
     align-items: flex-start;
     padding: 1rem;
     height: 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.home__how-it-works-container__item:last-of-type {
+    border-bottom: none;
 }
 
 .home__how-it-works-container__item-header {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 700;
     margin-bottom: .5rem;
 }
 
 .home__how-it-works-container__item-text {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 400;
     opacity: .9;
     margin-bottom: 0;
 }
 
 .home__how-it-works-container__img {
-    width: 50%;
+    width: 80%;
     height: 100%;
     display: none;
 }
@@ -250,9 +303,102 @@
 @media screen and (min-width: 768px) {
     .home__how-it-works-container {
         grid-template-columns: 1fr 1fr;
+        padding: 2rem;
     }
 
     .home__how-it-works-container__img {
         display: block;
+        width: 50%;
+    }
+
+    .home__how-it-works-container__item {
+        border-bottom: none;
+    }
+
+    .home__how-it-works-container__item-header {
+        font-size: 1.4rem;
+    }
+
+    .home__how-it-works-container__item-text {
+        font-size: 1.1rem;
+    }
+}
+
+/* FAQ */
+.faq {
+    margin-top: 4rem;
+    width: 100%;
+    padding: 3rem 0rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.accordian-item-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.accordian-item-header:hover {
+    cursor: pointer;
+}
+
+.accordian-item-p {
+    font-size: 1rem;
+    color: var(--var-color-text);
+    opacity: .8;
+}
+
+.faq-accordian__container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100% !important;
+    text-align: left;
+}
+
+.accordian-item {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.accordian-item__header {
+    padding: 1rem 0rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: inline;
+}
+
+@media screen and (min-width: 1000px) {
+    .faq {
+        padding: 4rem 2rem;
+    }
+
+    .faq__header {
+        font-size: 1.8rem;
+    }
+
+    .faq-accordian__container {
+        padding: 0;
+        width: 70%;
+    }
+
+    .faq__header {
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 1.8rem;
+    }
+
+    .accordian-item-p {
+        font-size: 1.1rem;
+    }
+
+    .accordian-item__header {
+        font-size: 1.3rem;
     }
 }

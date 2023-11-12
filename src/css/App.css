@@ -4,7 +4,7 @@
   --var-color-tertiary: #6677CC;
   --var-color-background: #fff;
   --var-color-text: #060622;
-  --var-color-text-light: #fff;
+  --var-color-text-light: rgba(2, 2, 13, .8);
 }
 
 body {
@@ -44,6 +44,7 @@ html {
   align-items: center;
   width: 100%;
   padding: 2rem;
+  margin-top: 2rem;
 }
 
 .web-section-dark {
@@ -61,14 +62,14 @@ html {
 .web-section__container-header {
   text-align: center;
   font-weight: 700;
-  font-size: 2rem;
+  font-size: 1.8rem;
   margin-bottom: 2rem;
 }
 
 .web-section__container-header-sm {
   text-align: center;
   font-weight: 700;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   margin-bottom: 2rem;
 }
 
@@ -78,20 +79,19 @@ html {
   }
 
   .web-section__container-header {
-    font-size: 2.2rem;
-    margin-bottom: 3.5rem;
+    font-size: 2rem;
+    margin-bottom: 3rem;
   }
 
   .web-section__container-header-sm {
-    font-size: 2rem;
-    margin-bottom: 3rem;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
   }
 }
 
 /* Typography */
 .text {
-  opacity: 0.9;
-  color: var(--var-color-text);
+  color: var(--var-color-text-light);
 }
 
 /* Buttons */

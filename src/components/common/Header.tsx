@@ -19,13 +19,16 @@ const Header = () => {
                         <a className="nav-link" href="/#features">Features</a>
                     </li>
                     <li className="nav-item">
-                        <a className="nav-link" href="/login">How It Works</a>
+                        <a className="nav-link" href="/#how-it-works">How It Works</a>
                     </li>
                     <li className="nav-item">
-                        <a className="nav-link" href="/login">Testimonials</a>
+                        <a className="nav-link" href="/#testimonials">Testimonials</a>
+                    </li>
+                    <li className="nav-item">
+                        <a className="nav-link" href="/#FAQ">FAQ</a>
                     </li>
                     <li className="nav-item  nav-item__highlight">
-                        <a className="nav-link" href="/get-started">Join Waitlist</a>
+                        <a className="nav-link" href="/#hero">Join Waitlist</a>
                     </li>
                 </ul>
             </div>

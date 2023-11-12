@@ -11,15 +11,17 @@ import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
 import { useState } from "react";
+import FAQAccordian from "../components/FAQAccordian";
 
 /**
  * TODO:
  * - Add "Features" section. - DONE
  * - Add "Testimonials" section - DONE
- * - Add "How it works" section.
- * - Add "Pricing" section.
+ * - Add "How it works" section - DONE
+ * - Add "Join Waitlist Btns" - DONE
+ * - REDUCE MOBILE FONT SIZES -
  * - Add "FAQ" section.
- * - Add "Email 
+ * - Add "Pricing" question in FAQ, stating that we are still working on the best pricing model to fit our customers.
  */
 const Home = () => {
     const [email, setEmail] = useState('');
@@ -52,7 +54,7 @@ const Home = () => {
                             <div className="home__container-item__input-wrapper">
                                 <input type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
                                 <button className="home__container-item__input home__container-item__btn" type="submit">
-                                    Join The Waitlist
+                                    Join Waitlist
                                     <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                                 </button>
                             </div>
@@ -82,7 +84,7 @@ const Home = () => {
                             <h3 className="home__how-it-works-container__item-header">
                                 Step 1: We Gather Data
                             </h3>
-                            <p className="home__how-it-works-container__item-text">
+                            <p className="home__how-it-works-container__item-text text">
                                 Our software runs constantly, gathering information about real podcast sponsorships. We then organize this info into our database, considering things like the date, company, and podcast.
                             </p>
                         </div>
@@ -92,14 +94,14 @@ const Home = () => {
                             <h3 className="home__how-it-works-container__item-header">
                                 Step 2: We Send You a List
                             </h3>
-                            <p className="home__how-it-works-container__item-text">
+                            <p className="home__how-it-works-container__item-text text">
                                 Every week, we put together a list of companies that have been sponsoring podcasts recently. We sort this list based on factors like podcast views and current sponsorship trends.                            </p>
                         </div>
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
                                 Step 3: You Apply
                             </h3>
-                            <p className="home__how-it-works-container__item-text">
+                            <p className="home__how-it-works-container__item-text text">
                                 Now, it's your turn to reach out to these companies. You can send them a message or email to discuss sponsorship opportunities for your podcast. This way, you can grow your podcast's earnings and reach more listeners.
                             </p>
                         </div>
@@ -116,6 +118,14 @@ const Home = () => {
                         <TestimonialCard name="John Doe" affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                         <TestimonialCard name="Demarcus Oslow" affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
+                </div>
+            </div>
+            <div className="web-section" id="FAQ">
+                <div className="web-section__container web-section-content">
+                    <h2 className="web-section__container-header-sm">
+                        Frequently Asked Questions
+                    </h2>
+                    <FAQAccordian />
                 </div>
             </div>
         </div>
