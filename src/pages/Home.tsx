@@ -15,13 +15,7 @@ import FAQAccordian from "../components/FAQAccordian";
 
 /**
  * TODO:
- * - Add "Features" section. - DONE
- * - Add "Testimonials" section - DONE
- * - Add "How it works" section - DONE
- * - Add "Join Waitlist Btns" - DONE
- * - REDUCE MOBILE FONT SIZES -
- * - Add "FAQ" section.
- * - Add "Pricing" question in FAQ, stating that we are still working on the best pricing model to fit our customers.
+ - Handle Email Submit
  */
 const Home = () => {
     const [email, setEmail] = useState('');

@@ -18,9 +18,9 @@ import Footer from './components/common/Footer';
 
 /**
  * TODO: 
- * - Change App to SponsorTrail
+ * - Add Footer -> DONE
  * - Add Pages:
- * - - Home
+ * - - Home -
  * - - Login
  * - - Register
  * - - Dashboard

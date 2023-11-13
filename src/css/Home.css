@@ -104,7 +104,10 @@
 
     .home__container-item__btn {
         font-size: 1.1rem;
+    }
 
+    .home__container-item__p {
+        font-size: 1.2rem;
     }
 }
 
@@ -186,8 +189,6 @@
         font-size: 1.1rem;
     }
 }
-
-
 
 /* Testimonials */
 .home__testimonials-list {
