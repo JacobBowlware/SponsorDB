@@ -101,6 +101,9 @@ const Home = () => {
                         </div>
                         <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
                     </div>
+                    <a className="footer-item footer-item__highlight mt-2" href="/#hero">
+                        Join Waitlist &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
+                    </a>
                 </div>
             </div>
             <div className="web-section" id="testimonials">

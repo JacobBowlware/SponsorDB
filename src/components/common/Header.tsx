@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // Font Awesome Icons
-import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faKiwiBird, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const Header = () => {
@@ -9,7 +9,7 @@ const Header = () => {
 
     return (
         <nav className="web-section navbar navbar-expand-lg navbar-light sticky-top" >
-            <a className="navbar-brand" href="/">SponsorTrail</a>
+            <a className="navbar-brand" href="/">SponsorTrail <FontAwesomeIcon icon={faKiwiBird} /> </a>
             <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <FontAwesomeIcon className="nav-icon" icon={navOpen ? faXmark : faBars} />
             </button>

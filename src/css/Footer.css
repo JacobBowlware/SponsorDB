@@ -24,11 +24,26 @@
     text-decoration: none;
 }
 
+.footer-item__highlight {
+    background: var(--var-color-primary);
+    width: 100%;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+
+}
+
 @media screen and (min-width: 1024px) {
     .footer-container {
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
         padding-bottom: 2rem;
+    }
+
+    .footer-item__highlight {
+        width: auto;
     }
 }

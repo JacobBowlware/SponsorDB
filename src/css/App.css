@@ -76,6 +76,7 @@ html {
 @media screen and (min-width: 1024px) {
   .web-section {
     padding: 5rem;
+    margin-top: 2rem;
   }
 
   .web-section__container-header {

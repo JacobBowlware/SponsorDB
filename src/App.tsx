@@ -20,7 +20,7 @@ import Footer from './components/common/Footer';
  * TODO: 
  * - Add Footer -> DONE
  * - Add Pages:
- * - - Home -
+ * - - Home - 
  * - - Login
  * - - Register
  * - - Dashboard
