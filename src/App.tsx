@@ -11,6 +11,7 @@ import './css/Footer.css';
 
 // Pages
 import Home from './pages/Home';
+import AllBlogs from './pages/AllBlogs';
 
 // Components
 import Header from './components/common/Header'
@@ -20,13 +21,13 @@ import Footer from './components/common/Footer';
  * TODO: 
  * - Add Footer -> DONE
  * - Add Pages:
- * - - Home - 
+ * - - Home - DONE
+ * - - Blog Page (Minimum 3 Posts) -
  * - - Login
  * - - Register
  * - - Dashboard
  * - - Profile
  * - - Settings
- * - - Blog Page (Minimum 3 Posts)
  */
 function App() {
   const Root = () => {
@@ -42,6 +43,7 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home />} />
         <Route path="*" element={<Home />} />
+        <Route path="/all-blogs" element={<AllBlogs />} />
       </Route>
     )
   )

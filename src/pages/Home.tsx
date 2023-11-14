@@ -8,7 +8,7 @@ import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 
 // Font Awesome Icons
-import { faArrowRight, faBook, faMoneyBill, faRocket, faKiwiBird } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faBook, faMoneyBill, faRocket, faKiwiBird, faList, faWandMagic, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Images & Gifs
@@ -18,12 +18,11 @@ import growth from './../assets/images/growth.png';
 import FAQAccordian from "../components/FAQAccordian";
 
 const db = getFirestore(app);
-/**
- * TODO:
- - Handle Email Submit - DONE
- - Implement Loading Gif - Not-Done
- - Notify User of Success - DONE
- */
+
+/* 
+TODO:
+- Add more descriptive text to hero section -
+*/
 const Home = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
@@ -63,8 +62,7 @@ const Home = () => {
                             Maximize Your Podcast's Sponsors
                         </h2>
                         <p className="home__container-item__p">
-                            Let SponsorTrail do the legwork for you, uncovering top-tier sponsorships to boost your podcast and revenue potential.
-                        </p>
+                            SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors, saving time and maximizing your podcast's revenue potential effortlessly.                        </p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
                                 <input id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
@@ -86,9 +84,9 @@ const Home = () => {
                         Why SponsorTrail?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faBook} header="Weekly Sponsorship Updates" text="Receive a curated list of podcast sponsors every week and stay informed with." />
-                        <FeatureCard icon={faRocket} header="Never Miss Out" text="Get notified when new sponsorship opportunities are available, so you can be the first to apply." />
-                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Maximize Sponsorships" text="Discover a wide range of sponsorship opportunities, boosting your podcast's revenue potential." />
+                        <FeatureCard icon={faList} header="Curated Sponsor List" text="Access a meticulously curated list of proven podcast sponsors, instantly connecting you to revenue opportunities." />
+                        <FeatureCard icon={faWandMagicSparkles} header="Effortless Updates" text="Receive regular updates with new and relevant sponsorships, making your search for sponsors hassle-free." />
+                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Boost Revenue" text="Maximize your podcast's revenue potential by leveraging targeted sponsorship opportunities from reputable companies." />
                     </div>
                 </div>
             </div>
@@ -100,27 +98,27 @@ const Home = () => {
                     <div className="home__how-it-works-container">
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
-                                Step 1: We Gather Data
+                                1. We Gather Data
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Our software runs constantly, gathering information about real podcast sponsorships. We then organize this info into our database, considering things like the date, company, and podcast.
+                                We collect data from reputable sources, compiling information on real podcast sponsorships. Our database organizes details such as sponsorships by date, company, and podcast.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img" src={search} alt="A team searching the web and gathering data on potential podcast sponsors for our clients." />
                         <img className="home__how-it-works-container__img" src={list} alt="A team preparing to send a list of potential podcast sponsors to our clients." />
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
-                                Step 2: We Send You a List
+                                2. We Send You a List
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Every week, we put together a list of companies that have been sponsoring podcasts recently. We sort this list based on factors like podcast views and current sponsorship trends.                            </p>
+                                Our team carefully selects recent podcast sponsors, ensuring only reputable companies with a strong sponsorship history are included in your tailored list.                                     </p>
                         </div>
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
-                                Step 3: You Apply
+                                3. You Apply
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Now, it's your turn to reach out to these companies. You can send them a message or email to discuss sponsorship opportunities for your podcast. This way, you can grow your podcast's earnings and reach more listeners.
+                                With your tailored list in hand, it's time to engage. Reach out to these reputable companies to explore sponsorship opportunities, boosting your podcast's earnings and audience reach.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />

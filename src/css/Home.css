@@ -155,6 +155,7 @@
     font-weight: 700;
     text-align: center;
     max-width: 15rem;
+    margin: 0;
 }
 
 .home__features-list__item-text {
