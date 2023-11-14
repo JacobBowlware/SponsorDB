@@ -1,3 +1,8 @@
+// React & Firebase
+import { useState } from "react";
+import { getFirestore, addDoc, collection } from "@firebase/firestore";
+import { app } from "../firebase/config";
+
 // Components
 import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
@@ -10,27 +15,43 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
-import { useState } from "react";
 import FAQAccordian from "../components/FAQAccordian";
 
+const db = getFirestore(app);
 /**
  * TODO:
- - Handle Email Submit
+ - Handle Email Submit - DONE
+ - Implement Loading Gif - Not-Done
+ - Notify User of Success - DONE
  */
 const Home = () => {
     const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [userEmailCollected, setUserEmailCollected] = useState(false);
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
+        setLoading(true);
 
-        /* 
-            1. Add email to database.
-            2. Thank user for joining the waitlist.
-            3. Send email to user with confirmation.
-            4. If they cannot find the email, tell them to check their spam folder.
-        */
+        try {
+            const docRef = collection(db, "waitlist_emails");
+            await addDoc(docRef, {
+                email: email
+            });
 
-        console.log(email);
+            // Disable Form Input and Button
+            const emailInput = document.getElementById('email-input') as HTMLInputElement;
+            const emailBtn = document.getElementById('email-btn') as HTMLButtonElement;
+
+            emailInput.disabled = true;
+            emailBtn.disabled = true;
+
+            setUserEmailCollected(true);
+        } catch (error) {
+            alert(error);
+        }
+
+        setLoading(false);
     }
 
     return (
@@ -44,20 +65,23 @@ const Home = () => {
                         <p className="home__container-item__p">
                             Let SponsorTrail do the legwork for you, uncovering top-tier sponsorships to boost your podcast and revenue potential.
                         </p>
-                        <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)}>
+                        <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
-                                <input type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
-                                <button className="home__container-item__input home__container-item__btn" type="submit">
+                                <input id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
+                                <button id="email-btn" className="btn home__container-item__input home__container-item__btn" type="submit">
                                     Join Waitlist
                                     <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                                 </button>
                             </div>
+                            {userEmailCollected && <p className="home__container-item__form-thanks">
+                                Thank you for your interest in SponsorTrail! Please check your email for a confirmation message (and possibly your spam folder).
+                            </p>}
                         </form>
                     </div>
                 </div>
             </div>
-            <div className="web-section" id="features">
-                <div className="web-section__container web-section-content">
+            <div className="web-section" >
+                <div className="web-section__container web-section-content" id="features">
                     <h2 className="web-section__container-header">
                         Why SponsorTrail?
                     </h2>
@@ -68,8 +92,8 @@ const Home = () => {
                     </div>
                 </div>
             </div>
-            <div className="web-section" id="how-it-works">
-                <div className="web-section__container web-section-content">
+            <div className="web-section" >
+                <div className="web-section__container web-section-content" id="how-it-works">
                     <h2 className="web-section__container-header-sm">
                         How It Works
                     </h2>
@@ -106,8 +130,8 @@ const Home = () => {
                     </a>
                 </div>
             </div>
-            <div className="web-section" id="testimonials">
-                <div className="web-section__container web-section-content">
+            <div className="web-section" >
+                <div className="web-section__container web-section-content" id="testimonials">
                     <h2 className="web-section__container-header-sm">
                         What People Are Saying
                     </h2>
@@ -117,8 +141,8 @@ const Home = () => {
                     </div>
                 </div>
             </div>
-            <div className="web-section" id="FAQ">
-                <div className="web-section__container web-section-content">
+            <div className="web-section" >
+                <div className="web-section__container web-section-content" id="FAQ">
                     <h2 className="web-section__container-header-sm">
                         Frequently Asked Questions
                     </h2>

@@ -26,6 +26,7 @@ import Footer from './components/common/Footer';
  * - - Dashboard
  * - - Profile
  * - - Settings
+ * - - Blog Page (Minimum 3 Posts)
  */
 function App() {
   const Root = () => {

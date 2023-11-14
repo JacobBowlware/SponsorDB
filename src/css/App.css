@@ -20,6 +20,15 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Link Spacing */
+#hero,
+#testimonials,
+#FAQ,
+#features,
+#how-it-works {
+  scroll-margin-top: 15rem;
+}
+
 /* Web-Container & Web-Section */
 .web-container {
   display: flex;
@@ -105,4 +114,19 @@ html {
   font-size: 1.2rem;
   text-align: center;
   border-radius: 50rem;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: default !important;
+}
+
+.btn:disabled:hover {
+  opacity: .5;
+}
+
+/* Forms */
+.disabled {
+  opacity: .5;
+
 }
