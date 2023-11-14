@@ -8,10 +8,10 @@ import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 
 // Font Awesome Icons
-import { faArrowRight, faBook, faMoneyBill, faRocket } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faBook, faMoneyBill, faRocket, faKiwiBird } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-// Images
+// Images & Gifs
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
@@ -69,8 +69,8 @@ const Home = () => {
                             <div className="home__container-item__input-wrapper">
                                 <input id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
                                 <button id="email-btn" className="btn home__container-item__input home__container-item__btn" type="submit">
-                                    Join Waitlist
-                                    <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                                    {loading ? <FontAwesomeIcon className="home__container-item__btn-icon" icon={faKiwiBird} /> : "Join Waitlist "}
+                                    {!loading && <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />}
                                 </button>
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">
