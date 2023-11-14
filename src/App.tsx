@@ -8,6 +8,7 @@ import './css/App.css';
 import './css/Home.css';
 import './css/Header.css';
 import './css/Footer.css';
+import './css/blogs/AllBlogs.css';
 
 // Pages
 import Home from './pages/Home';
@@ -16,6 +17,7 @@ import AllBlogs from './pages/AllBlogs';
 // Components
 import Header from './components/common/Header'
 import Footer from './components/common/Footer';
+import ReachingOut from './pages/blogs/ReachingOut';
 
 /**
  * TODO: 
@@ -23,11 +25,6 @@ import Footer from './components/common/Footer';
  * - Add Pages:
  * - - Home - DONE
  * - - Blog Page (Minimum 3 Posts) -
- * - - Login
- * - - Register
- * - - Dashboard
- * - - Profile
- * - - Settings
  */
 function App() {
   const Root = () => {
@@ -43,7 +40,8 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home />} />
         <Route path="*" element={<Home />} />
-        <Route path="/all-blogs" element={<AllBlogs />} />
+        <Route path="/blogs" element={<AllBlogs />} />
+        <Route path="/blogs/reaching-out" element={<ReachingOut />} />
       </Route>
     )
   )

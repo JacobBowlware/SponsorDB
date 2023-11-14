@@ -3,6 +3,7 @@ import { useState } from "react";
 // Font Awesome Icons
 import { faBars, faKiwiBird, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link } from "react-router-dom";
 
 const Header = () => {
     const [navOpen, setNavOpen] = useState(false);
@@ -26,6 +27,9 @@ const Header = () => {
                     </li>
                     <li className="nav-item">
                         <a className="nav-link" href="/#FAQ">FAQ</a>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/blogs">Blog</Link>
                     </li>
                     <li className="nav-item  nav-item__highlight">
                         <a className="nav-link" href="/#hero">Join Waitlist</a>

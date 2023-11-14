@@ -134,8 +134,8 @@ const Home = () => {
                         What People Are Saying
                     </h2>
                     <div className="home__testimonials-list">
-                        <TestimonialCard name="John Doe" affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
-                        <TestimonialCard name="Demarcus Oslow" affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="John D.dd" affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="Alex J." affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
                 </div>
             </div>
