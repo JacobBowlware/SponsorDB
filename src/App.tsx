@@ -26,6 +26,12 @@ import ReachingOut from './pages/blogs/ReachingOut';
  * - - Home - DONE
  * - - Blog Page (Minimum 3 Posts) -
  */
+
+/*
+  BUGS:
+  - On page refresh, we get firebase 404 error ->
+  - Blog Page grows too wide on desktop -> FIXED
+*/
 function App() {
   const Root = () => {
     return <>

@@ -10,7 +10,6 @@ interface TestimonialCardProps {
 const TestimonialCard = ({ name, affiliation, quote }: TestimonialCardProps) => {
     return (
         <div className="home__testimonials-list__item">
-            {/* Quote Icon */}
             <FontAwesomeIcon icon={faQuoteLeft} className="home__testimonials-list__item-quote-icon" />
             <p className="home__testimonials-list__item-quote">
                 {quote}

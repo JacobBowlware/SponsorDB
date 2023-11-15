@@ -1,3 +1,7 @@
+#all-blogs {
+    padding: auto;
+}
+
 .all-blogs__container {
     display: grid;
     grid-template-columns: 1fr;
@@ -48,5 +52,11 @@
 @media screen and (min-width: 1400px) {
     .all-blogs__container {
         grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}
+
+@media screen and (min-width: 1600px) {
+    #all-blogs {
+        padding: 0;
     }
 }

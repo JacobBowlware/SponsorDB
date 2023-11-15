@@ -94,7 +94,7 @@
 .home__container-item__form-thanks {
     text-align: center;
     padding: 1rem;
-    font-size: 1rem;
+    font-size: .8rem;
     font-weight: 300;
     width: 100%;
     background: var(--var-color-primary);
@@ -118,7 +118,7 @@
     }
 
     .home__container-item__form-thanks {
-        font-size: 1.1rem;
+        font-size: .9rem;
     }
 }
 

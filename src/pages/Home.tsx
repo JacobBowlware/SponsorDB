@@ -72,7 +72,7 @@ const Home = () => {
                                 </button>
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">
-                                Thank you for your interest in SponsorTrail! Please check your email for a confirmation message (and possibly your spam folder).
+                                Thank you for joining the SponsorTrail waitlist! Please check your inbox for a confirmation email (and possibly your spam folder).
                             </p>}
                         </form>
                     </div>
