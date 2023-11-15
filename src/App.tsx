@@ -29,7 +29,7 @@ import ReachingOut from './pages/blogs/ReachingOut';
 
 /*
   BUGS:
-  - On page refresh, we get firebase 404 error ->
+  - On page refresh, we get firebase 404 error ->FIXED
   - Blog Page grows too wide on desktop -> FIXED
 */
 function App() {
@@ -45,9 +45,9 @@ function App() {
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
         <Route index element={<Home />} />
-        <Route path="*" element={<Home />} />
+        <Route path="/*" element={<Home />} />
         <Route path="/blogs" element={<AllBlogs />} />
-        <Route path="/blogs/reaching-out" element={<ReachingOut />} />
+        <Route path="/blogs/5-tips-reaching-out" element={<ReachingOut />} />
       </Route>
     )
   )

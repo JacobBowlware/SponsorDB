@@ -21,11 +21,12 @@
 .all-blogs__container-item__title {
     font-size: 1.4rem;
     font-weight: 600;
+    height: 8rem;
 }
 
 .all-blogs__container-item__body {
     font-size: .9rem;
-
+    height: 100%;
 }
 
 .all-blogs__container-item__link {
