@@ -37,6 +37,12 @@
     width: 100%;
 }
 
+#email-template {
+    background: var(--var-color-primary);
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
 
 @media screen and (min-width: 768px) {
     .all-blogs__container {
@@ -59,5 +65,45 @@
 @media screen and (min-width: 1600px) {
     #all-blogs {
         padding: 0;
+    }
+}
+
+/* Individual Blog CSS */
+.blog p {
+    font-size: 1.1rem;
+    margin: 1rem 0;
+}
+
+.blog h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.blog h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 3rem 0 .5rem 0;
+}
+
+@media screen and (min-width: 768px) {
+    .blog {
+        padding: 0 2rem;
+    }
+}
+
+@media screen and (min-width: 1024px) {
+    .blog {
+        padding: 0 3rem;
+    }
+
+    .blog p {
+        font-size: 1.2rem;
+    }
+}
+
+@media screen and (min-width: 1440px) {
+    .blog {
+        padding: 0 4rem;
     }
 }

@@ -8,7 +8,7 @@ import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 
 // Font Awesome Icons
-import { faArrowRight, faBook, faMoneyBill, faRocket, faKiwiBird, faList, faWandMagic, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faMoneyBill, faKiwiBird, faList, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Images & Gifs
@@ -19,10 +19,6 @@ import FAQAccordian from "../components/FAQAccordian";
 
 const db = getFirestore(app);
 
-/* 
-TODO:
-- Add more descriptive text to hero section -
-*/
 const Home = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
@@ -134,7 +130,7 @@ const Home = () => {
                         What People Are Saying
                     </h2>
                     <div className="home__testimonials-list">
-                        <TestimonialCard name="John D.dd" affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="John D." affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                         <TestimonialCard name="Alex J." affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
                 </div>

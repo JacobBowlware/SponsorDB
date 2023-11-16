@@ -1,9 +1,4 @@
-import ReachingOut from "./blogs/ReachingOut";
 import AllBlogsItem from "../components/AllBlogsItem";
-
-const blogList = [
-    ReachingOut
-]
 
 const AllBlogs = () => {
     return (
