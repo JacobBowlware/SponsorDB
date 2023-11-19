@@ -1,5 +1,3 @@
-import React from 'react';
-
 const ReachingOut = () => {
     return (
         <div className="web-page blog-container">
@@ -63,7 +61,7 @@ const ReachingOut = () => {
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
 

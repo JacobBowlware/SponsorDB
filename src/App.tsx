@@ -18,6 +18,8 @@ import AllBlogs from './pages/AllBlogs';
 import Header from './components/common/Header'
 import Footer from './components/common/Footer';
 import ReachingOut from './pages/blogs/ReachingOut';
+import RightSponsor from './pages/blogs/RightSponsor';
+import EffectivePitch from './pages/blogs/EffectivePitch';
 
 /**
  * TODO: 
@@ -48,6 +50,8 @@ function App() {
         <Route path="/*" element={<Home />} />
         <Route path="/blogs" element={<AllBlogs />} />
         <Route path="/blogs/5-tips-reaching-out" element={<ReachingOut />} />
+        <Route path="/blogs/right-sponsor" element={<RightSponsor />} />
+        <Route path="/blogs/effective-pitch" element={<EffectivePitch />} />
       </Route>
     )
   )
