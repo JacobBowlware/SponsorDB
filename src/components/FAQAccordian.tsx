@@ -8,6 +8,7 @@ const FAQAccordian = () => {
     const [acc3Open, setAcc3Open] = useState(false);
     const [acc4Open, setAcc4Open] = useState(false);
     const [acc5Open, setAcc5Open] = useState(false);
+
     return (
         <div className="faq-accordian__container">
             <AccordianItem

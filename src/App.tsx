@@ -26,14 +26,10 @@ import EffectivePitch from './pages/blogs/EffectivePitch';
  * - Add Footer -> DONE
  * - Add Pages:
  * - - Home - DONE
- * - - Blog Page (Minimum 3 Posts) -
+ * - - Blog Page (Minimum 3 Posts) - DONE
+ * - Build the bot, show some example data - 
  */
 
-/*
-  BUGS:
-  - On page refresh, we get firebase 404 error ->FIXED
-  - Blog Page grows too wide on desktop -> FIXED
-*/
 function App() {
   const Root = () => {
     return <>
