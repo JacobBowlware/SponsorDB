@@ -1,13 +1,15 @@
 # Sopnsor Trail
 
 ## Project Summary:
-Sponsor trail is the...
+Sponsor trail is.... Web scraper built using Python.
 
-### Technology Stack:
+### Website Tech Stack:
 - HTML
+- CSS
+- JavaScript
 - TypeScript
 - ReactJS
 - Firebase
 
 ### Future Developments:
-- Implement new feature "X"
+- 
