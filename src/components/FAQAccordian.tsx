@@ -13,7 +13,7 @@ const FAQAccordian = () => {
         <div className="faq-accordian__container">
             <AccordianItem
                 title="What is the cost of SponsorTrail?"
-                content="We're finalizing our pricing plans to ensure the best value for our customers. You'll be notified once we have finalized our pricing."
+                content="Pricing is still being determined. However, we plan to offer a free trial period, allowing you to experience the benefits of SponsorTrail before committing to a subscription."
                 onPress={() => setAcc1Open(!acc1Open)}
                 isOpen={acc1Open}
             />
@@ -25,20 +25,19 @@ const FAQAccordian = () => {
             />
             <AccordianItem
                 title="How can I apply for sponsorships?"
-                content="Upon receiving your curated list, reaching out to potential sponsors is hassle-free. We provide contact information and guidelines for approaching these companies."
+                content="Upon receiving your curated list, reaching out to potential sponsors is hassle-free. We provide contact information and tips for approaching these companies."
                 onPress={() => setAcc3Open(!acc3Open)}
                 isOpen={acc3Open}
             />
             <AccordianItem
                 title="Are the sponsorships suitable for any podcast size?"
-                content="Yes, SponsorTrail caters to podcasts of various sizes, aligning opportunities with your podcast's scale and scope. However, it's essential to note that sponsorships often require a certain audience threshold. While this can vary, typically, companies may consider sponsorships for podcasts with a consistent audience size of several thousand listeners or more."
+                content="Yes! Sponsorship opportunities are to your podcast's audience and niche, ensuring you receive relevant and valuable sponsorship opportunities."
                 onPress={() => setAcc4Open(!acc4Open)}
                 isOpen={acc4Open}
             />
             <AccordianItem
                 title="How do we gather our data?"
-                content="We collect data from various trusted sources across the web, aggregating information on proven podcast sponsorships. Our team meticulously reviews and selects sponsorship opportunities, ensuring only reputable companies with a strong sponsorship history are included in your tailored list.
-                "
+                content="The majority of our information comes straight from podcasts themselves. In house software is constantly scanning the web for new sponsorships, ensuring our database is always up to date."
                 onPress={() => setAcc5Open(!acc5Open)}
                 isOpen={acc5Open}
             />

@@ -10,9 +10,9 @@ const Footer = () => {
                 <Link className="footer-item" to="/terms-of-service">
                     Terms of Service
                 </Link>
-                <Link className="footer-item" to="/contact-us">
+                <a className="footer-item" href="mailto:Jacobbowlware@gmail.com">
                     Contact Us
-                </Link>
+                </a>
                 <a className="footer-item " href="/#hero">
                     Join Waitlist
                 </a>

@@ -22,6 +22,7 @@
     font-size: 1.4rem;
     font-weight: 600;
     height: 8rem;
+    width: 100%;
 }
 
 .all-blogs__container-item__body {
@@ -41,6 +42,11 @@
     background: var(--var-color-primary);
     padding: 1rem;
     margin: 1rem 0;
+}
+
+.blog-table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
 
@@ -84,6 +90,18 @@
     font-size: 1.5rem;
     font-weight: 600;
     margin: 3rem 0 .5rem 0;
+}
+
+.blog h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 3rem 0 .5rem 0;
+}
+
+.blog-note {
+    font-size: .9rem;
+    font-style: italic;
+    margin: 1rem 0;
 }
 
 @media screen and (min-width: 768px) {

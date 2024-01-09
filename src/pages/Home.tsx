@@ -6,16 +6,16 @@ import { app } from "../firebase/config";
 // Components
 import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
+import FAQAccordian from "../components/FAQAccordian";
 
 // Font Awesome Icons
 import { faArrowRight, faMoneyBill, faKiwiBird, faList, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-// Images & Gifs
+// Images
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
-import FAQAccordian from "../components/FAQAccordian";
 
 const db = getFirestore(app);
 
@@ -58,7 +58,7 @@ const Home = () => {
                             Maximize Your Podcast's Sponsors
                         </h2>
                         <p className="home__container-item__p">
-                            SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors, saving time and maximizing your podcast's revenue potential effortlessly.                        </p>
+                            SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors, saving time and maximizing your podcast's revenue potential.                        </p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
                                 <input id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
@@ -68,7 +68,7 @@ const Home = () => {
                                 </button>
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">
-                                Thank you for joining the SponsorTrail waitlist! Expect an email from us soon about next steps.
+                                Thank you for joining the SponsorTrail waitlist! We'll be in touch soon.
                             </p>}
                         </form>
                     </div>
@@ -80,9 +80,9 @@ const Home = () => {
                         Why SponsorTrail?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faList} header="Curated Sponsor List" text="Access a meticulously curated list of proven podcast sponsors, instantly connecting you to revenue opportunities." />
-                        <FeatureCard icon={faWandMagicSparkles} header="Effortless Updates" text="Receive regular updates with new and relevant sponsorships, making your search for sponsors hassle-free." />
-                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Boost Revenue" text="Maximize your podcast's revenue potential by leveraging targeted sponsorship opportunities from reputable companies." />
+                        <FeatureCard icon={faList} header="Curated Sponsor List" text="Access a meticulously curated list of proven podcast sponsors, connecting you to numerous revenue opportunities." />
+                        <FeatureCard icon={faWandMagicSparkles} header="Effortless Updates" text="Receive regular updates with new and relevant sponsorships, making your search for sponsors stress-free." />
+                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Revenue Boost" text="Make the most of targeted sponsorship opportunities from trusted companies, maximizing your podcast's earnings." />
                     </div>
                 </div>
             </div>
@@ -94,20 +94,21 @@ const Home = () => {
                     <div className="home__how-it-works-container">
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
-                                1. We Gather Data
+                                1. Data Collection
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                We collect data from reputable sources, compiling information on real podcast sponsorships. Our database organizes details such as sponsorships by date, company, and podcast.
+                                Data is collected from reputable sources, compiling information on real podcast sponsorships. Our database organizes details such as sponsorships by date, company, and podcast.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img" src={search} alt="A team searching the web and gathering data on potential podcast sponsors for our clients." />
                         <img className="home__how-it-works-container__img" src={list} alt="A team preparing to send a list of potential podcast sponsors to our clients." />
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
-                                2. We Send You a List
+                                2. Tailored List
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Our team carefully selects recent podcast sponsors, ensuring only reputable companies with a strong sponsorship history are included in your tailored list.                                     </p>
+                                Our team analyzes the data, compiling a tailored list of podcast sponsors that match your podcast's audience and niche. We then send this list to you.
+                            </p>
                         </div>
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">

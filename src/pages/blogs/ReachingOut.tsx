@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const ReachingOut = () => {
     return (
         <div className="web-page blog-container">
@@ -59,6 +61,12 @@ const ReachingOut = () => {
                             [Your Contact Information]
                         </p>
                     </div>
+                    <h3>
+                        Related Blogs:
+                    </h3>
+                    <ul>
+                        <li><Link to="/blogs/the-role-of-podcast-sponsors">5 Tips for Reaching Out to Sponsors</Link></li>
+                    </ul>
                 </div>
             </div>
         </div>

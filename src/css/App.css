@@ -29,6 +29,10 @@ html {
   scroll-margin-top: 15rem;
 }
 
+#FAQ {
+  max-width: 1200px;
+}
+
 /* Web-Container & Web-Section */
 .web-container {
   display: flex;
@@ -56,7 +60,7 @@ html {
   justify-content: center;
   align-items: center;
   width: 100%;
-  padding: 2rem;
+  padding: 1rem;
   margin-top: 2rem;
 }
 
@@ -75,14 +79,14 @@ html {
 .web-section__container-header {
   text-align: center;
   font-weight: 700;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   margin-bottom: 2rem;
 }
 
 .web-section__container-header-sm {
   text-align: center;
   font-weight: 700;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   margin-bottom: 2rem;
 }
 
