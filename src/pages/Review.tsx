@@ -1,39 +1,56 @@
+import { useState } from "react";
+
+// Font Awesome
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarHollow } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState } from "react";
+
+import { getFirestore, addDoc, collection } from "@firebase/firestore";
+import { app } from "../firebase/config";
+import LoadingBtn from "../components/common/LoadingBtn";
 
 /* 
 TODO:
-- Add Firebase integration
+- Add Firebase integration - DONE
+- Add error handling - DONE
+- Add loading animation - DONE
 - Add form validation
-- Add error handling
-- Add loading animation
 - If user clicks on the stars/rating message, it should select the radio button.
 - Convert radio elements to a reusable component
 */
+
+const db = getFirestore(app);
 const Review = () => {
     const [name, setName] = useState('');
     const [review, setReview] = useState('');
     const [loading, setLoading] = useState(false);
     const [userReviewSubmitted, setUserReviewSubmitted] = useState(false);
+    const [userError, setUserError] = useState(false);
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
+        setUserError(false);
+        setUserReviewSubmitted(false);
 
-        // Submit Review to Firebase
         setLoading(true);
+        try {
+            const docRef = collection(db, "reviews");
+            await addDoc(docRef, {
+                name: name === '' ? 'Anonymous' : name,
+                review: review
+            });
 
+            setUserReviewSubmitted(true);
+            setLoading(false);
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000)
 
-        // Depending on the result of the submission, display a message to the user
-        setUserReviewSubmitted(true);
-        setLoading(false);
-        console.log(name, review);
-
-        // Refresh the page
-        setTimeout(() => {
-            window.location.reload();
-        }, 5000)
+        } catch (error) {
+            setUserError(true);
+            setLoading(false);
+            console.log(error)
+        }
     }
 
     return (
@@ -86,10 +103,11 @@ const Review = () => {
                         </div>
                         <h2 className="review-form-label">Review:</h2>
                         <textarea id='review-input' className="home__container-item__input review-input" rows={5} placeholder="" onChange={(e) => setReview(e.target.value)} />
-                        <button id='review-btn' className="home__container-item__btn review-btn" type="submit">Submit</button>
+                        <LoadingBtn loading={loading} title="Submit" />
                         {userReviewSubmitted && <p className="home__container-item__form-thanks">Thank you for leaving a review, we appreciate your feedback and
                             will use it to improve SponsorTrail for our users!
                         </p>}
+                        {userError && <p className="home__container-item__form-thanks">There was an error submitting your review. Please try again later.</p>}
                     </form>
                 </div>
             </div>
