@@ -9,12 +9,16 @@ import './css/Home.css';
 import './css/Header.css';
 import './css/Footer.css';
 import './css/Review.css';
+import './css/PrivacyPolicy.css';
+import './css/TOS.css';
 import './css/blogs/AllBlogs.css';
 
 // Pages
 import Home from './pages/Home';
 import AllBlogs from './pages/AllBlogs';
 import Review from './pages/Review';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TOS from './pages/TOS';
 
 // Components
 import Header from './components/common/Header'
@@ -48,6 +52,8 @@ function App() {
         <Route index element={<Home />} />
         <Route path="/*" element={<Home />} />
         <Route path="/review/" element={<Review />} />
+        <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service/" element={<TOS />} />
         <Route path="/blogs/" element={<AllBlogs />} />
         <Route path="/blogs/5-tips-reaching-out/" element={<ReachingOut />} />
         <Route path="/blogs/the-role-of-podcast-sponsors/" element={<RoleOfPodcastSponsor />} />

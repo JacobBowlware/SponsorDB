@@ -17,6 +17,7 @@ import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
 import { Link } from "react-router-dom";
+import LoadingBtn from "../components/common/LoadingBtn";
 
 const db = getFirestore(app);
 
@@ -62,11 +63,8 @@ const Home = () => {
                             SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors, saving time and maximizing your podcast's revenue potential.                        </p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
-                                <input id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
-                                <button id="email-btn" className="btn home__container-item__input home__container-item__btn" type="submit">
-                                    {loading ? <FontAwesomeIcon className="home__container-item__btn-icon" icon={faKiwiBird} /> : "Join Waitlist "}
-                                    {!loading && <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />}
-                                </button>
+                                <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
+                                <LoadingBtn loading={loading} title="Join Waitlist" addClasses="btn home__container-item__input home__container-item__btn" />
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">
                                 Thank you for joining the SponsorTrail waitlist! We'll be in touch soon.

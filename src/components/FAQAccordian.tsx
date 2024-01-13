@@ -12,32 +12,32 @@ const FAQAccordian = () => {
     return (
         <div className="faq-accordian__container">
             <AccordianItem
-                title="What is the cost of SponsorTrail?"
-                content="Pricing is still being determined. However, we plan to offer a free trial period, allowing you to experience the benefits of SponsorTrail before committing to a subscription."
+                title="How much will SponsorTrail cost?"
+                content="Pricing is still being determined. However, we plan to offer a free trial period, allowing you to experience the benefits of SponsorTrail before committing to any subscription."
                 onPress={() => setAcc1Open(!acc1Open)}
                 isOpen={acc1Open}
             />
             <AccordianItem
-                title="How often do I receive curated sponsorship lists?"
-                content="Expect fresh and relevant sponsorship opportunities delivered weekly. Our curated lists provide access to the latest and most valuable opportunities for your podcast."
+                title="How often will I receive curated sponsorship lists?"
+                content="Expect fresh and relevant sponsorship opportunities delivered weekly. Depending on your subscription plan, each curated list will contain 10-50+ sponsor opportunities. "
                 onPress={() => setAcc2Open(!acc2Open)}
                 isOpen={acc2Open}
             />
             <AccordianItem
                 title="How can I apply for sponsorships?"
-                content="Upon receiving your curated list, reaching out to potential sponsors is hassle-free. We provide contact information and tips for approaching these companies."
+                content="Application links are provided for each sponsorship opportunity. Simply click the link and follow the instructions provided by the sponsor."
                 onPress={() => setAcc3Open(!acc3Open)}
                 isOpen={acc3Open}
             />
             <AccordianItem
                 title="Are the sponsorships suitable for any podcast size?"
-                content="Yes! Sponsorship opportunities are to your podcast's audience and niche, ensuring you receive relevant and valuable sponsorship opportunities."
+                content="Most large sponsors are looking for podcasts with 50,000+ downloads per month, though it heavily depends on the niche. "
                 onPress={() => setAcc4Open(!acc4Open)}
                 isOpen={acc4Open}
             />
             <AccordianItem
                 title="How do we gather our data?"
-                content="The majority of our information comes straight from podcasts themselves. In house software is constantly scanning the web for new sponsorships, ensuring our database is always up to date."
+                content="Our information primarily comes from podcasts themselves. In-house software continuously scans the web for new sponsorships, ensuring our database is always up to date."
                 onPress={() => setAcc5Open(!acc5Open)}
                 isOpen={acc5Open}
             />
