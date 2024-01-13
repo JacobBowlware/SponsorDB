@@ -8,15 +8,19 @@ import './css/App.css';
 import './css/Home.css';
 import './css/Header.css';
 import './css/Footer.css';
+import './css/Review.css';
 import './css/blogs/AllBlogs.css';
 
 // Pages
 import Home from './pages/Home';
 import AllBlogs from './pages/AllBlogs';
+import Review from './pages/Review';
 
 // Components
 import Header from './components/common/Header'
 import Footer from './components/common/Footer';
+
+// Blogs
 import ReachingOut from './pages/blogs/ReachingOut';
 import RoleOfPodcastSponsor from './pages/blogs/RoleOfPodcastSponsor';
 
@@ -43,9 +47,10 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home />} />
         <Route path="/*" element={<Home />} />
-        <Route path="/blogs" element={<AllBlogs />} />
-        <Route path="/blogs/5-tips-reaching-out" element={<ReachingOut />} />
-        <Route path="/blogs/the-role-of-podcast-sponsors" element={<RoleOfPodcastSponsor />} />
+        <Route path="/review/" element={<Review />} />
+        <Route path="/blogs/" element={<AllBlogs />} />
+        <Route path="/blogs/5-tips-reaching-out/" element={<ReachingOut />} />
+        <Route path="/blogs/the-role-of-podcast-sponsors/" element={<RoleOfPodcastSponsor />} />
       </Route>
     )
   )

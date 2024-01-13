@@ -18,7 +18,7 @@ const RoleOfPodcastSponsor = () => {
                     </p>
                     <table className="blog-table">
                         <tr>
-                            <th>30-second Ad CPM <a href="/blogs/the-role-of-podcast-sponsors/#reference-1">[1]</a></th>
+                            <th>30-second Ad CPM <a href="#reference-1">[1]</a></th>
                             <th>60-second Ad CPM</th>
                         </tr>
                         <tr>

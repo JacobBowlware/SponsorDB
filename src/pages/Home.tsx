@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
+import { Link } from "react-router-dom";
 
 const db = getFirestore(app);
 
@@ -120,9 +121,6 @@ const Home = () => {
                         </div>
                         <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
                     </div>
-                    <a className="footer-item footer-item__highlight mt-2" href="/#hero">
-                        Join Waitlist &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
-                    </a>
                 </div>
             </div>
             <div className="web-section" >
@@ -134,6 +132,9 @@ const Home = () => {
                         <TestimonialCard name="John D." affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                         <TestimonialCard name="Alex J." affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
+                    <Link className="footer-item footer-item__highlight mt-2" to="/review">
+                        Write a Review &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
+                    </Link>
                 </div>
             </div>
             <div className="web-section" >
