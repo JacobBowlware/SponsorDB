@@ -55,6 +55,7 @@ const RoleOfPodcastSponsor = () => {
                     </h3>
                     <ul>
                         <li><Link to="/blogs/5-tips-reaching-out">5 Tips for Reaching Out to Sponsors</Link></li>
+                        <li><Link to="/blogs/data-driven-approach/">Navigating Podcast Sponsorships: A Data-Driven Approach</Link></li>
                     </ul>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 // React & Firebase
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { getFirestore, addDoc, collection } from "@firebase/firestore";
 import { app } from "../firebase/config";
 
@@ -7,17 +8,16 @@ import { app } from "../firebase/config";
 import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 import FAQAccordian from "../components/FAQAccordian";
+import LoadingBtn from "../components/common/LoadingBtn";
 
 // Font Awesome Icons
-import { faArrowRight, faMoneyBill, faKiwiBird, faList, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faMoneyBill, faList, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Images
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
-import { Link } from "react-router-dom";
-import LoadingBtn from "../components/common/LoadingBtn";
 
 const db = getFirestore(app);
 
@@ -33,7 +33,8 @@ const Home = () => {
         try {
             const docRef = collection(db, "waitlist_emails");
             await addDoc(docRef, {
-                email: email
+                email: email,
+                date: new Date()
             });
 
             // Disable Form Input and Button

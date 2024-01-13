@@ -1,12 +1,14 @@
+// React & Firebase
 import { useState } from "react";
+import { getFirestore, addDoc, collection } from "@firebase/firestore";
+import { app } from "../firebase/config";
 
 // Font Awesome
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarHollow } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { getFirestore, addDoc, collection } from "@firebase/firestore";
-import { app } from "../firebase/config";
+// Components
 import LoadingBtn from "../components/common/LoadingBtn";
 
 /* 

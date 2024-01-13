@@ -27,6 +27,7 @@ import Footer from './components/common/Footer';
 // Blogs
 import ReachingOut from './pages/blogs/ReachingOut';
 import RoleOfPodcastSponsor from './pages/blogs/RoleOfPodcastSponsor';
+import RoleOfData from './pages/blogs/RoleOfData';
 
 /**
  * TODO: 
@@ -57,6 +58,7 @@ function App() {
         <Route path="/blogs/" element={<AllBlogs />} />
         <Route path="/blogs/5-tips-reaching-out/" element={<ReachingOut />} />
         <Route path="/blogs/the-role-of-podcast-sponsors/" element={<RoleOfPodcastSponsor />} />
+        <Route path="/blogs/data-driven-approach" element={<RoleOfData />} />
       </Route>
     )
   )
