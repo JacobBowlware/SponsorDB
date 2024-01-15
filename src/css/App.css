@@ -3,7 +3,7 @@
   --var-color-secondary: #2929CC;
   --var-color-tertiary: #6677CC;
   --var-color-background: #fff;
-  --var-color-text: #060622;
+  --var-color-text: #090913;
   --var-color-text-light: rgba(2, 2, 13, .8);
 }
 
@@ -88,6 +88,12 @@ html {
   font-weight: 700;
   font-size: 1.5rem;
   margin-bottom: 2rem;
+}
+
+@media screen and (min-width: 768px) {
+  .web-section {
+    padding: 2rem;
+  }
 }
 
 @media screen and (min-width: 1024px) {

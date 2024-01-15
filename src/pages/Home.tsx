@@ -18,6 +18,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
+import AllBlogsItem from "../components/AllBlogsItem";
 
 const db = getFirestore(app);
 
@@ -142,6 +143,23 @@ const Home = () => {
                         Frequently Asked Questions
                     </h2>
                     <FAQAccordian />
+                </div>
+            </div>
+            <div className="web-section web-section-dark" >
+                <div className="web-section__container web-section-content home-blog__container" id="FAQ">
+                    <div className="home-blog__container-item">
+                        <h2 className="web-section__container-header-sm home-blog__container-item__header">
+                            Check Out Our Blog
+                        </h2>
+                        <p className="home-blog__body">
+                            Our blog is a great resource for podcasters looking to learn more about podcast sponsorships. We cover topics such as how to find sponsors, how to negotiate sponsorship deals, and more.
+                        </p>
+                        <AllBlogsItem dark={true} small={true} body="Understanding the role of a podcast sponsor is key to leveraging their potential benefits for your podcast. What exactly defines a podcast sponsor, and how do they contribute to your podcast’s success?" title="The Role of Podcast Sponsors" link="/blogs/the-role-of-podcast-sponsors/" />
+                    </div>
+                    <div className="home-blog__container-item">
+                        <AllBlogsItem dark={true} small={true} body="Having quality data on your podcast is a necessity when discussing potential sponsorships with companies. The following will describe the role of certain data sets and how to use them to your best advantage when negotiating for podcast sponsorships." title="Navigating Podcast Sponsorships: A Data-Driven Approach" link="/blogs/data-driven-approach/" left={true} />
+                        <AllBlogsItem dark={true} small={true} body="Learn essential tips for initiating conversations with potential sponsors to elevate your podcast's content and revenue. Craft compelling messages that set the stage for successful partnerships." title="5 Tips for Reaching Out to Sponsors" link="/blogs/5-tips-reaching-out/" left={true} />
+                    </div>
                 </div>
             </div>
         </div>
