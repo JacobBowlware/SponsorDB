@@ -17,6 +17,7 @@ const Footer = () => {
                     Join Waitlist
                 </a>
             </div>
+            <p>&copy; 2024 Sponsor Trail. All Rights Reserved.</p>
         </div>
     );
 }

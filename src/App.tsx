@@ -28,6 +28,7 @@ import Footer from './components/common/Footer';
 import ReachingOut from './pages/blogs/ReachingOut';
 import RoleOfPodcastSponsor from './pages/blogs/RoleOfPodcastSponsor';
 import RoleOfData from './pages/blogs/RoleOfData';
+import { useState } from 'react';
 
 /**
  * TODO: 
@@ -39,6 +40,10 @@ import RoleOfData from './pages/blogs/RoleOfData';
  */
 
 function App() {
+  const [sponsorCount, setSponsorCount] = useState(0);
+  const [companyCount, setCompanyCount] = useState(0);
+  const [emailCount, setEmailCount] = useState(0);
+
   const Root = () => {
     return <>
       <Header />
@@ -56,9 +61,9 @@ function App() {
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
         <Route path="/blogs/" element={<AllBlogs />} />
-        <Route path="/blogs/5-tips-reaching-out/" element={<ReachingOut />} />
-        <Route path="/blogs/the-role-of-podcast-sponsors/" element={<RoleOfPodcastSponsor />} />
-        <Route path="/blogs/data-driven-approach" element={<RoleOfData />} />
+        <Route path="/blogs/5-tips-reaching-out/" element={<ReachingOut companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
+        <Route path="/blogs/the-role-of-podcast-sponsors/" element={<RoleOfPodcastSponsor companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
+        <Route path="/blogs/data-driven-approach" element={<RoleOfData companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
       </Route>
     )
   )

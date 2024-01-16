@@ -13,7 +13,7 @@ const FAQAccordian = () => {
         <div className="faq-accordian__container">
             <AccordianItem
                 title="How much will SponsorTrail cost?"
-                content="Pricing is still being determined. However, we plan to offer a free trial period, allowing you to experience the benefits of SponsorTrail before committing to any subscription."
+                content="Pricing is still being determimed. For now, we are offering limited access to our beta program for free -join waitlist for more info. "
                 onPress={() => setAcc1Open(!acc1Open)}
                 isOpen={acc1Open}
             />
@@ -30,8 +30,8 @@ const FAQAccordian = () => {
                 isOpen={acc3Open}
             />
             <AccordianItem
-                title="Are the sponsorships suitable for any podcast size?"
-                content="Most large sponsors are looking for podcasts with 50,000+ downloads per month, though it heavily depends on the niche. "
+                title="Do you guarantee that these companies will sponsor my podcast?"
+                content="We can't guarantee sponsorships, but the companies we curate have demonstrated an interest in this type of advertising and may be open to future opportunities."
                 onPress={() => setAcc4Open(!acc4Open)}
                 isOpen={acc4Open}
             />

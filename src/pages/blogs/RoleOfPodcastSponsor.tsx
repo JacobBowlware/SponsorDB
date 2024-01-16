@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
+import SponsorHelp from "../../components/SponsorHelp";
 
-const RoleOfPodcastSponsor = () => {
+interface Props {
+    sponsorCount: number;
+    companyCount: number;
+    emailCount: number;
+}
+
+const RoleOfPodcastSponsor = ({ sponsorCount, companyCount, emailCount }: Props) => {
     return (
         <div className="web-page blog-container">
             <div className="web-section">
@@ -44,6 +51,7 @@ const RoleOfPodcastSponsor = () => {
                     <p>
                         When looking for podcast sponsors, it can be difficult to know where to start. Imagine your average viewer: what are their interests, where are they located, their gender, etc. Now, picture sponsors that you could genuinely imagine your viewers being interested in -those are the sponsors you should attempt to work with. For instance, if you run a podcast centered around wildlife exploration, looking towards technology companies for sponsorships is probably not a viable idea. Instead, this podcast may want to look towards brands which sell camping gear or heavy-duty outdoor clothing. Still, finding actual podcast sponsors can be hard. This is where we come in; SponsorTrail will send you lists of proven podcasts sponsors weekly, so all you have to do is reach out to them.
                     </p>
+                    <SponsorHelp sponsorCount={sponsorCount} companyCount={companyCount} emailCount={emailCount} />
                     <h3 className="blog-reference-header">References</h3>
                     <ol className="blog-reference-list">
                         <li id="reference-1">

@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
+import SponsorHelp from "../../components/SponsorHelp";
+interface Props {
+    sponsorCount: number;
+    companyCount: number;
+    emailCount: number;
+}
 
-const ReachingOut = () => {
+const ReachingOut = ({ sponsorCount, companyCount, emailCount }: Props) => {
     return (
         <div className="web-page blog-container">
             <div className="web-section">
@@ -61,6 +67,7 @@ const ReachingOut = () => {
                             [Your Contact Information]
                         </p>
                     </div>
+                    <SponsorHelp sponsorCount={sponsorCount} companyCount={companyCount} emailCount={emailCount} />
                     <h3>
                         Related Blogs:
                     </h3>

@@ -83,7 +83,7 @@ const Home = () => {
                     <div className="home__features-list">
                         <FeatureCard icon={faList} header="Curated Sponsor List" text="Access a meticulously curated list of proven podcast sponsors, connecting you to numerous revenue opportunities." />
                         <FeatureCard icon={faWandMagicSparkles} header="Effortless Updates" text="Receive regular updates with new and relevant sponsorships, making your search for sponsors stress-free." />
-                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Revenue Boost" text="Make the most of targeted sponsorship opportunities from trusted companies, maximizing your podcast's earnings." />
+                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Revenue Boost" text="An increse in sponsors is an increase in revenue. SponsorTrail helps you maximize your podcast's earning potential." />
                     </div>
                 </div>
             </div>
@@ -105,10 +105,10 @@ const Home = () => {
                         <img className="home__how-it-works-container__img" src={list} alt="A team preparing to send a list of potential podcast sponsors to our clients." />
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
-                                2. Tailored List
+                                2. Sponsor List
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Our team analyzes the data, compiling a tailored list of podcast sponsors that match your podcast's audience and niche. We then send this list to you.
+                                Our database is continuously updated, ensuring that you have access to the most relevant and up-to-date sponsorship opportunities. You will recieve full access to our complete list of sponsors upon subscribing. (4,000 sponsorships,  500 companies, 467 email addresses)
                             </p>
                         </div>
                         <div className="home__how-it-works-container__item">
@@ -116,7 +116,7 @@ const Home = () => {
                                 3. You Apply
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                With your tailored list in hand, it's time to engage. Reach out to these reputable companies to explore sponsorship opportunities, boosting your podcast's earnings and audience reach.
+                                With our complete list of sponsors in hand, you can begin applying for sponsorships. Each sponsorship opportunity includes a link to the application page, allowing you to apply directly to the sponsor.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />

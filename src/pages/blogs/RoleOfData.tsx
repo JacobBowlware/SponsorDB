@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
+import SponsorHelp from "../../components/SponsorHelp";
+interface Props {
+    sponsorCount: number;
+    companyCount: number;
+    emailCount: number;
+}
 
-const RoleOfData = () => {
+const RoleOfData = ({ sponsorCount, companyCount, emailCount }: Props) => {
     return (
         <div className="web-page blog-container">
             <div className="web-section">
@@ -50,6 +56,7 @@ const RoleOfData = () => {
                     <p>
                         In conclusion, arming yourself with a wide range of data is instrumental in making a persuasive pitch to potential sponsors. Key podcast metrics, including analytics, demographic insights, and engagement statistics, play a pivotal role in presenting the value of your podcast -fortunately, major hosting platforms collect and store this data for you. In navigating future sponsorship opportunities, remember to leverage these data sets to craft a persuasive pitch.
                     </p>
+                    <SponsorHelp sponsorCount={sponsorCount} companyCount={companyCount} emailCount={emailCount} />
                     <h3>
                         Related Blogs:
                     </h3>
