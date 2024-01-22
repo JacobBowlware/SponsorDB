@@ -23,7 +23,7 @@ def get_podcast_description(link):
         ) # prints --> <selenium.webdriver.remote.webelement.WebElement (session="39eb09feb6cab46db3f263c167d90193", element="8B71497472C1A9C1DF16CD3AC28C9BCC_element_52")>
 
         # Put description into a BeautifulSoup object.
-        description = BeautifulSoup(description.get_attribute('innerHTML'), 'lxml')
+        description = BeautifulSoup(description.get_attribute('innerHTML'), 'html.parser')
         description_expand_btn = description.find('tp-yt-paper-button', id='expand-sizer')
 
         # Get podcast description.

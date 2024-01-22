@@ -503,3 +503,20 @@
         font-size: 1.3rem;
     }
 }
+
+/* Air Table */
+.airtable-cont {
+    border: 1px solid var(--var-color-text);
+}
+
+.airtable-header {
+    margin: 1rem 0;
+}
+
+.airtable-p {
+    font-size: 1rem;
+    color: var(--var-color-text);
+    opacity: .8;
+    width: 100%;
+    text-align: center;
+}

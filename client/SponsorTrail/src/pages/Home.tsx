@@ -9,6 +9,7 @@ import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 import FAQAccordian from "../components/FAQAccordian";
 import LoadingBtn from "../components/common/LoadingBtn";
+import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
 import { faArrowRight, faMoneyBill, faList, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
@@ -22,7 +23,13 @@ import AllBlogsItem from "../components/AllBlogsItem";
 
 const db = getFirestore(app);
 
-const Home = () => {
+interface HomeProps {
+    companyCount: number;
+    sponsorCount: number;
+    emailCount: number;
+}
+
+const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [userEmailCollected, setUserEmailCollected] = useState(false);
@@ -120,6 +127,19 @@ const Home = () => {
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
+                    </div>
+                </div>
+            </div>
+            <div className="web-section web-section-dark" id="sample-data" >
+                <div className="web-section__container web-section-content">
+                    <h2 className="web-section__container-header airtable-header">
+                        See Our Data For Yourself
+                    </h2>
+                    <p className="airtable-p">
+                        We've compiled a list of {sponsorCount} podcast sponsorships, {companyCount} companies, and {emailCount} email addresses. Below is a small preview of our data.
+                    </p>
+                    <div className="airtable-cont">
+                        <AirTable />
                     </div>
                 </div>
             </div>

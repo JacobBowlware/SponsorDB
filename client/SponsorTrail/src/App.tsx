@@ -37,6 +37,7 @@ import { useState } from 'react';
  * - - Home - DONE
  * - - Blog Page (Minimum 3 Posts) - DONE
  * - Build the bot, show some example data - 
+ * - Example Table - 
  */
 
 function App() {
@@ -60,8 +61,8 @@ function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home />} />
-        <Route path="/*" element={<Home />} />
+        <Route index element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
+        <Route path="/*" element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />

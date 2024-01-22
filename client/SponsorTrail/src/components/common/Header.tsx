@@ -23,13 +23,13 @@ const Header = () => {
                         <a className="nav-link" href="/#how-it-works">How It Works</a>
                     </li>
                     <li className="nav-item">
+                        <a className="nav-link" href="#sample-data">Sample Data</a>
+                    </li>
+                    <li className="nav-item">
                         <a className="nav-link" href="/#testimonials">Testimonials</a>
                     </li>
                     <li className="nav-item">
                         <a className="nav-link" href="/#FAQ">FAQ</a>
-                    </li>
-                    <li className="nav-item">
-                        <Link className="nav-link" to="/blogs">Blog</Link>
                     </li>
                     <li className="nav-item  nav-item__highlight">
                         <a className="nav-link" href="/#hero">Join Waitlist</a>
