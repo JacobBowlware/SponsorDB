@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Sponsorship = new mongoose.model('Sponsorship', new mongoose.Schema({
+const Sponsorship = mongoose.model('Sponsorship', new mongoose.Schema({
     podcastName: {
         type: String,
         required: true,
@@ -26,4 +26,4 @@ const Sponsorship = new mongoose.model('Sponsorship', new mongoose.Schema({
     },
 }));
 
-module.exports = Sponsorship;
+module.exports.Sponsorship = Sponsorship;

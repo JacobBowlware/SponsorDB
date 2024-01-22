@@ -1,0 +1,1 @@
+const { Sponsorship } = require('../models/sponsorship');
