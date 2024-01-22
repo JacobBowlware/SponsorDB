@@ -1,0 +1,150 @@
+:root {
+  --var-color-primary: #f1f1f1;
+  --var-color-secondary: #2929CC;
+  --var-color-tertiary: #6677CC;
+  --var-color-background: #fff;
+  --var-color-text: #090913;
+  --var-color-text-light: rgba(2, 2, 13, .8);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Manrope', sans-serif;
+  background: var(--var-color-background);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Link Spacing */
+#hero,
+#testimonials,
+#FAQ,
+#features,
+#how-it-works {
+  scroll-margin-top: 15rem;
+}
+
+#FAQ {
+  max-width: 1200px;
+}
+
+/* Web-Container & Web-Section */
+.web-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--var-color-text);
+  background: var(--var-color-background);
+  min-height: 100vh;
+  width: 100%;
+}
+
+.web-page {
+  min-height: 80vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.web-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+
+.web-section-dark {
+  background: var(--var-color-primary);
+}
+
+.web-section-content {
+  max-width: 1440px;
+}
+
+.web-section__container {
+  width: 100%;
+}
+
+.web-section__container-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.6rem;
+  margin-bottom: 2rem;
+}
+
+.web-section__container-header-sm {
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media screen and (min-width: 768px) {
+  .web-section {
+    padding: 2rem;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .web-section {
+    padding: 5rem;
+    margin-top: 2rem;
+  }
+
+  .web-section__container-header {
+    font-size: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .web-section__container-header-sm {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
+}
+
+/* Typography */
+.text {
+  color: var(--var-color-text-light);
+}
+
+/* Buttons */
+.btn {
+  color: var(--var-color-secondary);
+  background: var(--var-color-primary);
+  padding: .5rem 2rem;
+  width: 100%;
+  font-weight: 600;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 50rem;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: default !important;
+}
+
+.btn:disabled:hover {
+  opacity: .5;
+}
+
+/* Forms */
+.disabled {
+  opacity: .5;
+}
+
+.disabled:hover {
+  opacity: .5 !important;
+  cursor: default !important;
+}
