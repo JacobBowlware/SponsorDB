@@ -1,29 +1,26 @@
 const mongoose = require('mongoose');
 
 const Sponsorship = mongoose.model('Sponsorship', new mongoose.Schema({
-    podcastName: {
-        type: String,
-        required: true,
-        minlength: 2,
-        maxlength: 100
+    sponsor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Sponsor'
     },
-    sponsorName: {
-        type: String,
-        required: true,
-        minlength: 2,
-        maxlength: 100
+    podcast: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Podcast'
     },
-    date: {
-        type: Date,
-        required: true,
-        default: Date.now
-    },
-    website: {
-        type: String,
-        required: false,
-        minlength: 2,
-        maxlength: 100
-    },
+    date: { type: Date, default: Date.now }
 }));
 
+const validateSponsorship = (sponsorship) => {
+    const schema = Joi.object({
+        sponsor: Joi.string().min(2).max(256).required(),
+        podcast: Joi.string().min(2).max(256).required(),
+        date: Joi.date().required()
+    });
+
+    return schema.validate(sponsorship);
+}
+
 module.exports.Sponsorship = Sponsorship;
+module.exports.validateSponsorship = validateSponsorship;
