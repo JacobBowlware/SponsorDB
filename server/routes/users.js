@@ -1,5 +1,5 @@
 const express = require('express');
-const { User } = require('../models/user');
+const { User, validateUser } = require('../models/user');
 
 const router = express.Router();
 
@@ -19,6 +19,10 @@ router.get('/:id', (req, res) => {
 
 router.post('/', async (req, res) => {
     // Validate User
+    const { error } = validateUser(req.body);
+    if (error) {
+        return res.status(400).send(error.details[0].message);
+    }
 
     // Create User
     const user = new User({

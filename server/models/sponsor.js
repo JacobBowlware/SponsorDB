@@ -30,6 +30,7 @@ const validateSponsor = (sponsor) => {
         tags: Joi.array().items(Joi.string()).min(1).max(256).required()
     });
 
+
     return schema.validate(sponsor);
 }
 

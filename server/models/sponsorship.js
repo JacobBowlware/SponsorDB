@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const Sponsorship = mongoose.model('Sponsorship', new mongoose.Schema({
-    sponsor: {
+    sponsorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Sponsor'
     },
-    podcast: {
+    podcastId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Podcast'
     },
@@ -14,8 +14,8 @@ const Sponsorship = mongoose.model('Sponsorship', new mongoose.Schema({
 
 const validateSponsorship = (sponsorship) => {
     const schema = Joi.object({
-        sponsor: Joi.string().min(2).max(256).required(),
-        podcast: Joi.string().min(2).max(256).required(),
+        sponsorId: Joi.string().min(2).max(256).required(),
+        podcastId: Joi.string().min(2).max(256).required(),
         date: Joi.date().required()
     });
 

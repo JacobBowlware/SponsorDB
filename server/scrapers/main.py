@@ -10,35 +10,35 @@ driver.get('https://www.youtube.com/podcasts')
 content = driver.page_source.encode('utf-8').strip()
 soup = BeautifulSoup(content, 'lxml')
 
-# Returns a string representing the podcast description.
+# Returns a string representing the entire podcast description (From YouTube).
 def get_podcast_description(link):
-    description_text = ''
     try:
         # Get podcast page content.
         driver.get(f'https://www.youtube.com{link}')
+        
+        # Open the description.
+        expand_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, 'expand'))
+        )
+        expand_button.click()
 
-        # Wait until the 'columns' element is present on the page.
-        description = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, 'description'))
-        ) # prints --> <selenium.webdriver.remote.webelement.WebElement (session="39eb09feb6cab46db3f263c167d90193", element="8B71497472C1A9C1DF16CD3AC28C9BCC_element_52")>
+        description_container = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "description-inline-expander")))
 
-        # Put description into a BeautifulSoup object.
-        description = BeautifulSoup(description.get_attribute('innerHTML'), 'html.parser')
-        description_expand_btn = description.find('tp-yt-paper-button', id='expand-sizer')
+        # Scroll to the description, and get the text.
+        if (description_container):
+            driver.execute_script("arguments[0].scrollIntoView();", description_container)
+            return description_container.find_element(By.CSS_SELECTOR, '.yt-core-attributed-string.yt-core-attributed-string--white-space-pre-wrap').text.strip()
 
-        # Get podcast description.
-        print("Description: ", description)
-        print("EXPAND BTN", description_expand_btn)
-        # description_text = description.find('yt-formatted-string', class_='content style-scope ytd-video-secondary-info-renderer')
+
     except Exception as e:
         print("ERROR OCCURED WHEN GETTING DESCRIPTION: ", e)
-
-    return description_text
+    
+    return ''
 
 # Returns a list of sponsors gathered from the podcast description.
 def get_sponsors(description: str):
-    # Parse through the description and find the sponsors.
-    sponsors = []
+    print(description)
     return None
 
 # Returns a datetime.date object, representing the date the podcast was posted.
@@ -74,8 +74,7 @@ def main():
 
                 print(f"Podcast Sponsors: {sponsors}")
                 print(f"Podcast Link: https://www.youtube.com{link}")
-                print(f"Date: {date}")
-                print()
+                print(f"Date: {date} \n")
                 csv_file.write(f'Sponsors: {sponsors}, Link: https://www.youtube.com{link}, Date: {date}\n')
             except Exception as e:
                 print(e)
