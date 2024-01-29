@@ -11,7 +11,7 @@ content = driver.page_source.encode('utf-8').strip()
 soup = BeautifulSoup(content, 'lxml')
 
 # Returns a string representing the entire podcast description (From YouTube).
-def get_podcast_description(link):
+def get_podcast_description_links(link):
     try:
         # Get podcast page content.
         driver.get(f'https://www.youtube.com{link}')
@@ -28,7 +28,16 @@ def get_podcast_description(link):
         # Scroll to the description, and get the text.
         if (description_container):
             driver.execute_script("arguments[0].scrollIntoView();", description_container)
-            return description_container.find_element(By.CSS_SELECTOR, '.yt-core-attributed-string.yt-core-attributed-string--white-space-pre-wrap').text.strip()
+            description = description_container.find_element(By.CSS_SELECTOR, '.yt-core-attributed-string.yt-core-attributed-string--white-space-pre-wrap')
+            
+            links = description.find_elements(By.TAG_NAME, 'a')
+            link_hrefs = []
+            for link in links:
+                # IF the link is really a link and not a anchor tag or something else, then add it to the list.
+                if 'http' in link.text.strip():
+                    link_hrefs.append(link.text.strip())
+
+            return link_hrefs
 
 
     except Exception as e:
@@ -37,8 +46,9 @@ def get_podcast_description(link):
     return ''
 
 # Returns a list of sponsors gathered from the podcast description.
-def get_sponsors(description: str):
-    print(description)
+def get_sponsors(links: [str]):
+    print(links)
+
     return None
 
 # Returns a datetime.date object, representing the date the podcast was posted.
@@ -69,8 +79,8 @@ def main():
             try:
                 date = get_date(header['aria-label'])
                 link = header['href']
-                description = get_podcast_description(link)
-                sponsors = get_sponsors(description)
+                description_links = get_podcast_description_links(link)
+                sponsors = get_sponsors(description_links)
 
                 print(f"Podcast Sponsors: {sponsors}")
                 print(f"Podcast Link: https://www.youtube.com{link}")

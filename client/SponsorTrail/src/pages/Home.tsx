@@ -175,6 +175,9 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                             Our blog is a great resource for podcasters looking to learn more about podcast sponsorships. We cover topics such as how to find sponsors, how to negotiate sponsorship deals, and more.
                         </p>
                         <AllBlogsItem dark={true} small={true} body="Understanding the role of a podcast sponsor is key to leveraging their potential benefits for your podcast. What exactly defines a podcast sponsor, and how do they contribute to your podcast’s success?" title="The Role of Podcast Sponsors" link="/blogs/the-role-of-podcast-sponsors/" />
+                        <a className="link home-blog__link" href='/blogs/'>
+                            All Blogs <FontAwesomeIcon icon={faArrowRight} className="home-blog__link-icon" />
+                        </a>
                     </div>
                     <div className="home-blog__container-item">
                         <AllBlogsItem dark={true} small={true} body="Having quality data on your podcast is a necessity when discussing potential sponsorships with companies. The following will describe the role of certain data sets and how to use them to your best advantage when negotiating for podcast sponsorships." title="Navigating Podcast Sponsorships: A Data-Driven Approach" link="/blogs/data-driven-approach/" left={true} />
