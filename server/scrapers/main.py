@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 driver = webdriver.Chrome()
-driver.get('https://www.youtube.com/podcasts')
+driver.get('https://www.youtube.com/results?search_query=finance+podcast')
 content = driver.page_source.encode('utf-8').strip()
 soup = BeautifulSoup(content, 'lxml')
 
@@ -47,7 +47,6 @@ def get_podcast_description_links(link):
 
 # Returns a list of sponsors gathered from the podcast description.
 def get_sponsors(links: [str]):
-    print(links)
 
     return None
 
@@ -82,10 +81,10 @@ def main():
                 description_links = get_podcast_description_links(link)
                 sponsors = get_sponsors(description_links)
 
-                print(f"Podcast Sponsors: {sponsors}")
+                print(f"Podcast Links: {description_links}")
                 print(f"Podcast Link: https://www.youtube.com{link}")
                 print(f"Date: {date} \n")
-                csv_file.write(f'Sponsors: {sponsors}, Link: https://www.youtube.com{link}, Date: {date}\n')
+                csv_file.write(f'Podcast Links: {description_links}, Link: https://www.youtube.com{link}, Date: {date}\n')
             except Exception as e:
                 print(e)
                 continue             

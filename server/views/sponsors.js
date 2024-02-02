@@ -3,9 +3,6 @@ const router = express.Router();
 
 const { Sponsor, validateSponsor } = require('../models/sponsor');
 
-/* TODO:
-- Hash passwords before saving.
-*/
 router.post('/', async (req, res) => {
     const { error } = validateSponsor(res.body);
     if (error) {
@@ -22,6 +19,9 @@ router.post('/', async (req, res) => {
         res.send(sponsor);
     }).catch((e) => {
         console.log(e);
+        res.status(400).send(e.message);
     })
 })
+
+module.exports = router;
 

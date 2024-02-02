@@ -1,6 +1,7 @@
 const express = require('express');
 const { User, validateUser } = require('../models/user');
-
+const bcrypt = require('bcrypt');
+const _ = require('lodash');
 const router = express.Router();
 
 router.get('/:id', (req, res) => {
@@ -25,19 +26,25 @@ router.post('/', async (req, res) => {
     }
 
     // Create User
-    const user = new User({
+    let user = new User({
         name: req.body.name,
         email: req.body.email,
         password: req.body.password,
         isSubscribed: req.body.isSubscribed || false,
     });
 
+    // Hash Password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
+
     // Save User
     await user.save()
         .then((user) => {
-            res.send(user);
+            res.send(_.pick(user, ['_id', 'name', 'email', 'isSubscribed']));
         })
         .catch((error) => {
             res.status(400).send(error);
         });
 });
+
+module.exports = router;

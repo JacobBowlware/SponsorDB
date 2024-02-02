@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
-
 const express = require('express');
 const app = express();
+
+require('./startup/routes')(app);
 
 mongoose.connect('mongodb://localhost/sponsortrail')
     .then(() => console.log('Connected to MongoDB...'))
