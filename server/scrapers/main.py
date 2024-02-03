@@ -47,7 +47,6 @@ def get_podcast_description_links(link):
 
 # Returns a list of sponsors gathered from the podcast description.
 def get_sponsors(links: [str]):
-
     return None
 
 # Returns a datetime.date object, representing the date the podcast was posted.
