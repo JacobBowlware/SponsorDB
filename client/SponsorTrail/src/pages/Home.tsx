@@ -12,8 +12,7 @@ import LoadingBtn from "../components/common/LoadingBtn";
 import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
-import { faArrowRight, faMoneyBill, faList, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMoneyBill, faList, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 
 // Images
 import search from './../assets/images/search.png';
@@ -88,9 +87,9 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                         Why SponsorTrail?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faList} header="Curated Sponsor List" text="Access a meticulously curated list of proven podcast sponsors, connecting you to numerous revenue opportunities." />
+                        <FeatureCard icon={faList} header="Sponsor List" text="Access a curated list of proven podcast sponsors, connecting you to numerous revenue opportunities." />
                         <FeatureCard icon={faWandMagicSparkles} header="Effortless Updates" text="Receive regular updates with new and relevant sponsorships, making your search for sponsors stress-free." />
-                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Revenue Boost" text="An increse in sponsors is an increase in revenue. SponsorTrail helps you maximize your podcast's earning potential." />
+                        <FeatureCard highlighted={true} icon={faMoneyBill} header="Revenue Boost" text="An increse in sponsors is an increase in revenue - SponsorTrail helps you maximize your podcast's earning potential." />
                     </div>
                 </div>
             </div>
@@ -105,7 +104,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                                 1. Data Collection
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Data is collected from reputable sources, compiling information on real podcast sponsorships. Our database organizes details such as sponsorships by date, company, and podcast.
+                                Data is regularly collected from reputable sources, compiling information on real podcast sponsorships.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img" src={search} alt="A team searching the web and gathering data on potential podcast sponsors for our clients." />
@@ -115,7 +114,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                                 2. Sponsor List
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Our database is continuously updated, ensuring that you have access to the most relevant and up-to-date sponsorship opportunities. You will recieve full access to our complete list of sponsors upon subscribing. (4,000 sponsorships,  500 companies, 467 email addresses)
+                                You will recieve full access to our complete list of sponsors upon subscribing. ({sponsorCount} sponsorships,  {companyCount} companies, {emailCount} email addresses). View a preview of our data <a href="#sample-data">below</a>.
                             </p>
                         </div>
                         <div className="home__how-it-works-container__item">
@@ -123,7 +122,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                                 3. You Apply
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                With our complete list of sponsors in hand, you can begin applying for sponsorships. Each sponsorship opportunity includes a link to the application page, allowing you to apply directly to the sponsor.
+                                With our complete list of sponsors in hand, you can begin applying for sponsorships. For more information on how to apply, check out our blog <a href="#blog">here</a>.
                             </p>
                         </div>
                         <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
@@ -136,7 +135,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                         See Our Data For Yourself
                     </h2>
                     <p className="airtable-p">
-                        We've compiled a list of {sponsorCount} podcast sponsorships, {companyCount} companies, and {emailCount} email addresses. Below is a small preview of our data.
+                        We've compiled a list of {sponsorCount} podcast sponsorships, {companyCount} companies, and {emailCount} email addresses -below is a small preview of our data.
                     </p>
                     <div className="airtable-cont">
                         <AirTable />
@@ -152,9 +151,9 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                         <TestimonialCard name="John D." affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                         <TestimonialCard name="Alex J." affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
-                    <Link className="footer-item footer-item__highlight mt-2" to="/review">
+                    {/* <Link className="footer-item footer-item__highlight mt-2" to="/review">
                         Write a Review &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
-                    </Link>
+                    </Link> */}
                 </div>
             </div>
             <div className="web-section" >
@@ -165,19 +164,17 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                     <FAQAccordian />
                 </div>
             </div>
-            <div className="web-section web-section-dark" >
+            <div className="web-section web-section-dark" id="blog" >
                 <div className="web-section__container web-section-content home-blog__container" id="FAQ">
                     <div className="home-blog__container-item">
                         <h2 className="web-section__container-header-sm home-blog__container-item__header">
-                            Check Out Our Blog
+                            Latest Blogs
                         </h2>
                         <p className="home-blog__body">
-                            Our blog is a great resource for podcasters looking to learn more about podcast sponsorships. We cover topics such as how to find sponsors, how to negotiate sponsorship deals, and more.
+                            Our blog is a great resource for podcasters looking to learn more about potential sponsorships. We cover topics such as how to find sponsors, how to negotiate sponsorship deals, and more.
+                            {/* &nbsp;<Link to="/blogs/">All Blogs &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} /></Link> */}
                         </p>
                         <AllBlogsItem dark={true} small={true} body="Understanding the role of a podcast sponsor is key to leveraging their potential benefits for your podcast. What exactly defines a podcast sponsor, and how do they contribute to your podcast’s success?" title="The Role of Podcast Sponsors" link="/blogs/the-role-of-podcast-sponsors/" />
-                        <a className="link home-blog__link" href='/blogs/'>
-                            All Blogs <FontAwesomeIcon icon={faArrowRight} className="home-blog__link-icon" />
-                        </a>
                     </div>
                     <div className="home-blog__container-item">
                         <AllBlogsItem dark={true} small={true} body="Having quality data on your podcast is a necessity when discussing potential sponsorships with companies. The following will describe the role of certain data sets and how to use them to your best advantage when negotiating for podcast sponsorships." title="Navigating Podcast Sponsorships: A Data-Driven Approach" link="/blogs/data-driven-approach/" left={true} />

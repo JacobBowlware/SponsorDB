@@ -18,7 +18,7 @@ const AccordianItem = ({ title, content, onPress, isOpen }: AccordianItemProps) 
             </div>
             {
                 isOpen && <div className="accordian-item-content">
-                    <p className="p accordian-item-p text">
+                    <p className="p accordian-item__p text">
                         {content}
                     </p>
                 </div>

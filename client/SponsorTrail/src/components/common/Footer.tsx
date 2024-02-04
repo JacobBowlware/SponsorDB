@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
     return (
-        <div className="web-section footer">
+        <div className="web-section web-section-dark footer">
             <div className=" footer-container web-section">
                 <Link className="footer-item" to="/privacy-policy">
                     Privacy Policy
@@ -17,7 +17,7 @@ const Footer = () => {
                     Join Waitlist
                 </a>
             </div>
-            <p>&copy; 2024 Sponsor Trail. All Rights Reserved.</p>
+            <p className="mt-3">&copy; 2024 Sponsor Trail. All Rights Reserved.</p>
         </div>
     );
 }

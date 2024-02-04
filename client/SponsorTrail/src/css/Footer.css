@@ -3,6 +3,7 @@
     max-width: 1440px;
     padding: 0;
     min-height: none;
+    margin-top: 0;
 }
 
 .footer-container {
@@ -32,7 +33,11 @@
     justify-content: center;
     align-items: center;
     font-weight: 600;
+}
 
+.footer-item__highlight-arrow-icon {
+    position: relative;
+    left: -2px;
 }
 
 @media screen and (min-width: 1024px) {

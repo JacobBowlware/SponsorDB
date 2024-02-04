@@ -26,7 +26,8 @@ html {
 #FAQ,
 #sample-data,
 #features,
-#how-it-works {
+#how-it-works,
+#blog {
   scroll-margin-top: 15rem;
 }
 
@@ -61,8 +62,8 @@ html {
   justify-content: center;
   align-items: center;
   width: 100%;
-  padding: 1rem;
-  margin-top: 2rem;
+  padding: 2rem 1rem 2rem;
+  margin-top: 3rem;
 }
 
 .web-section-dark {

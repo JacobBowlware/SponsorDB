@@ -22,7 +22,7 @@
 }
 
 .home__container-item__header {
-    font-size: 2.1rem;
+    font-size: 1.9rem;
     font-weight: 700;
     margin-bottom: 1rem;
     text-align: center;
@@ -169,7 +169,7 @@
     }
 
     .home__container-item__header {
-        font-size: 2.6rem;
+        font-size: 2.5rem;
     }
 
     .home__container-item__input {
@@ -247,6 +247,7 @@
     height: 100%;
     margin: 0;
     opacity: .9;
+    margin: .5rem 0 0 0;
 }
 
 .home__features-list__item-icon {
@@ -301,13 +302,13 @@
 }
 
 .home__testimonials-list__item-name {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: .5rem;
 }
 
 .home__testimonials-list__item-quote {
-    font-size: 1rem;
+    font-size: .9rem;
     font-weight: 400;
     padding-bottom: 1.5rem;
     opacity: .9;
@@ -316,7 +317,7 @@
 }
 
 .home__testimonials-list__item-quote-icon {
-    font-size: 2.4rem;
+    font-size: 2.2rem;
     margin-right: .5rem;
     margin-bottom: 1rem;
     color: var(--var-color-tertiary);
@@ -335,15 +336,15 @@
     }
 
     .home__testimonials-list__item-quote {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .home__testimonials-list__item-quote-icon {
-        font-size: 3rem;
+        font-size: 2.5rem;
     }
 
     .home__testimonials-list__item-name {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
     }
 }
 
@@ -469,9 +470,17 @@
 
 .accordian-item__header {
     padding: 1rem 0rem;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     display: inline;
+}
+
+.accordian-item__p {
+    font-size: .9rem;
+    color: var(--var-color-text);
+    opacity: .8;
+    width: 100%;
+    text-align: left;
 }
 
 
