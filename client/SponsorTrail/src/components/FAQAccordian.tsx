@@ -18,14 +18,14 @@ const FAQAccordian = () => {
                 isOpen={acc1Open}
             />
             <AccordianItem
-                title="How often will I receive curated sponsorship lists?"
-                content="Expect fresh and relevant sponsorship opportunities delivered weekly. Depending on your subscription plan, each curated list will contain 10-50+ sponsor opportunities. "
+                title="How often is the database updated?"
+                content="Our database is updated daily, ensuring that you have access to the most current information."
                 onPress={() => setAcc2Open(!acc2Open)}
                 isOpen={acc2Open}
             />
             <AccordianItem
                 title="How can I apply for sponsorships?"
-                content="Application links are provided for each sponsorship opportunity. Simply click the link and follow the instructions provided by the sponsor."
+                content="Depending on the sponsor, you may be able to apply directly through their website. If you're interested in a company that doesn't have an application process, we recommend reaching out to them directly."
                 onPress={() => setAcc3Open(!acc3Open)}
                 isOpen={acc3Open}
             />
@@ -37,7 +37,7 @@ const FAQAccordian = () => {
             />
             <AccordianItem
                 title="How do we gather our data?"
-                content="Our information primarily comes from podcasts themselves. In-house software continuously scans the web for new sponsorships, ensuring our database is always up to date."
+                content="Our information primarily comes from podcasts themselves. In-house software continuously scans the web for new sponsorships and updates our database accordingly. "
                 onPress={() => setAcc5Open(!acc5Open)}
                 isOpen={acc5Open}
             />

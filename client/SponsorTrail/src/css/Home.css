@@ -504,12 +504,12 @@
         font-size: 1.8rem;
     }
 
-    .accordian-item-p {
-        font-size: 1.1rem;
+    .accordian-item__p {
+        font-size: 1rem;
     }
 
     .accordian-item__header {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
 }
 
