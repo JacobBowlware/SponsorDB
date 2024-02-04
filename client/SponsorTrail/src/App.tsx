@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   createBrowserRouter, createRoutesFromElements,
   RouterProvider, Route, Outlet
@@ -23,12 +24,12 @@ import TOS from './pages/TOS';
 // Components
 import Header from './components/common/Header'
 import Footer from './components/common/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 // Blogs
 import ReachingOut from './pages/blogs/ReachingOut';
 import RoleOfPodcastSponsor from './pages/blogs/RoleOfPodcastSponsor';
 import RoleOfData from './pages/blogs/RoleOfData';
-import { useState } from 'react';
 
 /**
  * TODO: 
@@ -36,8 +37,8 @@ import { useState } from 'react';
  * - Add Pages:
  * - - Home - DONE
  * - - Blog Page (Minimum 3 Posts) - DONE
+ * - Example Table - DONE
  * - Build the bot, show some example data - 
- * - Example Table - 
  */
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
   const Root = () => {
     return <>
       <Header />
+      <ScrollToTop />
       <Outlet />
       <Footer />
     </>
