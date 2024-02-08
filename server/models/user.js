@@ -25,7 +25,7 @@ const validateUser = (user) => {
     const schema = Joi.object({
         email: Joi.string().min(2).max(100).required(),
         password: Joi.string().min(2).max(100).required(),
-        isSubscribed: Joi.boolean().required()
+        isSubscribed: Joi.boolean().default(false),
     });
 
     return schema.validate(user);

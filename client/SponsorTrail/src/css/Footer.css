@@ -6,6 +6,14 @@
     margin-top: 0;
 }
 
+.footer-wrap {
+    width: 100%;
+    background: var(--var-color-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .footer-container {
     width: 100%;
     display: flex;

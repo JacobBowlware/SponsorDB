@@ -18,34 +18,36 @@ const Header = () => {
     }
 
     return (
-        <nav className={`web-section navbar navbar-expand-lg navbar-light sticky-top `}>
-            <a className="navbar-brand" href="/">SponsorTrail <FontAwesomeIcon icon={faKiwiBird} /> </a>
-            <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <FontAwesomeIcon className="nav-icon" icon={navOpen ? faXmark : faBars} />
-            </button>
-            <div className="collapse navbar-collapse" id="navbarNav">
-                <ul className="navbar-nav">
-                    <li className="nav-item">
-                        <a className="nav-link" href="/#features" onClick={closeNavBar}>Features</a>
-                    </li>
-                    <li className="nav-item">
-                        <a className="nav-link" href="/#how-it-works" onClick={closeNavBar}>How It Works</a>
-                    </li>
-                    <li className="nav-item">
-                        <a className="nav-link" href="#sample-data" onClick={closeNavBar}>Sample Data</a>
-                    </li>
-                    <li className="nav-item">
-                        <a className="nav-link" href="/#testimonials" onClick={closeNavBar}>Testimonials</a>
-                    </li>
-                    <li className="nav-item">
-                        <a className="nav-link" href="/#FAQ" onClick={closeNavBar}>FAQ</a>
-                    </li>
-                    <li className="nav-item  nav-item__highlight">
-                        <a className="nav-link" href="/#hero" onClick={closeNavBar}>Join Waitlist</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+        <div className="navbar-wrap sticky-top">
+            <nav className={`web-section navbar navbar-expand-lg navbar-light  `}>
+                <a className="navbar-brand" href="/">SponsorTrail <FontAwesomeIcon icon={faKiwiBird} /> </a>
+                <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <FontAwesomeIcon className="nav-icon" icon={navOpen ? faXmark : faBars} />
+                </button>
+                <div className="collapse navbar-collapse" id="navbarNav">
+                    <ul className="navbar-nav">
+                        <li className="nav-item">
+                            <a className="nav-link" href="/#features" onClick={closeNavBar}>Features</a>
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link" href="/#how-it-works" onClick={closeNavBar}>How It Works</a>
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link" href="/#sample-data" onClick={closeNavBar}>Sample Data</a>
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link" href="/#testimonials" onClick={closeNavBar}>Testimonials</a>
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link" href="/#FAQ" onClick={closeNavBar}>FAQ</a>
+                        </li>
+                        <li className="nav-item  nav-item__highlight">
+                            <a className="nav-link" href="/#hero" onClick={closeNavBar}>Join Waitlist</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
     );
 }
 
