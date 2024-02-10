@@ -63,9 +63,9 @@ def get_date(podcast_label: str):
     elif verbal_date[1] == 'week' or verbal_date[1] == 'weeks':
         return today - datetime.timedelta(weeks=int(verbal_date[0]))
     elif verbal_date[1] == 'month' or verbal_date[1] == 'months':
-        return today - datetime.timedelta(months=int(verbal_date[0]))
+        return today - datetime.timedelta(days=int(verbal_date[0]) * 30)
     elif verbal_date[1] == 'year' or verbal_date[1] == 'years':
-        return today - datetime.timedelta(years=int(verbal_date[0]))
+        return today - datetime.timedelta(days=int(verbal_date[0]) * 365)
     else:
         return today
 

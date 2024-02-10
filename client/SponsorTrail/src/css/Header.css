@@ -1,12 +1,13 @@
 .navbar {
-    margin: 0 0 5rem 0;
     width: 100%;
     max-width: 1600px;
     flex-direction: row;
     padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-bottom: 0rem;
     background: var(--var-color-background);
     justify-content: space-between;
+    margin: 0;
+    margin-bottom: 1rem !important;
 }
 
 .navbar-wrap {
@@ -15,6 +16,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    height: auto;
+    margin: 0 0 5rem 0;
 }
 
 #navbarNav {
