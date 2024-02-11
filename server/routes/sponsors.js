@@ -1,11 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { Sponsor, validateSponsor } = require('../models/sponsor');
+const { Sponsorship } = require('../models/sponsorship');
 const auth = require('../middleware/auth');
-const subscribed = require('../middleware/subscribed');
+const subscribe = require('../middleware/subscribe');
+const admin = require('../middleware/admin');
+
+// Get basic sponsor info from db (# of sponsorships, # of companies)
+router.get('/count', async (req, res) => {
+    const sponsors = await Sponsor.find();
+    const sponsorships = await Sponsorship.find();
+
+    const sponsorLength = sponsors.length;
+    const sponsorshipLength = sponsorships.length;
+    res.status(200).send({ sponsorLength, sponsorshipLength });
+});
 
 // Get all sponsors
-router.get('/', auth, subscribed, async (req, res) => {
+router.get('/', auth, subscribe, admin, async (req, res) => {
     await Sponsor.find().sort('sponsorName').then((sponsors) => {
         res.status(200).send(sponsors);
     }).catch((e) => {

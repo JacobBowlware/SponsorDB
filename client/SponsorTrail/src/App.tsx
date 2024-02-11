@@ -6,12 +6,14 @@ import {
 
 // CSS
 import './css/App.css';
-import './css/Home.css';
 import './css/Header.css';
 import './css/Footer.css';
-import './css/Review.css';
-import './css/PrivacyPolicy.css';
-import './css/TOS.css';
+import './css/pages/Home.css';
+import './css/pages/Login.css';
+import './css/pages/Signup.css';
+import './css/pages/Review.css';
+import './css/pages/PrivacyPolicy.css';
+import './css/pages/TOS.css';
 import './css/blogs/AllBlogs.css';
 
 // Pages
@@ -20,6 +22,8 @@ import AllBlogs from './pages/AllBlogs';
 import Review from './pages/Review';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TOS from './pages/TOS';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 // Components
 import Header from './components/common/Header'
@@ -30,16 +34,6 @@ import ScrollToTop from './components/ScrollToTop';
 import ReachingOut from './pages/blogs/ReachingOut';
 import RoleOfPodcastSponsor from './pages/blogs/RoleOfPodcastSponsor';
 import RoleOfData from './pages/blogs/RoleOfData';
-
-/**
- * TODO: 
- * - Add Footer -> DONE
- * - Add Pages:
- * - - Home - DONE
- * - - Blog Page (Minimum 3 Posts) - DONE
- * - Example Table - DONE
- * - Build the bot, show some example data - 
- */
 
 function App() {
   const [sponsorCount, setSponsorCount] = useState(0);
@@ -56,7 +50,7 @@ function App() {
   }
 
   const getSponsorData = async () => {
-    // Get # of sponsors, companies, and emails from API.
+    // Get # of sponsors, companies, and emails from API. (https://sponsortrail.com/api/sponsors/count)
 
   }
 
@@ -65,6 +59,8 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
         <Route path="/*" element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
+        <Route path="/signup/" element={<Signup />} />
+        <Route path="/login/" element={<Login />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />

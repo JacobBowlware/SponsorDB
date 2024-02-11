@@ -2,10 +2,11 @@ const { Sponsorship, validateSponsorship } = require('../models/sponsorship');
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const isSubscribed = require('../middleware/subscribed');
+const subscribe = require('../middleware/subscribe');
+const admin = require('../middleware/admin');
 
 // Get all sponsorships (pairs of sponsors and podcasts)
-router.get('/', auth, isSubscribed, async (req, res) => {
+router.get('/', auth, subscribe, admin, async (req, res) => {
     await Sponsorship.find()
         .then((sponsors) => {
             if (!sponsors) {
