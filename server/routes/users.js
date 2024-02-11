@@ -24,7 +24,12 @@ router.post('/', async (req, res) => {
         return res.status(400).send(error.details[0].message);
     }
 
-    let user = new User({
+    let user = await User.findOne({ email: req.body.email });
+    if (user) {
+        return res.status(400).send('User already registered.');
+    }
+
+    user = new User({
         email: req.body.email,
         password: "",
         isSubscribed: req.body.isSubscribed || false,
@@ -32,16 +37,10 @@ router.post('/', async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(req.body.password, salt);
+    await user.save();
 
-    console.log(user);
-
-    await user.save()
-        .then((user) => {
-            res.send(_.pick(user, ['_id', 'email', 'isSubscribed']));
-        })
-        .catch((error) => {
-            res.status(400).send(error);
-        });
+    const token = user.generateAuthToken();
+    res.header('x-auth-token', token).send(_.pick(user, ['_id', 'email', 'isSubscribed']));
 });
 
 module.exports = router;

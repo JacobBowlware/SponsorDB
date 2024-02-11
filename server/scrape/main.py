@@ -4,11 +4,28 @@ import datetime
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import os
 
+
+openai_api_key = os.environ.get('openai_api_key')
 driver = webdriver.Chrome()
 driver.get('https://www.youtube.com/results?search_query=finance+podcast')
 content = driver.page_source.encode('utf-8').strip()
 soup = BeautifulSoup(content, 'lxml')
+
+import secrets
+import base64
+
+def generate_private_key():
+    # Generate 32 random bytes
+    random_bytes = secrets.token_bytes(32)
+    
+    # Encode the random bytes using Base64
+    private_key = base64.urlsafe_b64encode(random_bytes).decode('utf-8')
+    print(private_key)
+    
+    return private_key
+
 
 # Returns a string representing the entire podcast description (From YouTube).
 def get_podcast_description_links(link):
@@ -47,7 +64,17 @@ def get_podcast_description_links(link):
 
 # Returns a list of sponsors gathered from the podcast description.
 def get_sponsors(links: [str]):
-    return None
+    sponsors = []
+
+    # Send the list of links to openAI GPT API to decide which could be sponsors.
+    # If the link is a sponsor, have the AI assign a tag to its genre (i.e. "technology," "finance," "sports," etc.)
+    # Make sure the data is returned in a list of tuples, with the link and its genre, like such:
+    # [('https://www.sponsor1.com', 'finance'), ('https://www.sponsor2.com', 'technology'), ...]
+    # Then we return this list.
+
+    print(openai_api_key)
+    
+    return sponsors
 
 # Returns a datetime.date object, representing the date the podcast was posted.
 def get_date(podcast_label: str):
@@ -70,6 +97,8 @@ def get_date(podcast_label: str):
         return today
 
 def main():
+    generate_private_key();
+    return
     podcast_headers = soup.findAll('a', id='video-title')
     with open('sponsors.csv', 'w') as csv_file:
         csv_file.write('Sponsors, Podcast Link, Date Posted\n')
@@ -80,10 +109,11 @@ def main():
                 description_links = get_podcast_description_links(link)
                 sponsors = get_sponsors(description_links)
 
-                print(f"Podcast Links: {description_links}")
-                print(f"Podcast Link: https://www.youtube.com{link}")
-                print(f"Date: {date} \n")
-                csv_file.write(f'Podcast Links: {description_links}, Link: https://www.youtube.com{link}, Date: {date}\n')
+                if (len(description_links) > 0):
+                    sponsors = get_sponsors(description_links)
+                    csv_file.write(f'Podcast Links: {description_links}, Sponsors: {sponsors}, Link: https://www.youtube.com{link}, Date: {date}\n')
+                    if (len(sponsors) > 0):
+                        print("We have a sponsor! \n Exiting program...")
             except Exception as e:
                 print(e)
                 continue             

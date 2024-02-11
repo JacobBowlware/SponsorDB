@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const app = express();
+const config = require('config');
+
+if (!config.get('openai_api_key') || !config.get('jwtPrivateKey')) {
+    console.error('FATAL ERROR: key(s) are not defined.');
+    process.exit(1);
+}
 
 require('./startup/routes')(app);
 
