@@ -3,21 +3,15 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const _ = require('lodash');
 const router = express.Router();
+const auth = require('../middleware/auth');
 
-router.get('/:id', (req, res) => {
-    User.findById(req.params.id)
-        .then((user) => {
-            if (!user) {
-                return res.status(404).send();
-            }
+// Get current user
+router.get('/me', auth, async (req, res) => {
+    const user = await User.findById(req.user._id).select('-password');
+    res.send(user);
+});
 
-            res.send({ user });
-        })
-        .catch((error) => {
-            res.status(400).send(error);
-        });
-})
-
+// Register a new user
 router.post('/', async (req, res) => {
     const { error } = validateUser(req.body);
     if (error) {

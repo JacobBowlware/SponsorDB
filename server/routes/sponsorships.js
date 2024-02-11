@@ -1,8 +1,11 @@
-const { Sponsorship } = require('../models/sponsorship');
+const { Sponsorship, validateSponsorship } = require('../models/sponsorship');
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
+const isSubscribed = require('../middleware/subscribed');
 
-router.get('/', async (req, res) => {
+// Get all sponsorships (pairs of sponsors and podcasts)
+router.get('/', auth, isSubscribed, async (req, res) => {
     await Sponsorship.find()
         .then((sponsors) => {
             if (!sponsors) {
@@ -16,7 +19,13 @@ router.get('/', async (req, res) => {
         });
 });
 
-router.post('/', async (req, res) => {
+// Create a new sponsorship
+router.post('/', auth, async (req, res) => {
+    const { error } = validateSponsorship(req.body);
+    if (error) {
+        return res.status(400).send(error.details[0].message);
+    }
+
     const sponsor = new Sponsorship({
         sponsorId: req.body.sponsorId,
         podcastName: req.body.podcastName?.toLowerCase(),

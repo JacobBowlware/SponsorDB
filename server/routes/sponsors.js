@@ -1,8 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { Sponsor, validateSponsor } = require('../models/sponsor');
+const auth = require('../middleware/auth');
+const subscribed = require('../middleware/subscribed');
 
-router.post('/', async (req, res) => {
+// Get all sponsors
+router.get('/', auth, subscribed, async (req, res) => {
+    await Sponsor.find().sort('sponsorName').then((sponsors) => {
+        res.status(200).send(sponsors);
+    }).catch((e) => {
+        console.log(e);
+    });
+});
+
+// Create a new sponsor
+router.post('/', auth, async (req, res) => {
     const { error } = validateSponsor(res.body);
     if (error) {
         return res.status(400).send(error.details[0].message);
@@ -26,14 +38,5 @@ router.post('/', async (req, res) => {
         res.status(400).send(e.message);
     })
 })
-
-// TODO: Put auth middleware here
-router.get('/', async (req, res) => {
-    await Sponsor.find().sort('sponsorName').then((sponsors) => {
-        res.status(200).send(sponsors);
-    }).catch((e) => {
-        console.log(e);
-    });
-});
 
 module.exports = router;

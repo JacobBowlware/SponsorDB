@@ -6,26 +6,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
 
-
 openai_api_key = os.environ.get('openai_api_key')
 driver = webdriver.Chrome()
 driver.get('https://www.youtube.com/results?search_query=finance+podcast')
 content = driver.page_source.encode('utf-8').strip()
 soup = BeautifulSoup(content, 'lxml')
-
-import secrets
-import base64
-
-def generate_private_key():
-    # Generate 32 random bytes
-    random_bytes = secrets.token_bytes(32)
-    
-    # Encode the random bytes using Base64
-    private_key = base64.urlsafe_b64encode(random_bytes).decode('utf-8')
-    print(private_key)
-    
-    return private_key
-
 
 # Returns a string representing the entire podcast description (From YouTube).
 def get_podcast_description_links(link):
@@ -97,8 +82,6 @@ def get_date(podcast_label: str):
         return today
 
 def main():
-    generate_private_key();
-    return
     podcast_headers = soup.findAll('a', id='video-title')
     with open('sponsors.csv', 'w') as csv_file:
         csv_file.write('Sponsors, Podcast Link, Date Posted\n')

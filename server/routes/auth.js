@@ -5,6 +5,7 @@ const _ = require('lodash');
 const router = express.Router();
 const Joi = require('joi');
 
+// Login
 router.post('/', async (req, res) => {
     const { error } = validate(req.body);
     if (error) {
