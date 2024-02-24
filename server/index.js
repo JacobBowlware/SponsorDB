@@ -4,6 +4,18 @@ require('winston-mongodb');
 const express = require('express');
 const app = express();
 const config = require('config');
+const error = require('./middleware/error');
+
+process.on('uncaughtException', (ex) => {
+    winston.error(ex.message, ex);
+    console.log('We got an uncaught exception');
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (ex) => {
+    winston.error(ex.message, ex);
+    process.exit(1);
+});
 
 winston.add(new winston.transports.MongoDB({ db: 'mongodb://localhost/sponsortrail' }));
 
