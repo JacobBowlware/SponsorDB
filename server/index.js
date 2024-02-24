@@ -1,7 +1,11 @@
-const mongoose = require('mongoose');
+require('express-async-errors');
+const winston = require('winston');
+require('winston-mongodb');
 const express = require('express');
 const app = express();
 const config = require('config');
+
+winston.add(new winston.transports.MongoDB({ db: 'mongodb://localhost/sponsortrail' }));
 
 if (!config.get('openai_api_key') || !config.get('jwtPrivateKey')) {
     console.error('FATAL ERROR: key(s) are not defined.');
@@ -9,11 +13,7 @@ if (!config.get('openai_api_key') || !config.get('jwtPrivateKey')) {
 }
 
 require('./startup/routes')(app);
-
-mongoose.connect('mongodb://localhost/sponsortrail')
-    .then(() => console.log('Connected to MongoDB...'))
-    .catch(err => console.error('Could not connect to MongoDB...', err));
-
+require('./startup/db')();
 
 const port = process.env.PORT || 3000;
 app.listen(3000, () => {
