@@ -1,15 +1,19 @@
 # Sopnsor Trail
 
 ## Project Summary:
-Sponsor trail is.... Web scraper built using Python.
+SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors, saving time and maximizing your podcast's revenue potential. 
 
-### Website Tech Stack:
+## Tech Stack:
+### Front End:
 - HTML
 - CSS
-- JavaScript
 - TypeScript
 - ReactJS
-- Firebase
 
-### Future Developments:
-- 
+### Back End:
+- MongoDB
+- NodeJS
+- ExpressJS
+
+### Web Scraper:
+- Python
