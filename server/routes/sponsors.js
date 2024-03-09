@@ -6,14 +6,14 @@ const auth = require('../middleware/auth');
 const subscribe = require('../middleware/subscribe');
 const admin = require('../middleware/admin');
 
-// Get basic sponsor info from db (# of sponsorships, # of companies)
+// Get basic sponsor info from db (# of sponsorships, # of sponsors (companies))
 router.get('/count', async (req, res) => {
     const sponsors = await Sponsor.find();
     const sponsorships = await Sponsorship.find();
 
     const sponsorLength = sponsors.length;
     const sponsorshipLength = sponsorships.length;
-    res.status(200).send({ sponsorLength, sponsorshipLength });
+    res.status(200).send({ sponsorshipLength, sponsorLength, });
 });
 
 // Get all sponsors

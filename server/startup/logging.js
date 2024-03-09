@@ -4,7 +4,8 @@ require('winston-mongodb');
 
 module.exports = () => {
     winston.add(new winston.transports.MongoDB({ db: 'mongodb://localhost/sponsortrail' }));
-    console.log("Logging to MongoDB...")
+    winston.add(new winston.transports.File({ filename: 'logfile.log' }));
+    winston.add(new winston.transports.Console({ format: winston.format.simple() }));
 
     process.on('uncaughtException', (ex) => {
         winston.error(ex.message, ex);

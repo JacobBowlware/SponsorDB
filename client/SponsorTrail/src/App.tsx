@@ -16,7 +16,7 @@ import './css/pages/PrivacyPolicy.css';
 import './css/pages/TOS.css';
 import './css/blogs/AllBlogs.css';
 
-// Pages
+//Pages
 import Home from './pages/Home';
 import AllBlogs from './pages/AllBlogs';
 import Review from './pages/Review';

@@ -65,10 +65,11 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                 <div className="web-section__container home__container">
                     <div className="home__container-item">
                         <h2 className="home__container-item__header">
-                            Maximize Your Podcast's Sponsors
+                            Maximize Your Sponsors
                         </h2>
                         <p className="home__container-item__p">
-                            SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors, saving time and maximizing your podcast's revenue potential.                        </p>
+                            SponsorTrail streamlines finding sponsors. Access a curated database of proven sponsors in your niche, saving time and maximizing your revenue potential.
+                        </p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
                                 <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
@@ -87,7 +88,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                         Why SponsorTrail?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faList} header="Sponsor List" text="Access a curated list of proven podcast sponsors, connecting you to numerous revenue opportunities." />
+                        <FeatureCard icon={faList} header="Sponsor List" text="Gain access to a growing database of proven sponsors in your niche. Currently we " />
                         <FeatureCard icon={faWandMagicSparkles} header="Effortless Updates" text="Receive regular updates with new and relevant sponsorships, making your search for sponsors stress-free." />
                         <FeatureCard highlighted={true} icon={faMoneyBill} header="Revenue Boost" text="An increse in sponsors is an increase in revenue - SponsorTrail helps you maximize your podcast's earning potential." />
                     </div>

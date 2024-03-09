@@ -1,13 +1,12 @@
 const express = require('express');
+const winston = require('winston');
 const app = express();
 
 require('./startup/logging')();
-require('./startup/config')();
 require('./startup/routes')(app);
 require('./startup/db')();
 
 const port = process.env.PORT || 3000;
-
 app.listen(3000, () => {
-    console.log(`Listening on port ${port}...`);
+    winston.info(`Listening on port ${port}...`);
 });
