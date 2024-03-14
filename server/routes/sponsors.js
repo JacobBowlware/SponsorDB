@@ -6,6 +6,13 @@ const auth = require('../middleware/auth');
 const subscribe = require('../middleware/subscribe');
 const admin = require('../middleware/admin');
 
+// Get all sponsors
+router.get('/', async (req, res) => {
+    // const sponsors = await Sponsor.find();
+    // winston.info(sponsors)
+    res.status(200).send("Hello");
+});
+
 // Get basic sponsor info from db (# of sponsorships, # of sponsors (companies))
 router.get('/count', async (req, res) => {
     const sponsors = await Sponsor.find();
@@ -13,17 +20,9 @@ router.get('/count', async (req, res) => {
 
     const sponsorLength = sponsors.length;
     const sponsorshipLength = sponsorships.length;
-    res.status(200).send({ sponsorshipLength, sponsorLength, });
+    res.status(200).send({ "sponsorshipLength": sponsorshipLength, "sponsorLength": sponsorLength });
 });
 
-// Get all sponsors
-router.get('/', auth, subscribe, admin, async (req, res) => {
-    await Sponsor.find().sort('sponsorName').then((sponsors) => {
-        res.status(200).send(sponsors);
-    }).catch((e) => {
-        console.log(e);
-    });
-});
 
 // Create a new sponsor
 router.post('/', auth, async (req, res) => {

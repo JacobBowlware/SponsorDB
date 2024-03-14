@@ -1,4 +1,5 @@
 {
     "openai_api_key": "",
-    "jwtPrivateKey": ""
+    "jwtPrivateKey": "",
+    "db": "mongodb://localhost/sponsortrail"
 }
