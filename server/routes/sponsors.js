@@ -23,7 +23,6 @@ router.get('/count', async (req, res) => {
     res.status(200).send({ "sponsorshipLength": sponsorshipLength, "sponsorLength": sponsorLength });
 });
 
-
 // Create a new sponsor
 router.post('/', auth, async (req, res) => {
     const { error } = validateSponsor(res.body);

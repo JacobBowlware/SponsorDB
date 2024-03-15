@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from openai import OpenAI
+import sys
 
 openai_api_key = os.environ.get('openai_api_key')
 client = OpenAI(api_key=openai_api_key)
@@ -119,7 +120,10 @@ def main():
         csv_file.write('Publish Date, Sponsor Name, Sponsor Link, Tags, Podcast Name, Podcast Link\n')
         sponsors = get_sponsors(sponsorData)      
         for sponsor in sponsors:
-            csv_file.write(f'{sponsor}\n')   
+            csv_file.write(f'{sponsor}\n')  
 
+    print("Data has been written to sponsors.csv")
+    sys.stdout.flush()
+    
 if __name__ == '__main__':
     main()  

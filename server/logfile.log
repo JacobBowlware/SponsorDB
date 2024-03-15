@@ -155,3 +155,81 @@
 {"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
 {"level":"info","message":"Listening on port 3000..."}
 {"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail..."}
+{"code":"ENOENT","errno":-2,"level":"error","message":"spawn python ENOENT spawn python ENOENT","path":"python","spawnargs":["./scrape/main.py"],"stack":"Error: spawn python ENOENT\n    at ChildProcess._handle.onexit (node:internal/child_process:283:19)\n    at onErrorNT (node:internal/child_process:476:16)\n    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)","syscall":"spawn python"}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3002..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3002..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3003..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3003..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3003..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3003..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3003..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3003..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3000..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}
+{"level":"info","message":"Listening on port 3001..."}
+{"level":"info","message":"Connected to mongodb://localhost/sponsortrail_test..."}

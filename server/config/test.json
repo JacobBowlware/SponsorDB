@@ -1,4 +1,5 @@
 {
     "jwtPrivateKey": "1234",
-    "db": "mongodb://localhost/sponsortrail_test"
+    "db": "mongodb://localhost/sponsortrail_test",
+    "port": 3001
 }
