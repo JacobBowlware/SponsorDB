@@ -13,6 +13,12 @@ const Sponsorship = mongoose.model('Sponsorship', new mongoose.Schema({
         minlength: 2,
         maxlength: 256
     },
+    creatorLink: {
+        type: String,
+        required: false,
+        minlength: 0,
+        maxlength: 256
+    },
     publishDate: {
         type: Date,
         required: true
@@ -24,6 +30,7 @@ const validateSponsorship = (sponsorship) => {
     const schema = Joi.object({
         sponsorId: Joi.string().min(2).max(256).required(),
         creatorName: Joi.string().min(2).max(256).required(),
+        creatorLink: Joi.string().min(2).max(256),
         publishDate: Joi.date().required()
     });
 
