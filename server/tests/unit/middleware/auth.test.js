@@ -12,46 +12,53 @@ describe('auth middleware', () => {
     };
 
     const next = jest.fn();
+    const userData = {
+        _id: new mongoose.Types.ObjectId().toHexString(),
+        email: 'example@gmail.com',
+        password: '1234',
+        isSubscribed: true
+    }
+
+    const user = new User(userData);
+
+    let req = {
+        header: jest.fn().mockReturnValue(jwt.sign({
+            _id: user._id,
+            isSubscribed: user.isSubscribed,
+            'email': user.email,
+            'password': user.password
+        }, config.get('jwtPrivateKey')))
+    };
 
     it('should populate req.user with the payload of a valid JWT', () => {
-        const userData = {
-            _id: new mongoose.Types.ObjectId().toHexString(),
-            email: 'example@gmail.com',
-            password: '1234',
-            isSubscribed: true
-        }
-
-        const user = new User(userData);
-        const req = {
-            header: jest.fn().mockReturnValue(jwt.sign({
-                _id: user._id,
-                isSubscribed: user.isSubscribed,
-                'email': user.email,
-                'password': user.password
-            }, config.get('jwtPrivateKey')))
-        };
         auth(req, res, next);
 
         expect(req.user).toMatchObject(userData);
     });
 
     it('should return 400 if the JWT is invalid', () => {
-        const req = {
+        req = {
             header: jest.fn().mockReturnValue('InvalidToken')
         };
 
         auth(req, res, next);
 
         expect(res.status).toHaveBeenCalledWith(400);
-    })
+    });
 
     it('should return 401 if no token is provided', () => {
-        const req = {
+        req = {
             header: jest.fn().mockReturnValue(null)
         };
 
         auth(req, res, next);
 
         expect(res.status).toHaveBeenCalledWith(401);
-    })
+    });
+
+    it('should call next if the token is valid', () => {
+        auth(req, res, next);
+
+        expect(next).toHaveBeenCalled();
+    });
 });
