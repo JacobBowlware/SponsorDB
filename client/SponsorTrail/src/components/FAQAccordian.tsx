@@ -13,31 +13,31 @@ const FAQAccordian = () => {
         <div className="faq-accordian__container">
             <AccordianItem
                 title="How much will SponsorTrail cost?"
-                content="Pricing is still being determimed. For now, we are offering limited access to our beta program for free -join waitlist for more info. "
+                content="Pricing is still being determimed. For now, feel free to join our waitlist for more info!"
                 onPress={() => setAcc1Open(!acc1Open)}
                 isOpen={acc1Open}
             />
             <AccordianItem
                 title="How often is the database updated?"
-                content="Our database is updated daily, ensuring that you have access to the most current information."
+                content="Our database is updated weekly (on Sunday), ensuring that you have access to the most current information."
                 onPress={() => setAcc2Open(!acc2Open)}
                 isOpen={acc2Open}
             />
             <AccordianItem
                 title="How can I apply for sponsorships?"
-                content="Depending on the sponsor, you may be able to apply directly through their website. If you're interested in a company that doesn't have an application process, we recommend reaching out to them directly."
+                content="Depending on the sponsor, you may be able to apply directly through their website. If you're interested in a company that doesn't have an application process, we recommend reaching out to them directly!"
                 onPress={() => setAcc3Open(!acc3Open)}
                 isOpen={acc3Open}
             />
             <AccordianItem
-                title="Do you guarantee that these companies will sponsor my podcast?"
-                content="We can't guarantee sponsorships, but the companies we curate have demonstrated an interest in this type of advertising and may be open to future opportunities."
+                title="Does SponsorTrail guarantee that these companies will sponsor me?"
+                content="We can't guarantee sponsorships, however, the companies we curate have demonstrated an interest in this type of advertising in the past and may be open to future opportunities."
                 onPress={() => setAcc4Open(!acc4Open)}
                 isOpen={acc4Open}
             />
             <AccordianItem
                 title="How do we gather our data?"
-                content="Our information primarily comes from podcasts themselves. In-house software continuously scans the web for new sponsorships and updates our database accordingly. "
+                content="We gather our data directly from reliable sources and content creators in your niche. Our process ensures that the information provided is accurate and up-to-date."
                 onPress={() => setAcc5Open(!acc5Open)}
                 isOpen={acc5Open}
             />
