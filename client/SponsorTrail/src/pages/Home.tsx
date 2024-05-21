@@ -12,13 +12,15 @@ import LoadingBtn from "../components/common/LoadingBtn";
 import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
-import { faMoneyBill, faList, faWandMagicSparkles, faCheckCircle, faClock } from "@fortawesome/free-solid-svg-icons";
+import { faWandMagicSparkles, faCheckCircle, faClock } from "@fortawesome/free-solid-svg-icons";
 
 // Images
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
 import AllBlogsItem from "../components/AllBlogsItem";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import PricingCard from "../components/PricingCard";
 
 const db = getFirestore(app);
 
@@ -68,7 +70,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                             Maximize Your Sponsorships
                         </h2>
                         <p className="home__container-item__p">
-                            SponsorTrail simplifies the search for sponsors tailored to your content. Access a curated database of proven sponsors in your niche and unlock new revenue opportunities.</p>
+                            SponsorTrail simplifies the search for sponsors. Access our curated database of proven sponsors in your niche.</p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
                                 <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
@@ -121,39 +123,56 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                                     3. You Apply
                                 </h3>
                                 <p className="home__how-it-works-container__item-text text">
-                                    With our complete database of sponsors in hand, you can begin applying for sponsorships! Our data is designed to help you find the perfect sponsor for your content, quickly and easily.
+                                    With our complete database of sponsors in hand, you can begin applying for sponsorships!
                                 </p>
                             </div>
                             <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
                         </div>
                     </div>
                 </div>
-                <div className="web-section web-section-dark" id="sample-data" >
-                    <div className="web-section__container web-section-content">
-                        <h2 className="web-section__container-header airtable-header">
-                            See Our Data For Yourself
-                        </h2>
-                        <p className="airtable-p">
-                            We've compiled a list of {sponsorCount} podcast sponsorships, {companyCount} companies, and {emailCount} email addresses -below is a small preview of our data.
-                        </p>
-                        <div className="airtable-cont">
-                            <AirTable />
-                        </div>
+            </div>
+            <div className="web-section web-section-dark" id="sample-data" >
+                <div className="web-section__container web-section-content">
+                    <h2 className="web-section__container-header airtable-header">
+                        See Our Data For Yourself
+                    </h2>
+                    <p className="airtable-p">
+                        We've compiled a list of {sponsorCount} sponsorships, {companyCount} companies, and {emailCount} email addresses -below is a small preview.
+                    </p>
+                    <div className="airtable-cont">
+                        <AirTable />
                     </div>
                 </div>
-                <div className="web-section" >
-                    <div className="web-section__container web-section-content" id="testimonials">
-                        <h2 className="web-section__container-header-sm">
-                            What People Are Saying
-                        </h2>
-                        <div className="home__testimonials-list">
-                            <TestimonialCard name="John D." affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
-                            <TestimonialCard name="Alex J." affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
-                        </div>
-                        {/* <Link className="footer-item footer-item__highlight mt-2" to="/review">
+            </div>
+            <div className="web-section" >
+                <div className="web-section__container web-section-content" id="pricing">
+                    <h2 className="web-section__container-header-sm">
+                        Pricing Options
+                    </h2>
+                    <div className="home__pricing-container">
+                        <PricingCard header="Monthly"
+                            icon={faWandMagicSparkles}
+                            price="$15"
+                            text="Access our database of sponsors for a month. Cancel anytime." />
+                        <PricingCard header="Yearly"
+                            icon={faCheckCircle}
+                            price="$140"
+                            text="Access our database of sponsors for a year. Cancel anytime." />
+                    </div>
+                </div>
+            </div>
+            <div className="web-section" >
+                <div className="web-section__container web-section-content" id="testimonials">
+                    <h2 className="web-section__container-header-sm">
+                        What People Are Saying
+                    </h2>
+                    <div className="home__testimonials-list">
+                        <TestimonialCard name="John D." affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="Alex J." affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                    </div>
+                    {/* <Link className="footer-item footer-item__highlight mt-2" to="/review">
                         Write a Review &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
                     </Link> */}
-                    </div>
                 </div>
                 <div className="web-section" >
                     <div className="web-section__container web-section-content" id="FAQ">
@@ -163,26 +182,8 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                         <FAQAccordian />
                     </div>
                 </div>
-                <div className="web-section web-section-dark" id="blog" >
-                    <div className="web-section__container web-section-content home-blog__container" id="FAQ">
-                        <div className="home-blog__container-item">
-                            <h2 className="web-section__container-header-sm home-blog__container-item__header">
-                                Latest Blogs
-                            </h2>
-                            <p className="home-blog__body">
-                                Our blog is a great resource for podcasters looking to learn more about potential sponsorships. We cover topics such as how to find sponsors, how to negotiate sponsorship deals, and more.
-                                {/* &nbsp;<Link to="/blogs/">All Blogs &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} /></Link> */}
-                            </p>
-                            <AllBlogsItem dark={true} small={true} body="Understanding the role of a podcast sponsor is key to leveraging their potential benefits for your podcast. What exactly defines a podcast sponsor, and how do they contribute to your podcast’s success?" title="The Role of Podcast Sponsors" link="/blogs/the-role-of-podcast-sponsors/" />
-                        </div>
-                        <div className="home-blog__container-item">
-                            <AllBlogsItem dark={true} small={true} body="Having quality data on your podcast is a necessity when discussing potential sponsorships with companies. The following will describe the role of certain data sets and how to use them to your best advantage when negotiating for podcast sponsorships." title="Navigating Podcast Sponsorships: A Data-Driven Approach" link="/blogs/data-driven-approach/" left={true} />
-                            <AllBlogsItem dark={true} small={true} body="Learn essential tips for initiating conversations with potential sponsors to elevate your podcast's content and revenue. Craft compelling messages that set the stage for successful partnerships." title="5 Tips for Reaching Out to Sponsors" link="/blogs/5-tips-reaching-out/" left={true} />
-                        </div>
-                    </div>
-                </div>
             </div>
-        </div>
+        </div >
     );
 };
 
