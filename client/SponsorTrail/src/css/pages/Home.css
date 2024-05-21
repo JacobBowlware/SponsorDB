@@ -559,7 +559,27 @@
     padding: 1rem;
 }
 
-.home__pricing-card__text {}
+.home__pricing-card__text {
+    text-align: center;
+    width: 100%;
+}
+
+.home__pricing-card__price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: .5rem;
+}
+
+.home__pricing-card__price__time {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+}
+
+.home__pricing-card__icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
 
 .home__pricing-card__btn {
     border-radius: 3px;

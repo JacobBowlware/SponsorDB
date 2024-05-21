@@ -12,7 +12,7 @@ import LoadingBtn from "../components/common/LoadingBtn";
 import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
-import { faWandMagicSparkles, faCheckCircle, faClock } from "@fortawesome/free-solid-svg-icons";
+import { faWandMagicSparkles, faCheckCircle, faClock, faBolt, faRocket, faDiamond } from "@fortawesome/free-solid-svg-icons";
 
 // Images
 import search from './../assets/images/search.png';
@@ -151,12 +151,14 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                     </h2>
                     <div className="home__pricing-container">
                         <PricingCard header="Monthly"
-                            icon={faWandMagicSparkles}
+                            icon={faRocket}
                             price="$15"
+                            year={false}
                             text="Access our database of sponsors for a month. Cancel anytime." />
                         <PricingCard header="Yearly"
-                            icon={faCheckCircle}
-                            price="$140"
+                            icon={faDiamond}
+                            price="$120"
+                            year={true}
                             text="Access our database of sponsors for a year. Cancel anytime." />
                     </div>
                 </div>

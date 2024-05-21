@@ -143,7 +143,15 @@ html {
 }
 
 .text-highlight {
-  color: var(--var-color-secondary);
+  color: var(--var-color-tertiary);
+}
+
+.text-dark {
+  color: var(--var-color-text);
+}
+
+.bg-dark {
+  background: var(--var-color-text);
 }
 
 /* Forms */

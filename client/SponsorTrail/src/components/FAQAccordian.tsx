@@ -31,7 +31,7 @@ const FAQAccordian = () => {
             />
             <AccordianItem
                 title="How often is the database updated?"
-                content="Our database is updated weekly (on Sunday), ensuring that you have access to the most current information."
+                content="Our database is updated weekly, ensuring that you have access to the most current information."
                 onPress={() => setAcc2Open(!acc2Open)}
                 isOpen={acc2Open}
             />
