@@ -130,7 +130,7 @@ html {
   font-weight: 600;
   font-size: 1.2rem;
   text-align: center;
-  border-radius: 50rem;
+  border-radius: 0rem;
 }
 
 .btn:disabled {
@@ -165,8 +165,9 @@ html {
 }
 
 /* Forms */
-.form__input {
+.input {
   width: 100%;
+  margin: 0 0 .4rem 0;
 }
 
 .form__header {

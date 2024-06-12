@@ -73,8 +73,13 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                             SponsorTrail simplifies the search for sponsors. Access our curated database of proven sponsors in your niche.</p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
-                                <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
-                                <LoadingBtn loading={loading} title="Join Waitlist" addClasses="btn home__container-item__input home__container-item__btn" />
+                                <Link to="/login" className="btn home__container-item__input home__container-item__btn-secondary">
+                                    LOGIN
+                                </Link>
+                                {/* <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} /> */}
+                                <Link to="/signup" className="btn home__container-item__input home__container-item__btn">
+                                    JOIN FOR FREE
+                                </Link>
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">
                                 Thank you for joining the SponsorTrail waitlist! We'll be in touch soon.
@@ -144,7 +149,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                     </div>
                 </div>
             </div>
-            <div className="web-section" >
+            {/* <div className="web-section" >
                 <div className="web-section__container web-section-content" id="pricing">
                     <h2 className="web-section__container-header-sm">
                         Pricing Options
@@ -162,7 +167,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                             text="Access our database of sponsors for a year. Cancel anytime." />
                     </div>
                 </div>
-            </div>
+            </div> */}
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="testimonials">
                     <h2 className="web-section__container-header-sm">

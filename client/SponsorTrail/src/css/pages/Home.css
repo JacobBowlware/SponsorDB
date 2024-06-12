@@ -21,6 +21,27 @@
     margin-left: .4rem;
 }
 
+.home__container-item__btn-secondary {
+    height: 3rem;
+    font-weight: 700 !important;
+    font-size: .9rem;
+    background: var(--var-color-primary);
+    color: var(--var-color-text);
+    border: none !important;
+    /* border-radius: 0 15px 15px 0; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all .3s;
+    width: 10rem;
+}
+
+.home__container-item__btn-secondary:hover {
+    cursor: pointer;
+    opacity: .6;
+    color: var(--var-color-text);
+}
+
 .home__container-item__header {
     font-size: 1.9rem;
     font-weight: 700;
@@ -48,7 +69,7 @@
 .home__container-item__input {
     flex: 1;
     height: 3rem;
-    border: 1px solid var(--var-color-tertiary);
+    border: 1px solid var(--var-color-text);
     border-radius: 0;
     padding: 0 .7rem;
     font-size: .9rem;
@@ -64,11 +85,11 @@
 
 .home__container-item__btn {
     height: 3rem;
-    font-weight: 600;
+    font-weight: 700;
     font-size: .9rem;
     background: var(--var-color-tertiary);
     color: #fff;
-    border: none;
+    border: none !important;
     /* border-radius: 0 15px 15px 0; */
     display: flex;
     justify-content: center;
@@ -80,6 +101,7 @@
 .home__container-item__btn:hover {
     cursor: pointer;
     opacity: .8;
+    color: var(--var-color-background)
 }
 
 .home__container-item__form {
@@ -578,7 +600,7 @@
 
 .home__pricing-card__icon {
     font-size: 3rem;
-    margin-bottom: 1rem;
+    margin: 1rem 0;
 }
 
 .home__pricing-card__btn {

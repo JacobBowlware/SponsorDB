@@ -35,9 +35,9 @@ const Header = () => {
                         <li className="nav-item">
                             <a className="nav-link" href="/#sample-data" onClick={closeNavBar}>Sample Data</a>
                         </li>
-                        <li className="nav-item">
+                        {/* <li className="nav-item">
                             <a className="nav-link" href="/#pricing" onClick={closeNavBar}>Pricing</a>
-                        </li>
+                        </li> */}
                         <li className="nav-item">
                             <a className="nav-link" href="/#testimonials" onClick={closeNavBar}>Testimonials</a>
                         </li>

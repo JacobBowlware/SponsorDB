@@ -18,7 +18,7 @@ const FAQAccordian = () => {
                 isOpen={acc3Open}
             />
             <AccordianItem
-                title="Is it guaranteed that these companies will sponsor me?"
+                title="Am I guaranteed a sponsorship?"
                 content="We can't guarantee sponsorships, however, the companies we curate have demonstrated an interest in this type of advertising in the past and may be open to future opportunities."
                 onPress={() => setAcc4Open(!acc4Open)}
                 isOpen={acc4Open}

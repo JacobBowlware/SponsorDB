@@ -3,7 +3,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    max-width: 440px;
 }
 
 .login-form {
@@ -12,13 +11,53 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    background: var(--var-color-primary);
+    padding: 1.6rem;
+    max-width: 440px;
+}
+
+.login-form__header {
+    text-align: left;
+    font-weight: 700;
+    font-size: 1.6rem;
+    width: 60%;
+}
+
+.login-form__header-cont {
+    text-align: left;
+    font-weight: 700;
+    font-size: 1.5rem;
+    width: 100%;
+    margin-bottom: 1rem;
 }
 
 .login-form__input {
     padding: .5rem;
+    font-size: .9rem;
 }
 
 .login-form__btn {
     width: 100%;
     margin-top: 1rem;
+    background: var(--var-color-text);
+    color: var(--var-color-primary);
+    opacity: 0.8;
+    transition: all .3s;
+}
+
+.login-form__btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.login-form__link {
+    width: 100%;
+    text-align: left;
+    margin: 1rem 0 0 0;
+}
+
+@media screen and (min-width: 768px) {
+    .login-form {
+        padding: 2rem;
+    }
 }

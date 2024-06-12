@@ -59,15 +59,11 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
         <Route path="/*" element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
-        <Route path="/signup/" element={<Signup />} />
         <Route path="/login/" element={<Login />} />
+        <Route path="/signup/" element={<Signup />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
-        <Route path="/blogs/" element={<AllBlogs />} />
-        <Route path="/blogs/5-tips-reaching-out/" element={<ReachingOut companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
-        <Route path="/blogs/the-role-of-podcast-sponsors/" element={<RoleOfPodcastSponsor companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
-        <Route path="/blogs/data-driven-approach" element={<RoleOfData companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
       </Route>
     )
   )
