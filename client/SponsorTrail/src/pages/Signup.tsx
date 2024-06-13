@@ -45,7 +45,6 @@ const Signup = () => {
                 break;
             default:
         }
-
     }
 
     const handleSubmit = (e: any) => {
@@ -61,7 +60,7 @@ const Signup = () => {
                 <form className="login-form">
                     <div className="login-form__header-cont">
                         <h1 className="login-form__header">
-                            Signup for SponsorTrail
+                            Signup for SponsorTrail <span className="login-form__header-note">- it's free</span>
                         </h1>
                     </div>
                     <input className="input login-form__input" type="email" placeholder="Email Address"
@@ -86,7 +85,7 @@ const Signup = () => {
                     />
                     {confirmPasswordError && !error && <div className="form-error">{confirmPasswordError}</div>}
                     {error && <div className="form-error">{error}</div>}
-                    <button className="btn login-form__btn" type="submit">Signup</button>
+                    <button disabled={!!emailError || !!passwordError || !!confirmPasswordError || !!error || !email || !password || !confirmPassword} className="btn login-form__btn" type="submit">Signup</button>
                     <Link to="/login" className="login-form__link">Have an account?</Link>
                 </form>
             </div>

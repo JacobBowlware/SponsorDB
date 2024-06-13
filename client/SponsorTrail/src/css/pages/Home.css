@@ -78,6 +78,12 @@
     width: 100%;
 }
 
+.home__container-item-note {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: .9;
+}
+
 .home__container-item__input:focus {
     border-radius: 0;
     outline: none;

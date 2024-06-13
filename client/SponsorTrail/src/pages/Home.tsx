@@ -8,22 +8,17 @@ import { app } from "../firebase/config";
 import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 import FAQAccordian from "../components/FAQAccordian";
-import LoadingBtn from "../components/common/LoadingBtn";
 import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
-import { faWandMagicSparkles, faCheckCircle, faClock, faBolt, faRocket, faDiamond } from "@fortawesome/free-solid-svg-icons";
+import { faWandMagicSparkles, faCheckCircle, faClock } from "@fortawesome/free-solid-svg-icons";
 
 // Images
 import search from './../assets/images/search.png';
 import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
-import AllBlogsItem from "../components/AllBlogsItem";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import PricingCard from "../components/PricingCard";
 
 const db = getFirestore(app);
-
 interface HomeProps {
     companyCount: number;
     sponsorCount: number;
@@ -35,6 +30,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
     const [loading, setLoading] = useState(false);
     const [userEmailCollected, setUserEmailCollected] = useState(false);
 
+    // Collect User Email --> Currently removed from front-end
     const handleSubmit = async (e: any) => {
         e.preventDefault();
         setLoading(true);
@@ -78,7 +74,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                                 </Link>
                                 {/* <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} /> */}
                                 <Link to="/signup" className="btn home__container-item__input home__container-item__btn">
-                                    Access for Free
+                                    Sign-up for Free
                                 </Link>
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">

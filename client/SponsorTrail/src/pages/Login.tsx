@@ -36,7 +36,7 @@ const Login = () => {
                         onChange={(e) => {
                             setPassword(e.target.value);
                         }} />
-                    <button className="btn login-form__btn" type="submit">Login</button>
+                    <button disabled={!!emailError || !email || !password} className="btn login-form__btn" type="submit">Login</button>
                     <Link to="/signup" className="login-form__link">Don't have an account?</Link>
                 </form>
             </div>
