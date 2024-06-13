@@ -45,7 +45,7 @@ const Header = () => {
                             <a className="nav-link" href="/#FAQ" onClick={closeNavBar}>FAQ</a>
                         </li>
                         <li className="nav-item  nav-item__highlight">
-                            <a className="nav-link" href="/#hero" onClick={closeNavBar}>Join Waitlist</a>
+                            <Link className="nav-link" to="/login" onClick={closeNavBar}>Login</Link>
                         </li>
                     </ul>
                 </div>

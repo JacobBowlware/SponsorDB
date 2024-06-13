@@ -74,11 +74,11 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
                                 <Link to="/login" className="btn home__container-item__input home__container-item__btn-secondary">
-                                    LOGIN
+                                    Login
                                 </Link>
                                 {/* <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} /> */}
                                 <Link to="/signup" className="btn home__container-item__input home__container-item__btn">
-                                    JOIN FOR FREE
+                                    Access for Free
                                 </Link>
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">
