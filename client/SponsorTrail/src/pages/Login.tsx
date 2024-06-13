@@ -31,7 +31,7 @@ const Login = () => {
                         onChange={(e) => {
                             setEmail(e.target.value);
                         }} />
-                    {emailError && <div className="login-form__error">{emailError}</div>}
+                    {emailError && <div className="form-error">{emailError}</div>}
                     <input className="input login-form__input" type="password" placeholder="Password"
                         onChange={(e) => {
                             setPassword(e.target.value);
