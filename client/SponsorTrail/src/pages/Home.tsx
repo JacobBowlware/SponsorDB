@@ -19,13 +19,7 @@ import list from './../assets/images/list.png';
 import growth from './../assets/images/growth.png';
 
 const db = getFirestore(app);
-interface HomeProps {
-    companyCount: number;
-    sponsorCount: number;
-    emailCount: number;
-}
-
-const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
+const Home = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [userEmailCollected, setUserEmailCollected] = useState(false);
@@ -72,7 +66,6 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                                 <Link to="/login" className="btn home__container-item__input home__container-item__btn-secondary">
                                     Login
                                 </Link>
-                                {/* <input required={true} id="email-input" type="email" className="home__container-item__input" placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} /> */}
                                 <Link to="/signup" className="btn home__container-item__input home__container-item__btn">
                                     Sign-up for Free
                                 </Link>
@@ -138,7 +131,7 @@ const Home = ({ companyCount, sponsorCount, emailCount }: HomeProps) => {
                         See Our Data For Yourself
                     </h2>
                     <p className="airtable-p">
-                        We've compiled a list of {sponsorCount} sponsorships, {companyCount} companies, and {emailCount} email addresses -below is a small preview.
+                        We've compiled a list of 4,000+ sponsorships from 2,000+ companies -below is a small preview.
                     </p>
                     <div className="airtable-cont">
                         <AirTable />

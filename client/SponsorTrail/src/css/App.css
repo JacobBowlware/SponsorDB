@@ -208,3 +208,8 @@ html {
     font-size: .9rem;
   }
 }
+
+/* Airtable */
+.airtable-cont {
+  width: 100%;
+}

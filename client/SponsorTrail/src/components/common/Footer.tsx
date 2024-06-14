@@ -14,9 +14,9 @@ const Footer = () => {
                     <a className="footer-item" href="mailto:Jacobbowlware@gmail.com">
                         Contact Us
                     </a>
-                    <a className="footer-item " href="/#hero">
-                        Join Waitlist
-                    </a>
+                    <Link className="footer-item " to="/signup">
+                        Sign-up
+                    </Link>
                 </div>
                 <p className="mt-3">&copy; 2024 Sponsor Trail. All Rights Reserved.</p>
             </div>

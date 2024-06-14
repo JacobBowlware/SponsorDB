@@ -1,0 +1,26 @@
+.sponsors-header__cont {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: left;
+    width: 100%;
+    padding: 0rem;
+}
+
+.sponsors-header {
+    font-size: 1.8rem;
+    font-weight: 700;
+
+}
+
+.sponsors-subheader {
+    display: flex;
+    align-items: center;
+}
+
+@media screen and (min-width: 768px) {
+
+    .sponsors-header {
+        font-size: 2rem;
+    }
+}

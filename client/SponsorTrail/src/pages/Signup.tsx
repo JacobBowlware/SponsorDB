@@ -51,13 +51,19 @@ const Signup = () => {
         e.preventDefault();
 
         // Call API to signup user, if successful, redirect to dashboard
+        try {
+
+        }
+        catch (err) {
+            setError("An error occured, please try again");
+        }
         // Else, display error message with setError('message here')
     }
 
     return (
         <div className="web-page">
             <div className="login-container">
-                <form className="login-form">
+                <form className="login-form" onSubmit={(e) => handleSubmit(e)}>
                     <div className="login-form__header-cont">
                         <h1 className="login-form__header">
                             Signup for SponsorTrail <span className="login-form__header-note">- it's free</span>

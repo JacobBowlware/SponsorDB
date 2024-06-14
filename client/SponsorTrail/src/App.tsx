@@ -1,8 +1,9 @@
-import { useState } from 'react';
 import {
   createBrowserRouter, createRoutesFromElements,
   RouterProvider, Route, Outlet
 } from 'react-router-dom';
+
+import { useEffect, useState } from 'react';
 
 // CSS
 import './css/App.css';
@@ -14,56 +15,55 @@ import './css/pages/Signup.css';
 import './css/pages/Review.css';
 import './css/pages/PrivacyPolicy.css';
 import './css/pages/TOS.css';
-import './css/blogs/AllBlogs.css';
+import './css/pages/authReq/Sponsors.css'
 
 //Pages
 import Home from './pages/Home';
-import AllBlogs from './pages/AllBlogs';
 import Review from './pages/Review';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TOS from './pages/TOS';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 
+// Authed Pages
+import Sponsors from './pages/authReq/Sponsors';
+
 // Components
 import Header from './components/common/Header'
 import Footer from './components/common/Footer';
 import ScrollToTop from './components/ScrollToTop';
-
-// Blogs
-import ReachingOut from './pages/blogs/ReachingOut';
-import RoleOfPodcastSponsor from './pages/blogs/RoleOfPodcastSponsor';
-import RoleOfData from './pages/blogs/RoleOfData';
+import AuthHeader from './components/common/AuthHeader';
 
 function App() {
-  const [sponsorCount, setSponsorCount] = useState(0);
-  const [companyCount, setCompanyCount] = useState(0);
-  const [emailCount, setEmailCount] = useState(0);
+  const [userAuth, setUserAuth] = useState(false);
+
+  useEffect(() => {
+    // Call API to check if user is authenticated
+    // setUserAuth(response)
+  })
 
   const Root = () => {
     return <>
-      <Header />
+      {!userAuth ? <Header /> : <AuthHeader />}
       <ScrollToTop />
       <Outlet />
       <Footer />
     </>
   }
 
-  const getSponsorData = async () => {
-    // Get # of sponsors, companies, and emails from API. (https://sponsortrail.com/api/sponsors/count)
-
-  }
-
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
-        <Route path="/*" element={<Home companyCount={companyCount} emailCount={emailCount} sponsorCount={sponsorCount} />} />
+        <Route index element={<Home />} />
+        <Route path="/*" element={<Home />} />
         <Route path="/login/" element={<Login />} />
         <Route path="/signup/" element={<Signup />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
+        {/* Authed Routes */}
+        {userAuth && <Route path="/auth/sponsors/" element={<Sponsors />} />}
+        {userAuth && <Route path="/auth/sponsors/*" element={<Sponsors />} />}
       </Route>
     )
   )
