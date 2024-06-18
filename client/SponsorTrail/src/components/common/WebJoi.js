@@ -1,8 +1,25 @@
 const Joi = require('joi');
 
 const emailSchema = Joi.string().email({ tlds: { allow: false } }).required().label('Email');
-const passwordSchema = Joi.string().min(8).alphanum().required().label('Password');
+const passwordSchema = Joi.string().min(8).required().label('Password');
 const confirmPasswordSchema = Joi.string().required().valid(Joi.ref('password')).label('Confirm Password');
+
+/**
+ * Validate the user input
+ * @param {*} user object containing email and password
+ * @returns {object} The validation result
+ */
+const validateUser = (user) => {
+    const schema = Joi.object({
+        email: emailSchema,
+        password: passwordSchema,
+        confirmPassword: confirmPasswordSchema
+    });
+
+    const { error } = schema.validate(user);
+
+    return error;
+}
 
 /**
  * Validate the input property
@@ -47,4 +64,4 @@ const validateChange = (Input, setErrors, isLogin = false, password = "", confir
     }
 }
 
-export { validateChange, validateProperty };
+export { validateChange, validateProperty, validateUser };

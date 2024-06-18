@@ -16,11 +16,6 @@ const userSchema = new mongoose.Schema({
         minlength: 2,
         maxlength: 100
     },
-    isSubscribed: {
-        type: Boolean,
-        required: true,
-        default: false
-    },
     isAdmin: {
         type: Boolean,
         required: false,
@@ -29,7 +24,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.methods.generateAuthToken = function () {
-    const token = jwt.sign({ _id: this._id, isSubscribed: this.isSubscribed }, config.get('jwtPrivateKey'));
+    const token = jwt.sign({ _id: this._id }, config.get('jwtPrivateKey'));
     return token;
 }
 
@@ -38,8 +33,7 @@ const User = mongoose.model('User', userSchema);
 const validateUser = (user) => {
     const schema = Joi.object({
         email: Joi.string().min(2).max(100).required(),
-        password: Joi.string().min(2).max(100).required(),
-        isSubscribed: Joi.boolean().default(false),
+        password: Joi.string().min(2).max(100).required()
     });
 
     return schema.validate(user);

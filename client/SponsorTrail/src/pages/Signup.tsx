@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { validateProperty } from "../components/common/WebJoi";
+import { validateProperty, validateUser } from "../components/common/WebJoi";
+
+import axios from 'axios';
 
 const Signup = () => {
     const [email, setEmail] = useState('');
@@ -15,8 +17,6 @@ const Signup = () => {
         setError('');
         const obj = { name: name, value: e.target.value };
         const error = validateProperty(obj, password);
-
-        console.log(error);
 
         // Bad practice to hard code error messages; JOI default error messages looked messy
         switch (name) {
@@ -47,17 +47,30 @@ const Signup = () => {
         }
     }
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
 
-        // Call API to signup user, if successful, redirect to dashboard
-        try {
+        const errors = validateUser({ email: email, password: password, confirmPassword: confirmPassword });
+        if (errors) {
+            setConfirmPasswordError("Invalid input, please try again.")
+            setEmail("");
+            setPassword("");
+            setConfirmPassword("");
+            return;
+        }
 
+        try {
+            await axios.post('http://localhost:3001/api/users/', {
+                email: email,
+                password: password
+            }).then((res) => {
+                console.log(res);
+            })
         }
         catch (err) {
+            console.log(err);
             setError("An error occured, please try again");
         }
-        // Else, display error message with setError('message here')
     }
 
     return (
@@ -69,21 +82,21 @@ const Signup = () => {
                             Signup for SponsorTrail <span className="login-form__header-note">- it's free</span>
                         </h1>
                     </div>
-                    <input className="input login-form__input" type="email" placeholder="Email Address"
+                    <input value={email} className="input login-form__input" type="email" placeholder="Email Address"
                         onChange={(e) => {
                             setEmail(e.target.value);
                             handleChange('email', e);
                         }}
                     />
                     {emailError && <div className="form-error">{emailError}</div>}
-                    <input className="input login-form__input" type="password" placeholder="Password"
+                    <input value={password} className="input login-form__input" type="password" placeholder="Password"
                         onChange={(e) => {
                             setPassword(e.target.value)
                             handleChange('password', e);
                         }}
                     />
                     {passwordError && <div className="form-error">{passwordError}</div>}
-                    <input className="input login-form__input" type="password" placeholder="Repeat Password"
+                    <input value={confirmPassword} className="input login-form__input" type="password" placeholder="Repeat Password"
                         onChange={(e) => {
                             setConfirmPassword(e.target.value)
                             handleChange('confirmPassword', e);

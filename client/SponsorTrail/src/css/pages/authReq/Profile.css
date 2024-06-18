@@ -1,0 +1,36 @@
+.profile-cont {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.profile-cont__card {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    justify-content: center;
+    width: 100%;
+    padding: 2rem;
+    background: var(--var-color-primary);
+    max-width: 500px;
+}
+
+.profile-cont__card-header {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.profile-cont__card-info {
+    font-size: 1rem;
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: left;
+}
+
+.profile-cont__card-info-item__value {
+    font-weight: 700;
+}

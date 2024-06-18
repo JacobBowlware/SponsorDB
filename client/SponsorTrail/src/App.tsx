@@ -15,7 +15,8 @@ import './css/pages/Signup.css';
 import './css/pages/Review.css';
 import './css/pages/PrivacyPolicy.css';
 import './css/pages/TOS.css';
-import './css/pages/authReq/Sponsors.css'
+import './css/pages/authReq/Sponsors.css';
+import './css/pages/authReq/Profile.css';
 
 //Pages
 import Home from './pages/Home';
@@ -33,7 +34,17 @@ import Header from './components/common/Header'
 import Footer from './components/common/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import AuthHeader from './components/common/AuthHeader';
+import Profile from './pages/authReq/Profile';
 
+/*
+TODO:
+- APIS's:
+- - Login
+- - Signup
+- - Logout
+- - Auth
+
+*/
 function App() {
   const [userAuth, setUserAuth] = useState(false);
 
@@ -47,7 +58,7 @@ function App() {
       {!userAuth ? <Header /> : <AuthHeader />}
       <ScrollToTop />
       <Outlet />
-      <Footer />
+      <Footer auth={userAuth} />
     </>
   }
 
@@ -63,7 +74,7 @@ function App() {
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
         {userAuth && <Route path="/auth/sponsors/" element={<Sponsors />} />}
-        {userAuth && <Route path="/auth/sponsors/*" element={<Sponsors />} />}
+        {userAuth && <Route path="/auth/profile" element={<Profile />} />}
       </Route>
     )
   )

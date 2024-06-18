@@ -5,6 +5,8 @@ const _ = require('lodash');
 const router = express.Router();
 const auth = require('../middleware/auth');
 
+require('../middleware/corHeaders')(router);
+
 // Get current user
 router.get('/me', auth, async (req, res) => {
     const user = await User.findById(req.user._id).select('-password');
@@ -18,6 +20,8 @@ router.post('/', async (req, res) => {
         return res.status(400).send(error.details[0].message);
     }
 
+    console.log("Registering new user...");
+
     let user = await User.findOne({ email: req.body.email });
     if (user) {
         return res.status(400).send('User already registered.');
@@ -25,8 +29,7 @@ router.post('/', async (req, res) => {
 
     user = new User({
         email: req.body.email,
-        password: "",
-        isSubscribed: req.body.isSubscribed || false,
+        password: ""
     });
 
     const salt = await bcrypt.genSalt(10);
@@ -34,7 +37,7 @@ router.post('/', async (req, res) => {
     await user.save();
 
     const token = user.generateAuthToken();
-    res.header('x-auth-token', token).send(_.pick(user, ['_id', 'email', 'isSubscribed']));
+    res.header('x-auth-token', token).send(_.pick(user, ['_id', 'email']));
 });
 
 module.exports = router;

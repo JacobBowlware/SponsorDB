@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 
-const Footer = () => {
+interface FooterProps {
+    auth: Boolean;
+}
+
+const Footer = ({ auth }: FooterProps) => {
     return (
         <div className="footer-wrap">
             <div className="web-section web-section-dark footer">
@@ -14,9 +18,11 @@ const Footer = () => {
                     <a className="footer-item" href="mailto:Jacobbowlware@gmail.com">
                         Contact Us
                     </a>
-                    <Link className="footer-item " to="/signup">
+                    {auth ? <Link className="footer-item " to="/logout">
+                        Logout
+                    </Link> : <Link className="footer-item " to="/signup">
                         Sign-up
-                    </Link>
+                    </Link>}
                 </div>
                 <p className="mt-3">&copy; 2024 Sponsor Trail. All Rights Reserved.</p>
             </div>

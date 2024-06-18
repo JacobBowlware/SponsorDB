@@ -18,6 +18,7 @@ const Login = () => {
 
         // Call API to login user, if successful, redirect to dashboard
         // else, display error message with setError('message here')
+
     }
 
     return (
