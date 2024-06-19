@@ -33,7 +33,10 @@ const AuthHeader = () => {
                             <Link className="nav-link" to="/profile" onClick={closeNavBar}>Profile</Link>
                         </li>
                         <li className="nav-item  nav-item__highlight">
-                            <Link className="nav-link" to="/logout" onClick={closeNavBar}>Logout</Link>
+                            <button className="nav-link" onClick={() => {
+                                localStorage.removeItem('token');
+                                window.location.href = '/login';
+                            }}>Logout</button>
                         </li>
                     </ul>
                 </div>

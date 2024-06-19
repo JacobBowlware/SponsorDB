@@ -3,6 +3,7 @@ const setCorsHeaders = (res) => {
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Expose-Headers', 'x-auth-token'); // Expose x-auth-token to the client
 };
 
 const corHeaders = (router) => {

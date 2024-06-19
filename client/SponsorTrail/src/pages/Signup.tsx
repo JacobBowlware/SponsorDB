@@ -62,7 +62,7 @@ const Signup = () => {
             email: email,
             password: password
         }).then((res) => {
-            console.log(res);
+            localStorage.setItem('token', res.headers['x-auth-token']);
         }).catch((err) => {
             console.log(err);
             setConfirmPasswordError("An error occurred, please try again.")

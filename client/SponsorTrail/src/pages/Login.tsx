@@ -3,11 +3,7 @@ import { useState } from "react";
 import { validateProperty } from "../components/common/WebJoi";
 import axios from "axios";
 
-interface LoginProps {
-    setUserAuth: (auth: boolean) => void;
-}
-
-const Login = ({ setUserAuth }: LoginProps) => {
+const Login = () => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
@@ -26,10 +22,7 @@ const Login = ({ setUserAuth }: LoginProps) => {
             email: email,
             password: password
         }).then((res) => {
-            localStorage.setItem('token', res.data.token);
-            setUserAuth(true);
-            window.location.href = '/sponsors';
-
+            localStorage.setItem('token', res.headers['x-auth-token']);
         }).catch((err) => {
             setError("Invalid email or password.");
         })

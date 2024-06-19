@@ -43,15 +43,15 @@ TODO:
 - - Signup
 - - Logout
 - - Auth
-
 */
 function App() {
   const [userAuth, setUserAuth] = useState(false);
 
   useEffect(() => {
-    // Check token in local storage
     const token = localStorage.getItem('token');
+
     if (token) {
+      console.log(token);
       setUserAuth(true);
     }
   }, [])
@@ -70,7 +70,7 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home />} />
         <Route path="/*" element={<Home />} />
-        <Route path="/login/" element={<Login setUserAuth={setUserAuth} />} />
+        <Route path="/login/" element={<Login />} />
         <Route path="/signup/" element={<Signup />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
