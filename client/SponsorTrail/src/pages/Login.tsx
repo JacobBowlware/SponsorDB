@@ -23,6 +23,7 @@ const Login = () => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
+            window.location.href = '/sponsors';
         }).catch((err) => {
             setError("Invalid email or password.");
         })

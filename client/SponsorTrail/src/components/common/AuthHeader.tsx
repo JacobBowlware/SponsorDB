@@ -32,11 +32,11 @@ const AuthHeader = () => {
                         <li className="nav-item">
                             <Link className="nav-link" to="/profile" onClick={closeNavBar}>Profile</Link>
                         </li>
-                        <li className="nav-item  nav-item__highlight">
-                            <button className="nav-link" onClick={() => {
-                                localStorage.removeItem('token');
-                                window.location.href = '/login';
-                            }}>Logout</button>
+                        <li className="nav-item  nav-item__highlight" onClick={() => {
+                            localStorage.removeItem('token');
+                            window.location.reload();
+                        }}>
+                            <Link to="/login" className="nav-link">Logout</Link>
                         </li>
                     </ul>
                 </div>

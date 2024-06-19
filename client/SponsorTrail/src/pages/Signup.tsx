@@ -63,6 +63,7 @@ const Signup = () => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
+            window.location.href = '/sponsors';
         }).catch((err) => {
             console.log(err);
             setConfirmPasswordError("An error occurred, please try again.")

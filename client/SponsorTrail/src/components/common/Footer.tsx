@@ -18,7 +18,10 @@ const Footer = ({ auth }: FooterProps) => {
                     <a className="footer-item" href="mailto:Jacobbowlware@gmail.com">
                         Contact Us
                     </a>
-                    {auth ? <Link className="footer-item " to="/logout">
+                    {auth ? <Link className="footer-item " to="/login" onClick={() => {
+                        localStorage.removeItem('token');
+                        window.location.reload();
+                    }}>
                         Logout
                     </Link> : <Link className="footer-item " to="/signup">
                         Sign-up
