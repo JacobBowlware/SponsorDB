@@ -1,30 +1,44 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { validateProperty } from "../components/common/WebJoi";
+import axios from "axios";
 
-const Login = () => {
+interface LoginProps {
+    setUserAuth: (auth: boolean) => void;
+}
+
+const Login = ({ setUserAuth }: LoginProps) => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = () => {
-        // Ensure valid email before calling API
+    const handleSubmit = async (e: any) => {
+        e.preventDefault();
+
         const eErrors = validateProperty({ name: 'email', value: email });
         if (eErrors) {
-            setEmailError(eErrors);
+            setEmailError("Invalid email address.");
             return;
         }
 
-        // Call API to login user, if successful, redirect to dashboard
-        // else, display error message with setError('message here')
+        await axios.post('http://localhost:3001/api/auth/login', {
+            email: email,
+            password: password
+        }).then((res) => {
+            localStorage.setItem('token', res.data.token);
+            setUserAuth(true);
+            window.location.href = '/sponsors';
 
+        }).catch((err) => {
+            setError("Invalid email or password.");
+        })
     }
 
     return (
         <div className="web-page">
             <div className="login-container">
-                <form className="login-form " onSubmit={() => { handleSubmit() }}>
+                <form className="login-form " onSubmit={(e) => { handleSubmit(e) }}>
                     <div className="login-form__header-cont">
                         <h1 className="login-form__header">Welcome Back to SponsorTrail</h1>
                     </div>
@@ -33,11 +47,12 @@ const Login = () => {
                             setEmail(e.target.value);
                         }} />
                     {emailError && <div className="form-error">{emailError}</div>}
-                    <input className="input login-form__input" type="password" placeholder="Password"
+                    <input min={8} className="input login-form__input" type="password" placeholder="Password"
                         onChange={(e) => {
                             setPassword(e.target.value);
                         }} />
-                    <button disabled={!!emailError || !email || !password} className="btn login-form__btn" type="submit">Login</button>
+                    {error && <div className="form-error">{error}</div>}
+                    <button disabled={!!emailError || !email || !password || password.length < 8} className="btn login-form__btn" type="submit">Login</button>
                     <Link to="/signup" className="login-form__link">Don't have an account?</Link>
                 </form>
             </div>

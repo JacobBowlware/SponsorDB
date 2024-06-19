@@ -49,9 +49,12 @@ function App() {
   const [userAuth, setUserAuth] = useState(false);
 
   useEffect(() => {
-    // Call API to check if user is authenticated
-    // setUserAuth(response)
-  })
+    // Check token in local storage
+    const token = localStorage.getItem('token');
+    if (token) {
+      setUserAuth(true);
+    }
+  }, [])
 
   const Root = () => {
     return <>
@@ -67,14 +70,14 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home />} />
         <Route path="/*" element={<Home />} />
-        <Route path="/login/" element={<Login />} />
+        <Route path="/login/" element={<Login setUserAuth={setUserAuth} />} />
         <Route path="/signup/" element={<Signup />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
-        {userAuth && <Route path="/auth/sponsors/" element={<Sponsors />} />}
-        {userAuth && <Route path="/auth/profile" element={<Profile />} />}
+        {userAuth && <Route path="/sponsors/" element={<Sponsors />} />}
+        {userAuth && <Route path="/profile/" element={<Profile />} />}
       </Route>
     )
   )

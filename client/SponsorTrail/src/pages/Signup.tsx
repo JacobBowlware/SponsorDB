@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { validateProperty, validateUser } from "../components/common/WebJoi";
-
 import axios from 'axios';
 
 const Signup = () => {
@@ -59,18 +58,15 @@ const Signup = () => {
             return;
         }
 
-        try {
-            await axios.post('http://localhost:3001/api/users/', {
-                email: email,
-                password: password
-            }).then((res) => {
-                console.log(res);
-            })
-        }
-        catch (err) {
+        await axios.post('http://localhost:3001/api/users/', {
+            email: email,
+            password: password
+        }).then((res) => {
+            console.log(res);
+        }).catch((err) => {
             console.log(err);
-            setError("An error occured, please try again");
-        }
+            setConfirmPasswordError("An error occurred, please try again.")
+        })
     }
 
     return (

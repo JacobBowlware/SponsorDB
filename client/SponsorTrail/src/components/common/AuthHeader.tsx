@@ -27,10 +27,10 @@ const AuthHeader = () => {
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav">
                         <li className="nav-item">
-                            <Link className="nav-link" to="/auth/sponsors" onClick={closeNavBar}>Database</Link>
+                            <Link className="nav-link" to="/sponsors" onClick={closeNavBar}>Database</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to="/auth/profile" onClick={closeNavBar}>Profile</Link>
+                            <Link className="nav-link" to="/profile" onClick={closeNavBar}>Profile</Link>
                         </li>
                         <li className="nav-item  nav-item__highlight">
                             <Link className="nav-link" to="/logout" onClick={closeNavBar}>Logout</Link>
