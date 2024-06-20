@@ -1,6 +1,32 @@
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 const Profile = () => {
+    const [user, setUser] = useState({
+        email: "",
+        password: ""
+    });
+
+    const getUserProfile = async () => {
+        // Get user profile information
+        await axios.get('http://localhost:3001/api/users/me', {
+            headers: {
+                'x-auth-token': localStorage.getItem('token')
+            }
+        }).then((res) => {
+            setUser(res.data);
+        }).catch((err) => {
+            console.log(err);
+        })
+    }
+
+    useEffect(() => {
+        if (user.email === "") {
+            getUserProfile();
+        }
+    }, [])
+
     return (
         <div className="web-page">
             <div className="web-section profile" id="">
@@ -10,15 +36,14 @@ const Profile = () => {
                             Profile Information
                         </h1>
                         <div className="profile-cont__card-info">
-                            <p className="profile-cont__card-info-item">
-                                Email: <span className="profile-cont__card-info-item__value"> example@gmail.com </span>
-                            </p>
-                            <Link to="/auth/change-password">
-                                Change Password
-                            </Link>
-                            <Link to="/auth/change-password">
-                                Logout
-                            </Link>
+                            <div className="profile-cont__card-info-options">
+                                <p className="profile-cont__card-info-item">
+                                    Email: <span className="profile-cont__card-info-item__value">  {user.email ? user.email : "An error occured..."}</span>
+                                </p>
+                                <Link className="btn profile-cont__card-form__btn" to="/change-password">
+                                    Change Password
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
