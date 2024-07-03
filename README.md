@@ -1,13 +1,12 @@
 # Sopnsor Trail
 
 ## Project Summary:
-SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors, saving time and maximizing your podcast's revenue potential. 
+SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors...
 
 ## Tech Stack:
 ### Front End:
-- HTML
-- CSS
 - TypeScript
+- JavaScript
 - ReactJS
 
 ### Back End:
