@@ -4,8 +4,7 @@ import { Link } from "react-router-dom";
 
 const Profile = () => {
     const [user, setUser] = useState({
-        email: "",
-        password: ""
+        email: ""
     });
 
     const getUserProfile = async () => {
@@ -25,7 +24,7 @@ const Profile = () => {
         if (user.email === "") {
             getUserProfile();
         }
-    }, [])
+    }, [user.email])
 
     return (
         <div className="web-page">

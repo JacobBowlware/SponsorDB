@@ -1,13 +1,23 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { validateProperty } from "../components/common/WebJoi";
 import axios from "axios";
 
-const Login = () => {
+interface LoginProps {
+    userAuth: boolean;
+}
+
+const Login = ({ userAuth }: LoginProps) => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (userAuth) {
+            window.location.href = '/sponsors';
+        }
+    })
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();

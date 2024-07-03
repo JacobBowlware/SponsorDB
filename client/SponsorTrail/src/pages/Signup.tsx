@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { validateProperty, validateUser } from "../components/common/WebJoi";
 import axios from 'axios';
 
-const Signup = () => {
+interface SignupProps {
+    userAuth: boolean;
+}
+
+const Signup = ({ userAuth }: SignupProps) => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
@@ -11,6 +15,12 @@ const Signup = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (userAuth) {
+            window.location.href = '/sponsors';
+        }
+    })
 
     const handleChange = (name: string, e: any) => {
         setError('');
@@ -76,7 +86,7 @@ const Signup = () => {
                 <form className="login-form" onSubmit={(e) => handleSubmit(e)}>
                     <div className="login-form__header-cont">
                         <h1 className="login-form__header">
-                            Signup for SponsorTrail <span className="login-form__header-note">- it's free</span>
+                            Signup for SponsorTrail
                         </h1>
                     </div>
                     <input value={email} className="input login-form__input" type="email" placeholder="Email Address"

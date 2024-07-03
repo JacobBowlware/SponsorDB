@@ -71,8 +71,8 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home />} />
         <Route path="/*" element={<Home />} />
-        <Route path="/login/" element={<Login />} />
-        <Route path="/signup/" element={<Signup />} />
+        <Route path="/login/" element={<Login userAuth={userAuth} />} />
+        <Route path="/signup/" element={<Signup userAuth={userAuth} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />

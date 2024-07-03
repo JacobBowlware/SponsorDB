@@ -11,7 +11,7 @@ import FAQAccordian from "../components/FAQAccordian";
 import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
-import { faWandMagicSparkles, faCheckCircle, faClock } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faClock, faCalendarDays } from "@fortawesome/free-solid-svg-icons";
 
 // Images
 import search from './../assets/images/search.png';
@@ -83,9 +83,9 @@ const Home = () => {
                         Why SponsorTrail?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faWandMagicSparkles} header="Weekly Updates" text="Stay ahead with our weekly database updates, ensuring you always have access to the latest and most relevant sponsors." />
-                        <FeatureCard icon={faCheckCircle} header="Proven Sponsors" text="Our database is filled with sponsors who have previously sponsored content in your niche, ensuring you're connected with reputable companies." />
-                        <FeatureCard highlighted={true} icon={faClock} header="Time-Saver" text="Spend less time searching for sponsors and more time creating content. Our database is designed to streamline the sponsorship process." />
+                        <FeatureCard icon={faCalendarDays} header="Stay Ahead of Competition" text="Stay ahead by viewing the latest sponsorship deals happening in your niche." />
+                        <FeatureCard icon={faCheckCircle} header="Proven Sponsors" text="Our database is filled with sponsors who have previously sponsored content in the past." />
+                        <FeatureCard highlighted={true} icon={faClock} header="Time-Saver" text="Spend less time searching for sponsors. Our database is designed to streamline the sponsorship process." />
                     </div>
                 </div>
                 <div className="web-section" >
