@@ -14,7 +14,7 @@ const ChangePassword = () => {
 
     const getUserProfile = async () => {
         // Get user profile information
-        await axios.get(`${"http://localhost:3001/api/"}users/me`, {
+        await axios.get(`http://localhost:3001/api/"users/me`, {
             headers: {
                 'x-auth-token': localStorage.getItem('token')
             }
@@ -36,7 +36,7 @@ const ChangePassword = () => {
         e.preventDefault();
         setLoading(true);
         // Send a password reset email
-        await axios.post(`${"http://localhost:3001/api/"}users/reset-password`, {
+        await axios.post(`http://localhost:3001/api/users/reset-password`, {
             email: user.email
         }).then((res) => {
             console.log(res.data);
@@ -48,6 +48,7 @@ const ChangePassword = () => {
         }).catch((err) => {
             console.log(err);
             setError(true);
+            setEmailSent(false);
         });
 
         setLoading(false);

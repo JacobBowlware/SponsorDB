@@ -7,7 +7,7 @@ const subscribe = require('../middleware/subscribe');
 const admin = require('../middleware/admin');
 
 // Get all sponsors
-router.get('/', auth, subscribe, async (req, res) => {
+router.get('/', auth, async (req, res) => {
     const sponsors = await Sponsor.find();
     res.status(200).send(sponsors);
 });

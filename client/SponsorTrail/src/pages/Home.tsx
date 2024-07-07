@@ -60,7 +60,9 @@ const Home = () => {
                             Maximize Your Sponsorships
                         </h2>
                         <p className="home__container-item__p">
-                            SponsorTrail simplifies the search for sponsors. Access our curated database of proven sponsors in your niche.</p>
+                            Stop wasting time searching for sponsors. Access our free database of proven sponsors in your niche, anytime, anywhere.
+
+                        </p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
                             <div className="home__container-item__input-wrapper">
                                 <Link to="/login" className="btn home__container-item__input home__container-item__btn-secondary">
@@ -83,7 +85,7 @@ const Home = () => {
                         Why SponsorTrail?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faCalendarDays} header="Stay Ahead of Competition" text="Stay ahead by viewing the latest sponsorship deals happening in your niche." />
+                        <FeatureCard icon={faCalendarDays} header="Stay Ahead of Competition" text="View the latest sponsorship deals happening in your niche." />
                         <FeatureCard icon={faCheckCircle} header="Proven Sponsors" text="Our database is filled with sponsors who have previously sponsored content in the past." />
                         <FeatureCard highlighted={true} icon={faClock} header="Time-Saver" text="Spend less time searching for sponsors. Our database is designed to streamline the sponsorship process." />
                     </div>

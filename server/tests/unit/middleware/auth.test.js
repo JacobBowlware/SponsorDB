@@ -15,8 +15,7 @@ describe('auth middleware', () => {
     const userData = {
         _id: new mongoose.Types.ObjectId().toHexString(),
         email: 'example@gmail.com',
-        password: '1234',
-        isSubscribed: true
+        password: '1234'
     }
 
     const user = new User(userData);
@@ -24,7 +23,6 @@ describe('auth middleware', () => {
     let req = {
         header: jest.fn().mockReturnValue(jwt.sign({
             _id: user._id,
-            isSubscribed: user.isSubscribed,
             'email': user.email,
             'password': user.password
         }, config.get('jwtPrivateKey')))
@@ -33,6 +31,7 @@ describe('auth middleware', () => {
     it('should populate req.user with the payload of a valid JWT', () => {
         auth(req, res, next);
 
+        console.log(req.user)
         expect(req.user).toMatchObject(userData);
     });
 
