@@ -9,7 +9,6 @@ module.exports = () => {
 
     process.on('uncaughtException', (ex) => {
         winston.error(ex.message, ex);
-        console.log('We got an uncaught exception');
         process.exit(1);
     });
 

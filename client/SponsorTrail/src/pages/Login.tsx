@@ -44,7 +44,7 @@ const Login = ({ userAuth }: LoginProps) => {
             <div className="login-container">
                 <form className="login-form " onSubmit={(e) => { handleSubmit(e) }}>
                     <div className="login-form__header-cont">
-                        <h1 className="login-form__header">Welcome Back to SponsorTrail</h1>
+                        <h1 className="login-form__header">Welcome Back to SponsorDB</h1>
                     </div>
                     <input className="input login-form__input" type="email" placeholder="Email Address"
                         onChange={(e) => {

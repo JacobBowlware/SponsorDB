@@ -15,7 +15,7 @@ const Footer = ({ auth }: FooterProps) => {
                     <Link className="footer-item" to="/terms-of-service">
                         Terms of Service
                     </Link>
-                    <a className="footer-item" href="mailto:Jacobbowlware@gmail.com">
+                    <a className="footer-item" href="mailto:SponsorDatabase@gmail.com">
                         Contact Us
                     </a>
                     {auth ? <Link className="footer-item " to="/login" onClick={() => {
@@ -27,7 +27,7 @@ const Footer = ({ auth }: FooterProps) => {
                         Sign-up
                     </Link>}
                 </div>
-                <p className="mt-3">&copy; 2024 Sponsor Trail. All Rights Reserved.</p>
+                <p className="mt-3">&copy; 2024 SponsorDB. All Rights Reserved.</p>
             </div>
         </div>
     );

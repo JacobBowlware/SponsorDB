@@ -11,7 +11,7 @@ import FAQAccordian from "../components/FAQAccordian";
 import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
-import { faCheckCircle, faClock, faCalendarDays } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faClock, faCalendarDays, faCheck, faMoneyBill } from "@fortawesome/free-solid-svg-icons";
 
 // Images
 import search from './../assets/images/search.png';
@@ -60,7 +60,7 @@ const Home = () => {
                             Maximize Your Sponsorships
                         </h2>
                         <p className="home__container-item__p">
-                            Stop wasting time searching for sponsors. Access our free database of proven sponsors in your niche, anytime, anywhere.
+                            Access our free database of proven sponsors in your niche. Spend less time searching and more time creating.
 
                         </p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
@@ -73,7 +73,7 @@ const Home = () => {
                                 </Link>
                             </div>
                             {userEmailCollected && <p className="home__container-item__form-thanks">
-                                Thank you for joining the SponsorTrail waitlist! We'll be in touch soon.
+                                Thank you for joining the SponsorDB waitlist! We'll be in touch soon.
                             </p>}
                         </form>
                     </div>
@@ -82,12 +82,14 @@ const Home = () => {
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="features">
                     <h2 className="web-section__container-header">
-                        Why SponsorTrail?
+                        Why SponsorDB?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faCalendarDays} header="Stay Ahead of Competition" text="View the latest sponsorship deals happening in your niche." />
-                        <FeatureCard icon={faCheckCircle} header="Proven Sponsors" text="Our database is filled with sponsors who have previously sponsored content in the past." />
-                        <FeatureCard highlighted={true} icon={faClock} header="Time-Saver" text="Spend less time searching for sponsors. Our database is designed to streamline the sponsorship process." />
+                        <FeatureCard icon={faCalendarDays} header="Stay Updated" text="View the latest sponsorship deals happening in your niche, with new data added daily.
+                        " />
+                        <FeatureCard icon={faMoneyBill} header="Free to Use" text="Access our database of sponsors for free. No hidden fees or charges.
+                        " />
+                        <FeatureCard highlighted={true} header="Time Saver" icon={faCheckCircle} text="Spend less time searching for sponsors. Our database is designed to streamline the sponsorship process." />
                     </div>
                 </div>
                 <div className="web-section" >
@@ -162,11 +164,11 @@ const Home = () => {
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="testimonials">
                     <h2 className="web-section__container-header-sm">
-                        What People Are Saying
+                        Testimonials
                     </h2>
                     <div className="home__testimonials-list">
-                        <TestimonialCard name="John D." affiliation="Podcast Host" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
-                        <TestimonialCard name="Alex J." affiliation="Podcast Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="John D." affiliation="Content Creator" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="Alex J." affiliation="Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
                     {/* <Link className="footer-item footer-item__highlight mt-2" to="/review">
                         Write a Review &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />

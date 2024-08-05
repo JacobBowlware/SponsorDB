@@ -86,7 +86,7 @@ const Signup = ({ userAuth }: SignupProps) => {
                 <form className="login-form" onSubmit={(e) => handleSubmit(e)}>
                     <div className="login-form__header-cont">
                         <h1 className="login-form__header">
-                            Signup for SponsorTrail
+                            Signup for SponsorDB
                         </h1>
                     </div>
                     <input value={email} className="input login-form__input" type="email" placeholder="Email Address"

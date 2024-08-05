@@ -12,14 +12,12 @@ router.get('/', auth, async (req, res) => {
     res.status(200).send(sponsors);
 });
 
-// Get the number of sponsors and sponsorships
+// Get the number of sponsors
 router.get('/count', async (req, res) => {
     const sponsors = await Sponsor.find();
-    const sponsorships = await Sponsorship.find();
 
-    const sponsorLength = sponsors.length;
-    const sponsorshipLength = sponsorships.length;
-    res.status(200).send({ "sponsorshipLength": sponsorshipLength, "sponsorLength": sponsorLength });
+    const sponsorCount = sponsors.length;
+    res.status(200).send({ "count": sponsorCount });
 });
 
 // Create a new sponsor

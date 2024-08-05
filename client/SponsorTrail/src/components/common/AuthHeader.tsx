@@ -20,7 +20,7 @@ const AuthHeader = () => {
     return (
         <div className="navbar-wrap sticky-top">
             <nav className={`web-section navbar navbar-expand-lg navbar-light  `}>
-                <a className="navbar-brand" href="/">SponsorTrail <FontAwesomeIcon icon={faKiwiBird} /> </a>
+                <a className="navbar-brand" href="/">SponsorDB </a>
                 <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <FontAwesomeIcon className="nav-icon" icon={navOpen ? faXmark : faBars} />
                 </button>
