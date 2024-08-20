@@ -549,6 +549,8 @@
 
 .airtable-header {
     margin: 1rem 0;
+    text-align: left;
+    font-size: 2rem;
 }
 
 .airtable-p {
@@ -556,7 +558,17 @@
     color: var(--var-color-text);
     opacity: .8;
     width: 100%;
-    text-align: center;
+    text-align: left;
+}
+
+@media screen and (min-width: 768px) {
+    .airtable-header {
+        font-size: 2.2rem;
+    }
+
+    .airtable-p {
+        font-size: 1.1rem;
+    }
 }
 
 /* Pricing */

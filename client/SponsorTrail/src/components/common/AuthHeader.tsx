@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // Font Awesome Icons
-import { faBars, faKiwiBird, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faDatabase, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 
@@ -20,7 +20,7 @@ const AuthHeader = () => {
     return (
         <div className="navbar-wrap sticky-top">
             <nav className={`web-section navbar navbar-expand-lg navbar-light  `}>
-                <a className="navbar-brand" href="/">SponsorDB </a>
+                <a className="navbar-brand" href="/">SponsorDB <FontAwesomeIcon className="nav-icon" icon={faDatabase} /></a>
                 <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <FontAwesomeIcon className="nav-icon" icon={navOpen ? faXmark : faBars} />
                 </button>

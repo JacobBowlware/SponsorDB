@@ -97,20 +97,32 @@ def get_date(podcast_label: str):
         return today
 
 def main():
-    podcast_headers = soup.findAll('a', id='video-title')
+    video_headers = soup.findAll('a', id='video-title')
     sponsorData = []
 
-    # Get the date, link, and description links for each podcast.
-    for header in podcast_headers:
+    # Get the data on each video
+    sponsoredCount = 0
+    for header in video_headers:
         try:
             date = get_date(header['aria-label'])
             date_str = date.isoformat()
             link = 'https://www.youtube.com' + header['href']
+
+            # Get the podcast description links.
             description_links = get_podcast_description_links(link)
-            sponsorData.append((link, description_links, date_str))
+
+            # Append the data to the sponsorData list.
+            if description_links:
+                sponsorData.append((link, description_links, date_str))
+                sponsoredCount += 1
         except Exception as e:
             print(e)
             continue   
+
+        if sponsoredCount == 5:
+            break
+
+        
 
     # Close the browser.
     driver.quit()

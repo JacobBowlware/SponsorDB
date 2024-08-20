@@ -53,14 +53,30 @@ const Home = () => {
 
     return (
         <div className="web-page">
-            <div className="web-section home" id="hero">
+            <div className="web-section web-section-dark" id="sample-data" >
+                <div className="web-section__container web-section-content">
+                    <h1 className="web-section__container-header airtable-header">
+                        Maximize your Newsletter Sponsorships
+                    </h1>
+                    <p className="airtable-p">
+                        Access our free database of proven sponsors in your niche. Spend less time searching and more time earning.
+                    </p>
+                    <p>
+                        (8,000+ records from 1,000+ companies) - <Link to="/login">Login</Link> or <Link to="/signup">Signup</Link> to view the full database.
+                    </p>
+                    <div className="airtable-cont">
+                        <AirTable />
+                    </div>
+                </div>
+            </div>
+            {/* <div className="web-section home" id="hero">
                 <div className="web-section__container home__container">
                     <div className="home__container-item">
                         <h2 className="home__container-item__header">
-                            Maximize Your Sponsorships
+                            Maximize Newsletter Sponsorships
                         </h2>
                         <p className="home__container-item__p">
-                            Access our free database of proven sponsors in your niche. Spend less time searching and more time creating.
+                            Access our free database of proven sponsors in your niche. Spend less time searching and more time earning.
 
                         </p>
                         <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
@@ -78,7 +94,7 @@ const Home = () => {
                         </form>
                     </div>
                 </div>
-            </div>
+            </div> */}
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="features">
                     <h2 className="web-section__container-header">
@@ -103,7 +119,7 @@ const Home = () => {
                                     1. Data Collection
                                 </h3>
                                 <p className="home__how-it-works-container__item-text text">
-                                    Data is regularly collected from reputable sources, compiling information on real sponsorships and companies in your niche.
+                                    Data is collected from reputable sources, compiling information on real sponsorships, companies, and newsletters.
                                 </p>
                             </div>
                             <img className="home__how-it-works-container__img" src={search} alt="A team searching the web and gathering data on potential podcast sponsors for our clients." />
@@ -121,24 +137,11 @@ const Home = () => {
                                     3. You Apply
                                 </h3>
                                 <p className="home__how-it-works-container__item-text text">
-                                    With our complete database of sponsors in hand, you can begin applying for sponsorships!
+                                    With our complete database of sponsors in hand, you can begin applying for sponsorships and growing your newsletter.
                                 </p>
                             </div>
                             <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div className="web-section web-section-dark" id="sample-data" >
-                <div className="web-section__container web-section-content">
-                    <h2 className="web-section__container-header airtable-header">
-                        See Our Data For Yourself
-                    </h2>
-                    <p className="airtable-p">
-                        We've compiled a list of 4,000+ sponsorships from 2,000+ companies -below is a small preview.
-                    </p>
-                    <div className="airtable-cont">
-                        <AirTable />
                     </div>
                 </div>
             </div>
