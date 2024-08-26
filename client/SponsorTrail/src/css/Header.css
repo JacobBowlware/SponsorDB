@@ -47,6 +47,10 @@
     font-size: .9rem;
 }
 
+.nav-link__dark {
+    color: var(--var-color-background) !important;
+}
+
 .nav-link:hover {
     opacity: 0.6;
 }
@@ -66,13 +70,16 @@
     align-items: center;
 }
 
+.nav-item__highlight-dark {
+    background: var(--var-color-text);
+}
+
 @media screen and (min-width: 768px) {
     .navbar {
         margin-bottom: 9rem;
     }
 
     .nav-item__highlight {
-        background: var(--var-color-primary);
         width: auto;
         padding: 0 1rem;
         display: flex;

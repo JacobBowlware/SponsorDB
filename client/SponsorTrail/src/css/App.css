@@ -154,6 +154,10 @@ html {
   background: var(--var-color-text);
 }
 
+#loading-btn {
+  max-width: none !important;
+}
+
 /* Forms */
 .disabled {
   opacity: .5;

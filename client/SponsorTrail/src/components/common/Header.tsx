@@ -29,7 +29,7 @@ const Header = () => {
                     <ul className="navbar-nav">
                         <li className="nav-item">
                             <a className="nav-link" href="/#sample-data" onClick={closeNavBar}>Database</a>
-                        </li>``
+                        </li>
                         <li className="nav-item">
                             <a className="nav-link" href="/#features" onClick={closeNavBar}>Features</a>
                         </li>

@@ -8,7 +8,7 @@ interface LoadingBtnProps {
 
 const LoadingBtn = ({ loading, title, addClasses }: LoadingBtnProps) => {
     return (
-        <button id="email-btn" className={`home__container-item__btn review-btn ${addClasses}`} type="submit">
+        <button id="loading-btn" className={`home__container-item__btn review-btn ${addClasses}`} type="submit">
             {loading ? <FontAwesomeIcon className="home__container-item__btn-icon" icon={faKiwiBird} /> : title}
         </button>
     );

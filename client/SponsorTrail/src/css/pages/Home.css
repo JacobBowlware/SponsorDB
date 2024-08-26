@@ -21,27 +21,6 @@
     margin-left: .4rem;
 }
 
-.home__container-item__btn-secondary {
-    height: 3rem;
-    font-weight: 700 !important;
-    font-size: .9rem;
-    background: var(--var-color-primary);
-    color: var(--var-color-text);
-    border: none !important;
-    /* border-radius: 0 15px 15px 0; */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all .3s;
-    width: 10rem;
-}
-
-.home__container-item__btn-secondary:hover {
-    cursor: pointer;
-    opacity: .6;
-    color: var(--var-color-text);
-}
-
 .home__container-item__header {
     font-size: 1.9rem;
     font-weight: 700;
@@ -94,7 +73,7 @@
     height: 3rem;
     font-weight: 700;
     font-size: .9rem;
-    background: var(--var-color-tertiary);
+    background: var(--var-color-text);
     color: #fff;
     border: none !important;
     /* border-radius: 0 15px 15px 0; */
@@ -102,7 +81,7 @@
     justify-content: center;
     align-items: center;
     transition: all .3s;
-    width: 10rem;
+    max-width: 15rem;
 }
 
 .home__container-item__btn:hover {
@@ -207,6 +186,7 @@
 
     .home__container-item__btn {
         font-size: 1.1rem;
+        max-width: 20rem;
     }
 
     .home__container-item__p {
@@ -256,7 +236,7 @@
 }
 
 .home__features-list__item--highlighted {
-    background: var(--var-color-tertiary);
+    background: var(--var-color-text);
     color: #fff;
 }
 
@@ -281,7 +261,7 @@
 
 .home__features-list__item-icon {
     font-size: 4.5rem;
-    color: var(--var-color-tertiary);
+    color: var(--var-color-text);
     margin-bottom: 1rem;
 }
 
@@ -349,7 +329,7 @@
     font-size: 2.2rem;
     margin-right: .5rem;
     margin-bottom: 1rem;
-    color: var(--var-color-tertiary);
+    color: var(--var-color-text);
 }
 
 .home__testimonials-list__item-affiliation {
@@ -420,10 +400,6 @@
     display: none;
 }
 
-.home__how-it-works-container__img-shown {
-    display: block;
-}
-
 @media screen and (min-width: 768px) {
     .home__how-it-works-container {
         grid-template-columns: 1fr 1fr;
@@ -445,6 +421,12 @@
 
     .home__how-it-works-container__item-text {
         font-size: 1.1rem;
+    }
+}
+
+@media screen and (min-width: 1440px) {
+    #how-it-works {
+        max-width: 80%;
     }
 }
 
