@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { Sponsor, validateSponsor } = require('../models/sponsor');
-const { Sponsorship } = require('../models/sponsorship');
 const auth = require('../middleware/auth');
 const subscribe = require('../middleware/subscribe');
 const admin = require('../middleware/admin');

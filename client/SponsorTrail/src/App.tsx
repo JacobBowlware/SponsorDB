@@ -1,3 +1,4 @@
+// React
 import {
   createBrowserRouter, createRoutesFromElements,
   RouterProvider, Route, Outlet
@@ -30,30 +31,55 @@ import ChangePassword from './pages/ChangePassword';
 
 // Authed Pages
 import Sponsors from './pages/authReq/Sponsors';
+import Profile from './pages/authReq/Profile';
+import Admin from './pages/authReq/Admin';
 
 // Components
 import Header from './components/common/Header'
 import Footer from './components/common/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import AuthHeader from './components/common/AuthHeader';
-import Profile from './pages/authReq/Profile';
 
-/*
-TODO:
-- APIS's:
-- - Login - DONE
-- - Signup - DONE
-- - Logout - DONE
-- - Auth - DONE
-*/
+// Other
+import axios from 'axios';
+
 function App() {
   const [userAuth, setUserAuth] = useState(false);
+  const [user, setUser] = useState({
+    email: "",
+    isAdmin: false
+  });
+
+  const getUserInfo = async () => {
+    // Get user profile information
+    await axios.get('http://localhost:3001/api/users/me', {
+      headers: {
+        'x-auth-token': localStorage.getItem('token')
+      }
+    }).then((res) => {
+      setUser(res.data);
+      console.log(res.data);
+    }).catch((err) => {
+      console.log(err);
+    })
+  }
+
+  console.log(user)
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const fetchData = async () => {
+      if (user.email === "") {
+        await getUserInfo();
+      }
+    }
 
+    const token = localStorage.getItem('token');
     if (token) {
       setUserAuth(true);
+
+      if (user.email === "") {
+        fetchData();
+      }
     }
   }, [])
 
@@ -80,6 +106,8 @@ function App() {
         {/* Authed Routes */}
         {userAuth && <Route path="/sponsors/" element={<Sponsors />} />}
         {userAuth && <Route path="/profile/" element={<Profile />} />}
+        {/* Admin Routes */}
+        {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>
     )
   )

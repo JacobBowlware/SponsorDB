@@ -20,8 +20,15 @@ const sponsorSchema = new mongoose.Schema({
         required: false,
         minlength: 0,
         maxlength: 5
+    },
+    linkedVideos: {
+        type: [String],
+        required: false,
+        minlength: 0,
+        maxlength: 1000
     }
 })
+
 
 const Sponsor = mongoose.model('Sponsor', sponsorSchema);
 
