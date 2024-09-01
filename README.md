@@ -1,7 +1,7 @@
 # Sopnsor Trail
 
 ## Project Summary:
-SponsorTrail streamlines finding podcast sponsors. Access a curated list of proven sponsors...
+Maximize your Newsletter Sponsorships. SponsorDB provides a free database of proven newsletter sponsors.
 
 ## Tech Stack:
 ### Front End:
