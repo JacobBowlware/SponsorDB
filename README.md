@@ -1,4 +1,4 @@
-# SopnsorDB
+# SponsorDB
 
 ## Project Summary:
 - Full stack web application to streamline the searching process for newsletter sponsrships.
