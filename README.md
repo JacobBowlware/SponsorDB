@@ -1,20 +1,35 @@
-# SponsorDB
+:bookmark_tabs: SponsorDB
+## Overview
 
-## Project Summary:
-- Full stack web application to streamline the searching process for newsletter sponsrships.
-- Automated email scraper to collect and verify sponsorship data.
-- Intuitive database design to allow users to search, sort, and apply for sponsorhips.
+SponsorDB is a full-stack web application designed to streamline the search for newsletter sponsorships. It provides users with a continuously updated database of verified sponsorship opportunities, helping newsletter creators save time and find the right sponsors efficiently.
+Features
+
+Automated Email Scraper: Collects and verifies sponsorship data from newsletter emails using Playwright.
+Advanced Search and Sorting: Intuitive interface for users to search, filter, and apply for sponsorships.
+Real-Time Updates: Continuously updated database with new sponsorship deals and verified information.
+Free Access: No hidden fees or charges for accessing the sponsor database.
+
+## How It Works
+
+Data Collection:
+    Our automated scraper gathers data from reputable sources, compiling information on real sponsorships, companies, and newsletters.
+Data Verification:
+    Collected data is verified and organized into our MongoDB database to ensure reliability and accuracy.
+Application Process:
+    Users can explore the database, apply for sponsorships, and enhance their newsletter's reach and profitability.
 
 ## Technology Used
-### Front End:
-- TypeScript
-- JavaScript
-- ReactJS
-- HTML/CSS
+Front End:
 
-### Back End:
-- MongoDB
-- NodeJS
-- ExpressJS
-- Python
-- Jest
+    TypeScript
+    JavaScript
+    ReactJS
+    HTML/CSS
+
+Back End:
+
+    NodeJS
+    ExpressJS
+    MongoDB
+    Python
+    Jest for testing
