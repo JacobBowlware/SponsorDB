@@ -21,7 +21,7 @@ const sponsorSchema = new mongoose.Schema({
         minlength: 0,
         maxlength: 5
     },
-    linkedVideos: {
+    newslettersSponsored: {
         type: [String],
         required: false,
         minlength: 0,
@@ -36,7 +36,8 @@ const validateSponsor = (sponsor) => {
     const schema = Joi.object({
         sponsorName: Joi.string().min(2).max(256).required(),
         sponsorLink: Joi.string().min(2).max(256),
-        tags: Joi.array().items(Joi.string()).max(5)
+        tags: Joi.array().items(Joi.string()).max(5),
+        newslettersSponsored: Joi.array().items(Joi.string()).max(1000)
     });
 
     return schema.validate(sponsor);

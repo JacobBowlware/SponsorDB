@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { Sponsor, validateSponsor } = require('../models/sponsor');
 const auth = require('../middleware/auth');
-const subscribe = require('../middleware/subscribe');
-const admin = require('../middleware/admin');
 
 // Get all sponsors
 router.get('/', auth, async (req, res) => {
