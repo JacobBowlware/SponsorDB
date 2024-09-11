@@ -2,18 +2,36 @@ const winston = require('winston');
 require('express-async-errors');
 require('winston-mongodb');
 
-module.exports = () => {
-    winston.add(new winston.transports.MongoDB({ db: 'mongodb://localhost/sponsortrail' }));
-    winston.add(new winston.transports.File({ filename: 'logfile.log' }));
-    winston.add(new winston.transports.Console({ format: winston.format.simple() }));
+const logFormat = winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ timestamp, level, message, stack }) => {
+        return `${timestamp} ${level}: ${stack || message}`;
+    })
+);
 
-    process.on('uncaughtException', (ex) => {
-        winston.error(ex.message, ex);
-        process.exit(1);
-    });
+const logger = winston.createLogger({
+    level: 'info',
+    format: logFormat,
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'errorLogfile.log', level: 'error' }),
+        new winston.transports.File({ filename: 'infoLogfile.log', level: 'info' }),
+        new winston.transports.MongoDB({
+            db: 'mongodb://localhost/sponsortrail',
+            level: 'info',
+            options: { useUnifiedTopology: true }
+        })
+    ]
+});
 
-    process.on('unhandledRejection', (ex) => {
-        winston.error(ex.message, ex);
-        process.exit(1);
-    });
-}
+process.on('uncaughtException', (ex) => {
+    logger.error(ex.message, ex);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (ex) => {
+    logger.error(ex.message);
+    process.exit(1);
+});
+
+module.exports = logger;
