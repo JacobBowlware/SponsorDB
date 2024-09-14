@@ -9,6 +9,9 @@ const logFormat = winston.format.combine(
     })
 );
 
+const mongoPassword = process.env.mongoPassword;
+const mongoURI = "mongodb+srv://jacobbowlware:" + mongoPassword + "@sponsor-db.zsf5b.mongodb.net/?retryWrites=true&w=majority&appName=sponsor-db";
+
 const logger = winston.createLogger({
     level: 'info',
     format: logFormat,
@@ -17,9 +20,8 @@ const logger = winston.createLogger({
         new winston.transports.File({ filename: 'errorLogfile.log', level: 'error' }),
         new winston.transports.File({ filename: 'infoLogfile.log', level: 'info' }),
         new winston.transports.MongoDB({
-            db: 'mongodb://localhost/sponsortrail',
-            level: 'info',
-            options: { useUnifiedTopology: true }
+            db: mongoURI,
+            level: 'info'
         })
     ]
 });

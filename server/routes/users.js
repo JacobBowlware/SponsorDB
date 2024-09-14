@@ -16,26 +16,31 @@ router.get('/me', auth, async (req, res) => {
     res.send(user);
 });
 
+// Test route
+router.get('/test', async (req, res) => {
+    res.send("Testing...");
+});
+
 // Register a new user
 router.post('/', async (req, res) => {
     const { error } = validateUser(req.body);
     if (error) {
-        return res.status(400).send(error.details[0].message);
+        return res.status(400).send("Error Happen: " + error.details[0].message);
     }
 
-    let user = await User.findOne({ email: req.body.email });
-    if (user) {
-        return res.status(400).send('User already registered.');
-    }
-
-    user = new User({
+    let user = new User({
         email: req.body.email,
         password: ""
     });
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(req.body.password, salt);
-    await user.save();
+    try {
+        await user.save();
+    }
+    catch (error) {
+        return res.status(400).send("A user with this email already exists");
+    }
 
     const token = user.generateAuthToken();
     res.header('x-auth-token', token);

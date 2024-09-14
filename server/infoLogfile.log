@@ -17,3 +17,73 @@
 2024-09-11T17:47:21.118Z info: Connected to mongodb://localhost/sponsortrail...
 2024-09-11T17:47:41.300Z info: Listening on port 3001...
 2024-09-11T17:47:41.313Z info: Connected to mongodb://localhost/sponsortrail...
+2024-09-11T17:49:40.863Z info: Listening on port 3001...
+2024-09-11T17:49:40.877Z info: Connected to mongodb://localhost/sponsortrail...
+2024-09-11T17:49:53.847Z info: Listening on port 3001...
+2024-09-11T17:49:53.867Z info: Connected to mongodb://localhost/sponsortrail...
+2024-09-11T17:50:03.639Z info: Listening on port 3001...
+2024-09-11T17:50:03.653Z info: Connected to mongodb://localhost/sponsortrail...
+2024-09-12T02:02:13.836Z info: Listening on port 3001...
+2024-09-12T02:02:14.523Z error: MongoServerError: bad auth : authentication failed
+    at Connection.onMessage (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:205:26)
+    at MessageStream.<anonymous> (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:64:60)
+    at MessageStream.emit (node:events:513:28)
+    at processIncomingData (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:117:16)
+    at MessageStream._write (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:33:9)
+    at writeOrBuffer (node:internal/streams/writable:392:12)
+    at _write (node:internal/streams/writable:333:10)
+    at Writable.write (node:internal/streams/writable:337:10)
+    at TLSSocket.ondata (node:internal/streams/readable:766:22)
+    at TLSSocket.emit (node:events:513:28)
+2024-09-12T02:03:21.266Z info: Listening on port 3001...
+2024-09-12T02:03:21.842Z error: MongoServerError: bad auth : authentication failed
+    at Connection.onMessage (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:205:26)
+    at MessageStream.<anonymous> (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:64:60)
+    at MessageStream.emit (node:events:513:28)
+    at processIncomingData (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:117:16)
+    at MessageStream._write (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:33:9)
+    at writeOrBuffer (node:internal/streams/writable:392:12)
+    at _write (node:internal/streams/writable:333:10)
+    at Writable.write (node:internal/streams/writable:337:10)
+    at TLSSocket.ondata (node:internal/streams/readable:766:22)
+    at TLSSocket.emit (node:events:513:28)
+2024-09-12T02:04:18.657Z info: Listening on port 3001...
+2024-09-12T02:04:24.422Z error: MongoServerError: bad auth : authentication failed
+    at Connection.onMessage (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:205:26)
+    at MessageStream.<anonymous> (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:64:60)
+    at MessageStream.emit (node:events:513:28)
+    at processIncomingData (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:117:16)
+    at MessageStream._write (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:33:9)
+    at writeOrBuffer (node:internal/streams/writable:392:12)
+    at _write (node:internal/streams/writable:333:10)
+    at Writable.write (node:internal/streams/writable:337:10)
+    at TLSSocket.ondata (node:internal/streams/readable:766:22)
+    at TLSSocket.emit (node:events:513:28)
+2024-09-12T02:05:02.730Z info: Listening on port 3001...
+2024-09-12T02:05:03.315Z error: MongoServerError: bad auth : authentication failed
+    at Connection.onMessage (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:205:26)
+    at MessageStream.<anonymous> (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:64:60)
+    at MessageStream.emit (node:events:513:28)
+    at processIncomingData (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:117:16)
+    at MessageStream._write (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:33:9)
+    at writeOrBuffer (node:internal/streams/writable:392:12)
+    at _write (node:internal/streams/writable:333:10)
+    at Writable.write (node:internal/streams/writable:337:10)
+    at TLSSocket.ondata (node:internal/streams/readable:766:22)
+    at TLSSocket.emit (node:events:513:28)
+2024-09-12T02:09:22.965Z info: Listening on port 3001...
+2024-09-12T02:09:23.670Z error: MongoServerError: bad auth : authentication failed
+    at Connection.onMessage (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:205:26)
+    at MessageStream.<anonymous> (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/connection.js:64:60)
+    at MessageStream.emit (node:events:513:28)
+    at processIncomingData (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:117:16)
+    at MessageStream._write (/Users/jacobbowlware/Documents/Code/React-Projects/SponsorTrail/server/node_modules/mongodb/lib/cmap/message_stream.js:33:9)
+    at writeOrBuffer (node:internal/streams/writable:392:12)
+    at _write (node:internal/streams/writable:333:10)
+    at Writable.write (node:internal/streams/writable:337:10)
+    at TLSSocket.ondata (node:internal/streams/readable:766:22)
+    at TLSSocket.emit (node:events:513:28)
+2024-09-12T02:11:22.030Z info: Listening on port 3001...
+2024-09-12T02:11:22.876Z info: Connected to mongodb://localhost/sponsortrail...
+2024-09-12T02:11:44.597Z info: Listening on port 3001...
+2024-09-12T02:11:45.170Z info: Connected to MongoDB...

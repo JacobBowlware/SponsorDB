@@ -1,4 +1,4 @@
 {
     "openai_api_key": "sponsortrail_openaiPrivateKey",
-    "jwtPrivateKey": "sponsortrail_jwtPrivateKey"
+    "jwtPrivateKey": ""
 }

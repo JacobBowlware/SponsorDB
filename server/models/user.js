@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 2,
-        maxlength: 100
+        maxlength: 100,
+        unique: true
     },
     password: {
         type: String,
@@ -24,7 +25,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.methods.generateAuthToken = function () {
-    const token = jwt.sign({ _id: this._id }, config.get('jwtPrivateKey'));
+    const token = jwt.sign({ _id: this._id }, process.env.jwtPrivateKey);
     return token;
 }
 
