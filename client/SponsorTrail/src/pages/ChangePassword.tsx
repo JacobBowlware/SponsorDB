@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import config from "../config";
 
 const ChangePassword = () => {
     const [user, setUser] = useState({
@@ -14,7 +15,7 @@ const ChangePassword = () => {
 
     const getUserProfile = async () => {
         // Get user profile information
-        await axios.get(`http://localhost:3001/api/"users/me`, {
+        await axios.get(`${process.env.REACT_APP_BACKEND_URL}users/me`, {
             headers: {
                 'x-auth-token': localStorage.getItem('token')
             }
@@ -36,7 +37,7 @@ const ChangePassword = () => {
         e.preventDefault();
         setLoading(true);
         // Send a password reset email
-        await axios.post(`http://localhost:3001/api/users/reset-password`, {
+        await axios.post(`${config.backendUrl}users/reset-password`, {
             email: user.email
         }).then((res) => {
             console.log(res.data);

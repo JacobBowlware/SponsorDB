@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { validateProperty } from "../components/common/WebJoi";
 import axios from "axios";
+import config from '../config';
 
 interface LoginProps {
     userAuth: boolean;
@@ -28,7 +29,7 @@ const Login = ({ userAuth }: LoginProps) => {
             return;
         }
 
-        await axios.post('http://localhost:3001/api/auth/login', {
+        await axios.post(`${config.backendUrl}auth/login`, {
             email: email,
             password: password
         }).then((res) => {

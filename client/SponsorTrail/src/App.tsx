@@ -19,6 +19,7 @@ import './css/pages/PrivacyPolicy.css';
 import './css/pages/TOS.css';
 import './css/pages/authReq/Sponsors.css';
 import './css/pages/authReq/Profile.css';
+import './css/pages/authReq/Admin.css';
 
 //Pages
 import Home from './pages/Home';
@@ -42,6 +43,7 @@ import AuthHeader from './components/common/AuthHeader';
 
 // Other
 import axios from 'axios';
+import config from './config';
 
 function App() {
   const [userAuth, setUserAuth] = useState(false);
@@ -52,19 +54,16 @@ function App() {
 
   const getUserInfo = async () => {
     // Get user profile information
-    await axios.get('http://localhost:3001/api/users/me', {
+    await axios.get(`${config.backendUrl}users/me`, {
       headers: {
         'x-auth-token': localStorage.getItem('token')
       }
     }).then((res) => {
       setUser(res.data);
-      console.log(res.data);
     }).catch((err) => {
       console.log(err);
     })
   }
-
-  console.log(user)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,7 +104,7 @@ function App() {
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
         {userAuth && <Route path="/sponsors/" element={<Sponsors />} />}
-        {userAuth && <Route path="/profile/" element={<Profile />} />}
+        {userAuth && <Route path="/profile/" element={<Profile userEmail={user.email} />} />}
         {/* Admin Routes */}
         {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

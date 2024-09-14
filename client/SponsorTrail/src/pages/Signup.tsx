@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { validateProperty, validateUser } from "../components/common/WebJoi";
 import axios from 'axios';
+import config from '../config';
 
 interface SignupProps {
     userAuth: boolean;
@@ -68,14 +69,13 @@ const Signup = ({ userAuth }: SignupProps) => {
             return;
         }
 
-        await axios.post('http://localhost:3001/api/users/', {
+        await axios.post(`${config.backendUrl}users/`, {
             email: email,
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
             window.location.href = '/sponsors';
         }).catch((err) => {
-            console.log(err);
             setConfirmPasswordError("An error occurred, please try again.")
         })
     }

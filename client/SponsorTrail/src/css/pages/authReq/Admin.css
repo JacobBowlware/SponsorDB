@@ -1,0 +1,106 @@
+.admin-header__cont {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.admin-dash__cont {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin-dash__text {
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: var(--var-color-text);
+    text-align: left;
+    width: 100%;
+}
+
+.admin-dash__form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    justify-content: center;
+    align-items: flex-start;
+    background: var(--var-color-primary);
+    padding: .5rem;
+}
+
+.admin-dash__form-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.admin-dash__form-input {
+    width: 100%;
+    margin: .4rem 0 .1rem 0;
+}
+
+.admin-dash__form__email-link {
+    color: var(--var-color-text);
+    font-size: 1rem;
+    font-weight: 300;
+    text-decoration: none;
+
+}
+
+.admin-dash__form__btn {
+    width: 10rem;
+    background: var(--var-color-text);
+    color: var(--var-color-primary);
+}
+
+.admin-dash__sponsor-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.admin-dash__form-input {
+    margin: .4rem 0 .1rem 0;
+    padding: .3rem;
+}
+
+.admin-dash__sponsor-approve {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: .6rem;
+    gap: .5rem;
+}
+
+.admin-dash__form-btn {
+    background: var(--var-color-text);
+    color: var(--var-color-primary);
+    width: 10rem;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: .4rem;
+}
+
+.admin-dash__form-btn-approve {
+    background: var(--var-color-text);
+}
+
+.admin-dash__form-btn-deny {
+    background: #D82729;
+}

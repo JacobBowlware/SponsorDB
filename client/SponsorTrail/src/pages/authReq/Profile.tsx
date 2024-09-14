@@ -1,30 +1,37 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import config from '../../config';
 
-const Profile = () => {
+interface ProfileProps {
+    userEmail: string
+}
+
+const Profile = ({ userEmail }: ProfileProps) => {
     const [user, setUser] = useState({
-        email: ""
+        email: "loading..."
     });
 
     const getUserProfile = async () => {
-        // Get user profile information
-        await axios.get('http://localhost:3001/api/users/me', {
+        await axios.get(`${config.backendUrl}users/me`, {
             headers: {
                 'x-auth-token': localStorage.getItem('token')
             }
         }).then((res) => {
             setUser(res.data);
         }).catch((err) => {
-            console.log(err);
+            setUser({ email: "An error occured..." });
         })
     }
 
     useEffect(() => {
-        if (user.email === "") {
+        if (userEmail !== "") {
+            setUser({ email: userEmail });
+        }
+        else {
             getUserProfile();
         }
-    }, [user.email])
+    }, [user.email, userEmail])
 
     return (
         <div className="web-page">
@@ -37,7 +44,7 @@ const Profile = () => {
                         <div className="profile-cont__card-info">
                             <div className="profile-cont__card-info-options">
                                 <p className="profile-cont__card-info-item">
-                                    Email: <span className="profile-cont__card-info-item__value">  {user.email ? user.email : "An error occured..."}</span>
+                                    Email: <span className="profile-cont__card-info-item__value">  {user.email}</span>
                                 </p>
                                 <Link className="btn profile-cont__card-form__btn" to="/change-password">
                                     Change Password
