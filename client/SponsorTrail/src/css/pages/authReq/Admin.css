@@ -6,9 +6,6 @@
 }
 
 .admin-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     width: 100%;
     padding: 1rem 0;
     border-bottom: 1px solid #e0e0e0;
@@ -103,4 +100,15 @@
 
 .admin-dash__form-btn-deny {
     background: #D82729;
+}
+
+.admin-dash__form-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.admin-dash__form-body__links {
+    display: column;
+    justify-content: center;
 }

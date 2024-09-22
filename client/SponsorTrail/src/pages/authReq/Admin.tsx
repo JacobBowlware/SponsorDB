@@ -2,6 +2,14 @@ import { faArrowRight, faCheck, faMailForward, faMailReply, faMessage, faTimes }
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 
+interface Sponsor {
+    sponsorName: string;
+    sponsorLink: string;
+    newsletter: string;
+    tags: string[];
+    emailLink: string;
+}
+
 /*
  ADMIN PAGE
  - This page allows for the admin to view all potential-sponsors found from our email scraping tool.
@@ -15,11 +23,11 @@ const Admin = () => {
     const [tags, setTags] = useState([""]);
     const [sponsors, setSponsors] = useState([
         {
-            sponsor: "",
-            sponsorLink: "",
+            sponsorName: "",
+            sponsorLinks: [""],
             newsletter: "",
             tags: [""],
-            emailLink: ""
+            emailLink: "",
         }
     ]);
 
@@ -42,15 +50,15 @@ const Admin = () => {
         // Call backend to get all sponsors with status 'Under Review'
         setSponsors([
             {
-                sponsor: "Health Tech Solutions",
-                sponsorLink: "https://www.example_sponsors-page.com",
+                sponsorName: "Health Tech Solutions",
+                sponsorLinks: ["https://www.example_sponsors-page.com", "https://www.blahblahJoslynsCutepage.com"],
                 newsletter: "WeeklyTech",
                 tags: ["Tech", "Health"],
                 emailLink: "sponsorDBemails/this_sponsors-email.gmail.com"
             },
             {
-                sponsor: "Northwest Finance",
-                sponsorLink: "https://www.north-fin.com",
+                sponsorName: "Northwest Finance",
+                sponsorLinks: ["https://www.north-fin.com"],
                 newsletter: "FinanceWeekly",
                 tags: ["Finance"],
                 emailLink: "sponsorDBemails/other-sopnsorHERE.gmail.com"
@@ -62,20 +70,33 @@ const Admin = () => {
         <div className="web-page">
             <div className="web-section admin" id="">
                 <div className="admin-header__cont web-section-content">
-                    <h1 className="admin-header">Admin Dashboard</h1>
+                    <h1 className="admin-header">
+                        <strong>Approve </strong> or <strong>Deny</strong> Sponsors
+                    </h1>
                 </div>
                 <div className="admin-dash__cont">
                     <p className="admin-dash__text">
                         View all <strong>'Under Review'</strong> sponsors currently in the database.
                     </p>
                     <p className="admin-dash__text">
-                        Fill in the fields with the correct information. <strong>Submit</strong> or <strong>Deny</strong> sponsors to add them to the database.
+                        Fill in the fields with the correct information.
                     </p>
                     <form className="admin-dash__form">
                         <div className="admin-dash__form-header">
-                            <p className="mb-0">
-                                Newsletter Email: <a href={sponsors[0].emailLink} target="_blank" rel="noreferrer">{sponsors[0].emailLink}</a>
-                            </p>
+                            <div className="admin-dash__form-body">
+                                <p className="mb-0">
+                                    Email Link: <a href={sponsors[0].emailLink} target="_blank" rel="noreferrer">{sponsors[0].emailLink}</a>
+                                </p>
+                                <p className="mb-0 admin-dash__form-body__links">
+                                    Potential Sponsors:
+                                    <ul>
+                                        {sponsors[0].sponsorLinks.map((link, index) => {
+                                            return <li><a key={index} href={link} target="_blank" rel="noreferrer">{link}</a></li>
+
+                                        })}
+                                    </ul>
+                                </p>
+                            </div>
                             <button onClick={(e) => handleDeny(e)} className="btn admin-dash__form-btn admin-dash__form-btn-deny">
                                 <FontAwesomeIcon icon={faTimes} />
                             </button>
