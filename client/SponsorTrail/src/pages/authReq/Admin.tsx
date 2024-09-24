@@ -1,70 +1,99 @@
-import { faArrowRight, faCheck, faMailForward, faMailReply, faMessage, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 
-interface Sponsor {
-    sponsorName: string;
-    sponsorLink: string;
-    newsletter: string;
-    tags: string[];
-    emailLink: string;
-}
-
-/*
- ADMIN PAGE
- - This page allows for the admin to view all potential-sponsors found from our email scraping tool.
- - Sponsors with the 'Under Review' status will be displayed here.
- - ADMIN must approve or deny the sponsor before they are added to the sponsors database.
-*/
 const Admin = () => {
-    const [sponsor, setSponsor] = useState("");
-    const [sponsorLink, setSponsorLink] = useState("");
-    const [newsletter, setNewsletter] = useState("");
-    const [tags, setTags] = useState([""]);
-    const [sponsors, setSponsors] = useState([
+    // potentialSponsorData for potential sponsors, from our email scraping tool
+    const [potentialSponsorData, setPotentialSponsorData] = useState([
         {
-            sponsorName: "",
-            sponsorLinks: [""],
-            newsletter: "",
-            tags: [""],
-            emailLink: "",
+            emailSender: "",
+            potentialSponsorLinks: [""]
         }
     ]);
 
-    const handleApprove = async (e: any) => {
+    const [sponsors, setSponsors] = useState([
+        {
+            newsletter: potentialSponsorData[0].emailSender,
+            sponsor: "",
+            sponsorLink: "",
+            tags: [""]
+        }
+    ]);
+
+    const handleAddSponsor = () => {
+        setSponsors([...sponsors, { newsletter: sponsors[0].newsletter, sponsor: "", sponsorLink: "", tags: [""] }]);
+    };
+
+    const handleRemoveSponsor = (index: number) => {
+        const newSponsors = sponsors.filter((_, i) => i !== index);
+        setSponsors(newSponsors);
+    };
+
+    const handleSponsorChange = (index: number, field: string, value: string) => {
+        const newSponsors = [...sponsors];
+        newSponsors[index] = { ...newSponsors[index], [field]: value };
+        setSponsors(newSponsors);
+    };
+
+
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
-        console.log("Approve");
+
+        console.log(sponsors);
+
     }
 
     const handleDeny = async (e: any) => {
         e.preventDefault();
 
-        let sponsorsCopy = [...sponsors];
+        let potentialSponsorDataCopy = [...potentialSponsorData];
 
-        // Remove first element from sponsorsCopy
-        sponsorsCopy.shift();
-        setSponsors(sponsorsCopy);
+        // Remove first element
+        potentialSponsorData.shift();
+
+        // Update state
+        setPotentialSponsorData(potentialSponsorDataCopy);
     }
 
     useEffect(() => {
-        // Call backend to get all sponsors with status 'Under Review'
-        setSponsors([
+        // Call backend to get all potential sponsors
+        const fetchedSponsorData = [
             {
-                sponsorName: "Health Tech Solutions",
-                sponsorLinks: ["https://www.example_sponsors-page.com", "https://www.blahblahJoslynsCutepage.com"],
-                newsletter: "WeeklyTech",
-                tags: ["Tech", "Health"],
-                emailLink: "sponsorDBemails/this_sponsors-email.gmail.com"
+                emailSender: "Health Tech Solutions <health-tech@gmail.com>",
+                potentialSponsorLinks: ["https://www.example_sponsors-page.com", "https://www.blahblahJoslynsCutepage.com"]
             },
             {
-                sponsorName: "Northwest Finance",
-                sponsorLinks: ["https://www.north-fin.com"],
-                newsletter: "FinanceWeekly",
-                tags: ["Finance"],
-                emailLink: "sponsorDBemails/other-sopnsorHERE.gmail.com"
+                emailSender: "Northwest Finance <northwestFin@hot-mail.net>",
+                potentialSponsorLinks: ["https://www.north-fin.com"]
+            }
+        ];
+
+        setPotentialSponsorData(fetchedSponsorData);
+
+        // Set sponsors after potentialSponsorData is populated
+        setSponsors([
+            {
+                newsletter: fetchedSponsorData[0].emailSender,
+                sponsor: "",
+                sponsorLink: "",
+                tags: [""]
             }
         ]);
     }, []);
+
+    const checkDisabled = () => {
+        if (sponsors.length === 0) {
+            return true;
+        }
+
+        for (let i = 0; i < sponsors.length; i++) {
+            if (sponsors[i].sponsor === "" || sponsors[i].sponsorLink === "" || sponsors[i].tags.length === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     return (
         <div className="web-page">
@@ -76,44 +105,66 @@ const Admin = () => {
                 </div>
                 <div className="admin-dash__cont">
                     <p className="admin-dash__text">
-                        View all <strong>'Under Review'</strong> sponsors currently in the database.
-                    </p>
-                    <p className="admin-dash__text">
-                        Fill in the fields with the correct information.
+                        View all <strong>'Potential Sponsors'</strong> currently in the database.
                     </p>
                     <form className="admin-dash__form">
                         <div className="admin-dash__form-header">
                             <div className="admin-dash__form-body">
                                 <p className="mb-0">
-                                    Email Link: <a href={sponsors[0].emailLink} target="_blank" rel="noreferrer">{sponsors[0].emailLink}</a>
+                                    Email Sender: <a href={potentialSponsorData[0].emailSender} target="_blank" rel="noreferrer">{potentialSponsorData[0].emailSender}</a>
                                 </p>
                                 <p className="mb-0 admin-dash__form-body__links">
                                     Potential Sponsors:
                                     <ul>
-                                        {sponsors[0].sponsorLinks.map((link, index) => {
+                                        {potentialSponsorData[0].potentialSponsorLinks.map((link, index) => {
                                             return <li><a key={index} href={link} target="_blank" rel="noreferrer">{link}</a></li>
 
                                         })}
                                     </ul>
                                 </p>
                             </div>
+                        </div>
+                        {sponsors.map((sponsorData, index) => {
+                            return <div className="admin-dash__sponsor-info">
+                                <p className="mb-0">
+                                    Sponsor  {index + 1}:
+                                </p>
+                                <input
+                                    placeholder="Sponsor"
+                                    className="admin-dash__form-input"
+                                    onChange={(e) => { handleSponsorChange(index, "sponsor", e.target.value) }}
+                                    value={sponsorData.sponsor}
+                                />
+                                <input
+                                    placeholder="Sponsor Link"
+                                    className="admin-dash__form-input"
+                                    onChange={(e) => { handleSponsorChange(index, "sponsorLink", e.target.value) }}
+                                    value={sponsorData.sponsorLink}
+                                />
+                                <input
+                                    placeholder="tag1, tag2, etc"
+                                    className="admin-dash__form-input"
+                                    onChange={(e) => { handleSponsorChange(index, "tags", e.target.value) }}
+                                    value={sponsorData.tags}
+                                />
+                                <button type="button" onClick={() => handleRemoveSponsor(index)} className="btn admin-dash__form-btn-remove_sponsor">
+                                    Remove
+                                </button>
+                            </div>
+                        })}
+
+                        <button type="button" onClick={handleAddSponsor} className="btn admin-dash__form-btn-add_sponsor">
+                            <FontAwesomeIcon icon={faPlus} />
+                        </button>
+                        <div className="admin-dash__sponsor-approve">
+                            <button disabled={checkDisabled()} onClick={(e) => handleSubmit(e)} className="btn admin-dash__form-btn admin-dash__form-btn-approve">
+                                <FontAwesomeIcon icon={faCheck} />
+                            </button>
                             <button onClick={(e) => handleDeny(e)} className="btn admin-dash__form-btn admin-dash__form-btn-deny">
                                 <FontAwesomeIcon icon={faTimes} />
                             </button>
                         </div>
-                        <div className="admin-dash__sponsor-info">
-                            <input placeholder="Sponsor" className="admin-dash__form-input" onChange={(e) => { setSponsor(e.target.value) }} />
-                            <input placeholder="Sponsor Link" className="admin-dash__form-input" onChange={(e) => { setSponsorLink(e.target.value) }} />
-                            <input placeholder="Newsletter Name" className="admin-dash__form-input" onChange={(e) => { setNewsletter(e.target.value) }} />
-                            <input placeholder="tag1, tag2, etc" className="admin-dash__form-input" onChange={(e) => { setTags([e.target.value]) }} />
-                        </div>
-                        <div className="admin-dash__sponsor-approve">
-                            <button disabled={!sponsor || !sponsorLink || !newsletter} onClick={(e) => handleApprove(e)} className="btn admin-dash__form-btn admin-dash__form-btn-approve">
-                                Submit <FontAwesomeIcon icon={faArrowRight} />
-                            </button>
-                        </div>
                     </form>
-
                 </div>
             </div>
         </div>

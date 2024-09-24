@@ -45,7 +45,7 @@ const Review = () => {
             <div className="web-section all-blogs web-section-content" id="review">
                 <div className="web-section__container review-container">
                     <h1 className="review-header">
-                        We appreciate your feedback!
+                        Leave a Review
                     </h1>
                     <form className="review-form" onSubmit={(e) => handleSubmit(e)}>
                         <h2 className="review-form-label">Name (optional):</h2>

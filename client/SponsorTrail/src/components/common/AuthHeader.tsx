@@ -5,7 +5,11 @@ import { faBars, faDatabase, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 
-const AuthHeader = () => {
+interface AuthHeaderProps {
+    isAdmin: boolean;
+}
+
+const AuthHeader = ({ isAdmin }: AuthHeaderProps) => {
     const [navOpen, setNavOpen] = useState(false);
 
     const closeNavBar = () => {
@@ -26,6 +30,9 @@ const AuthHeader = () => {
                 </button>
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav">
+                        {isAdmin && <li className="nav-item">
+                            <Link className="nav-link" to="/admin" onClick={closeNavBar}>Admin</Link>
+                        </li>}
                         <li className="nav-item">
                             <Link className="nav-link" to="/sponsors" onClick={closeNavBar}>Database</Link>
                         </li>

@@ -34,7 +34,7 @@
     justify-content: center;
     align-items: flex-start;
     background: var(--var-color-primary);
-    padding: .5rem;
+    padding: 1rem;
 }
 
 .admin-dash__form-header {
@@ -69,6 +69,8 @@
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
+    border-bottom: 1px solid #b8b6b6;
+    padding: 1rem 0;
 }
 
 .admin-dash__form-input {
@@ -91,7 +93,25 @@
     width: 10rem;
     font-weight: 600;
     font-size: 1rem;
-    padding: .4rem;
+    padding: .3rem;
+}
+
+.admin-dash__form-btn-remove_sponsor {
+    padding: .3rem;
+    font-size: .8rem;
+    background: var(--var-color-text);
+    color: var(--var-color-primary);
+    width: 10rem;
+    margin: .3rem 0 0 0;
+}
+
+.admin-dash__form-btn-add_sponsor {
+    padding: .3rem;
+    font-size: 1rem;
+    background: var(--var-color-text);
+    color: var(--var-color-primary);
+    width: 10rem;
+    margin: 1rem 0;
 }
 
 .admin-dash__form-btn-approve {
@@ -111,4 +131,10 @@
 .admin-dash__form-body__links {
     display: column;
     justify-content: center;
+}
+
+@media screen and (min-width: 768px) {
+    .admin-dash__form {
+        padding: 1.5rem;
+    }
 }

@@ -15,7 +15,7 @@ const Footer = ({ auth }: FooterProps) => {
                     <Link className="footer-item" to="/terms-of-service">
                         Terms of Service
                     </Link>
-                    <a className="footer-item" href="mailto:SponsorDatabase@gmail.com">
+                    <a className="footer-item" href="mailto:sponsordatabase@gmail.com">
                         Contact Us
                     </a>
                     {auth ? <Link className="footer-item " to="/login" onClick={() => {

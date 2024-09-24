@@ -25,7 +25,7 @@ const FAQAccordian = () => {
             />
             <AccordianItem
                 title="How do we gather our data?"
-                content="We gather our data directly from content creators and sponsors themselves. Our process ensures that the information provided is accurate and up-to-date."
+                content="We gather our data directly from newsletters and sponsors themselves. Our process ensures that the information provided is accurate and up-to-date."
                 onPress={() => setAcc5Open(!acc5Open)}
                 isOpen={acc5Open}
             />
