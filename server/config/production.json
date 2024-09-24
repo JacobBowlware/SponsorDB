@@ -1,5 +1,5 @@
 {
     "db": "mongodb+srv://jacobbowlware:${mongoPassword}@sponsor-db.zsf5b.mongodb.net/logs?retryWrites=true&w=majority`",
-    "BASE_URL": "https://your-app-name.herokuapp.com/api/",
+    "BASE_URL": "https://sponsor-db-server-f6ca7971af31.herokuapp.com//",
     "port": 3001
 }

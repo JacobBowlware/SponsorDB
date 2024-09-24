@@ -1,5 +1,5 @@
 {
     "jwtPrivateKey": "1234",
-    "db": "mongodb://localhost:27017/sponsortrail-test",
+    "db": "https://sponsor-db-server-f6ca7971af31.herokuapp.com",
     "port": 3001
 }

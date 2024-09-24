@@ -4,7 +4,7 @@ const logger = require('./startup/logging');
 
 /*
 TODO:
-- Add an error logger for the email monitor
+- Add an error logger for the email monitor - DONE
 - Add unit & integration tests for the email monitor
 - Change email monitor CRON job to run every 12 hours.
 - 

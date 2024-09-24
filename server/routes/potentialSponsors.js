@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { PotentialSponsor, validatePotentialSponsor } = require('../models/potentialSponsor');
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
 // Get all potential sponsors
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, admin, async (req, res) => {
     const potentialSponsors = await PotentialSponsor.find();
     res.status(200).send(potentialSponsors);
 });
@@ -31,7 +32,7 @@ router.post('/', auth, async (req, res) => {
     await potentialSponsor.save().then((potentialSponsor) => {
         res.send(potentialSponsor);
     }).catch((e) => {
-        res.status(400).send(e.message);
+        res.status(400).send("Error saving to database...", e.message);
     });
 });
 
