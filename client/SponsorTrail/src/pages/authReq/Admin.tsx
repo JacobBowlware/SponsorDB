@@ -1,13 +1,16 @@
 import { faCheck, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
+import config from '../../config';
+import axios from "axios";
 
 const Admin = () => {
     // potentialSponsorData for potential sponsors, from our email scraping tool
     const [potentialSponsorData, setPotentialSponsorData] = useState([
         {
             emailSender: "",
-            potentialSponsorLinks: [""]
+            potentialSponsorLinks: [""],
+            _id: ""
         }
     ]);
 
@@ -16,12 +19,13 @@ const Admin = () => {
             newsletter: potentialSponsorData[0].emailSender,
             sponsor: "",
             sponsorLink: "",
-            tags: [""]
+            tags: [""],
+            _id: potentialSponsorData[0]._id
         }
-    ]);
+    ] || []);
 
     const handleAddSponsor = () => {
-        setSponsors([...sponsors, { newsletter: sponsors[0].newsletter, sponsor: "", sponsorLink: "", tags: [""] }]);
+        setSponsors([...sponsors, { newsletter: sponsors[0].newsletter, sponsor: "", sponsorLink: "", tags: [""], _id: sponsors[0]._id }]);
     };
 
     const handleRemoveSponsor = (index: number) => {
@@ -39,47 +43,58 @@ const Admin = () => {
     const handleSubmit = async (e: any) => {
         e.preventDefault();
 
-        console.log(sponsors);
+        axios.post(`${config.backendUrl}sponsors/`, sponsors,
+            {
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
+            }).then((res) => {
+                console.log(res);
+            }).catch((err) => {
+                console.log(err);
+            })
 
     }
 
-    const handleDeny = async (e: any) => {
+    const handleDeny = (e: any) => {
         e.preventDefault();
+        const deniedSponsor = potentialSponsorData[0];
+
+        // Remove item from potentialSponsors database using the id of the potentialSponsor
+        axios.delete(`${config.backendUrl}potentialSponsors/${deniedSponsor._id}`,
+            {
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
+            }).then((res) => {
+                console.log(res);
+            }).catch((err) => {
+                console.log(err);
+            })
 
         let potentialSponsorDataCopy = [...potentialSponsorData];
 
         // Remove first element
-        potentialSponsorData.shift();
+        potentialSponsorDataCopy.shift();
 
         // Update state
         setPotentialSponsorData(potentialSponsorDataCopy);
     }
 
-    useEffect(() => {
-        // Call backend to get all potential sponsors
-        const fetchedSponsorData = [
+    const getSponsorData = async () => {
+        await axios.get(`${config.backendUrl}potentialSponsors/`,
             {
-                emailSender: "Health Tech Solutions <health-tech@gmail.com>",
-                potentialSponsorLinks: ["https://www.example_sponsors-page.com", "https://www.blahblahJoslynsCutepage.com"]
-            },
-            {
-                emailSender: "Northwest Finance <northwestFin@hot-mail.net>",
-                potentialSponsorLinks: ["https://www.north-fin.com"]
-            }
-        ];
-
-        setPotentialSponsorData(fetchedSponsorData);
-
-        // Set sponsors after potentialSponsorData is populated
-        setSponsors([
-            {
-                newsletter: fetchedSponsorData[0].emailSender,
-                sponsor: "",
-                sponsorLink: "",
-                tags: [""]
-            }
-        ]);
-    }, []);
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
+            }).then((res) => {
+                const potentialSponsorData = res.data;
+                setPotentialSponsorData(potentialSponsorData);
+            }).catch((err) => {
+                console.log(err);
+                return [];
+            })
+    }
 
     const checkDisabled = () => {
         if (sponsors.length === 0) {
@@ -94,6 +109,17 @@ const Admin = () => {
 
         return false;
     }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            // call backend to get all potential sponsors
+            await getSponsorData();
+        }
+
+        if (potentialSponsorData.length === 1) {
+            fetchData();
+        }
+    }, [getSponsorData, setPotentialSponsorData]);
 
     return (
         <div className="web-page">
