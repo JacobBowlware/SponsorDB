@@ -13,21 +13,22 @@
     justify-content: center;
     align-items: center;
     background: var(--var-color-primary);
-    padding: 1.6rem;
+    padding: 1rem;
     max-width: 440px;
+    font-size: .8rem;
 }
 
 .login-form__header {
     text-align: left;
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     width: 70%;
 }
 
 .login-form__header-cont {
     text-align: left;
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     width: 100%;
     margin-bottom: 1rem;
 }
@@ -42,7 +43,7 @@
 
 .login-form__input {
     padding: .5rem;
-    font-size: .9rem;
+    font-size: .8rem;
 }
 
 .login-form__btn {
@@ -52,7 +53,7 @@
     color: var(--var-color-primary);
     opacity: 0.8;
     transition: all .3s;
-    font-size: 1rem;
+    font-size: .8rem;
 }
 
 .login-form__btn:disabled {
