@@ -1,4 +1,5 @@
 {
     "openai_api_key": "sponsortrail_openaiPrivateKey",
-    "jwtPrivateKey": ""
+    "jwtPrivateKey": "",
+    "db_auth_token": "sponsortrail_dbAuthToken"
 }

@@ -5,6 +5,8 @@ const _ = require('lodash');
 
 module.exports = async function (req, res, next) {
     const token = req.header('x-auth-token');
+
+    console.log(token);
     if (!token) {
         return res.status(401).send('Access denied. No token provided.');
     }
@@ -13,6 +15,7 @@ module.exports = async function (req, res, next) {
         const decoded = jwt.verify(token, process.env.jwtPrivateKey || config.get('jwtPrivateKey'));
 
         // Get user from the token, call database to get the user from their ID
+        console.log(decoded);
         const user = await User.findById(decoded._id);
 
         if (!user) {

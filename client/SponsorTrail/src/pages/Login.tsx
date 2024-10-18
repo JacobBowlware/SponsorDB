@@ -57,7 +57,9 @@ const Login = ({ userAuth }: LoginProps) => {
                             setPassword(e.target.value);
                         }} />
                     {error && <div className="form-error">{error}</div>}
-                    <button disabled={!!emailError || !email || !password || password.length < 8} className="btn login-form__btn" type="submit">Login</button>
+                    <div className="login-form__btn-container">
+                        <button disabled={!!emailError || !email || !password || password.length < 8} className="btn login-form__btn" type="submit">Login</button>
+                    </div>
                     <Link to="/signup" className="login-form__link">Don't have an account?</Link>
                 </form>
             </div>

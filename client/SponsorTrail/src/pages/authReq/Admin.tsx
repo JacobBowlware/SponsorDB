@@ -4,25 +4,27 @@ import { useEffect, useState } from "react";
 import config from '../../config';
 import axios from "axios";
 
+// TODO: Render the email itself to the side of the form, to allow for easier viewing of the email - should be small and not take up too much space
 const Admin = () => {
     // potentialSponsorData for potential sponsors, from our email scraping tool
     const [potentialSponsorData, setPotentialSponsorData] = useState([
         {
             emailSender: "",
             potentialSponsorLinks: [""],
+            emailLink: "",
             _id: ""
         }
     ]);
 
     const [sponsors, setSponsors] = useState([
         {
-            newsletter: potentialSponsorData[0].emailSender,
+            newsletter: "", // Same as emailSender
             sponsor: "",
             sponsorLink: "",
             tags: [""],
-            _id: potentialSponsorData[0]._id
+            _id: ""
         }
-    ] || []);
+    ]);
 
     const handleAddSponsor = () => {
         setSponsors([...sponsors, { newsletter: sponsors[0].newsletter, sponsor: "", sponsorLink: "", tags: [""], _id: sponsors[0]._id }]);
@@ -43,6 +45,13 @@ const Admin = () => {
     const handleSubmit = async (e: any) => {
         e.preventDefault();
 
+        // Add newsletter to each sponsor
+        for (let i = 0; i < sponsors.length; i++) {
+            sponsors[i].newsletter = potentialSponsorData[0].emailSender;
+        }
+
+        console.log(sponsors);
+
         axios.post(`${config.backendUrl}sponsors/`, sponsors,
             {
                 headers: {
@@ -54,6 +63,8 @@ const Admin = () => {
                 console.log(err);
             })
 
+
+        handleDeny(e);
     }
 
     const handleDeny = (e: any) => {
@@ -133,64 +144,71 @@ const Admin = () => {
                     <p className="admin-dash__text">
                         View all <strong>'Potential Sponsors'</strong> currently in the database.
                     </p>
-                    <form className="admin-dash__form">
-                        <div className="admin-dash__form-header">
-                            <div className="admin-dash__form-body">
-                                <p className="mb-0">
-                                    Email Sender: <a href={potentialSponsorData[0].emailSender} target="_blank" rel="noreferrer">{potentialSponsorData[0].emailSender}</a>
-                                </p>
-                                <p className="mb-0 admin-dash__form-body__links">
-                                    Potential Sponsors:
-                                    <ul>
-                                        {potentialSponsorData[0].potentialSponsorLinks.map((link, index) => {
-                                            return <li><a key={index} href={link} target="_blank" rel="noreferrer">{link}</a></li>
+                    {(potentialSponsorData.length === 0) ? <h2 className="admin-dash__form-header">No New Emails</h2> :
+                        <><form className="admin-dash__form">
+                            <div className="admin-dash__form-header">
+                                <div className="admin-dash__form-body">
+                                    <p>
+                                        Remaining: {potentialSponsorData.length - 1}
+                                    </p>
+                                    <p className="mb-0">
+                                        Email Sender: <a href={potentialSponsorData[0].emailLink} target="_blank" rel="noreferrer">{potentialSponsorData[0].emailSender}</a>
+                                    </p>
+                                    <p className="mb-0 admin-dash__form-body__links">
+                                        Potential Sponsors:
+                                        <ul>
+                                            {potentialSponsorData[0].potentialSponsorLinks.map((link, index) => {
+                                                return <li>
+                                                    <a key={index} href={link} target="_blank" rel="noreferrer">{link}</a>
+                                                </li>
 
-                                        })}
-                                    </ul>
-                                </p>
+                                            })}
+                                        </ul>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        {sponsors.map((sponsorData, index) => {
-                            return <div className="admin-dash__sponsor-info">
-                                <p className="mb-0">
-                                    Sponsor  {index + 1}:
-                                </p>
-                                <input
-                                    placeholder="Sponsor"
-                                    className="admin-dash__form-input"
-                                    onChange={(e) => { handleSponsorChange(index, "sponsor", e.target.value) }}
-                                    value={sponsorData.sponsor}
-                                />
-                                <input
-                                    placeholder="Sponsor Link"
-                                    className="admin-dash__form-input"
-                                    onChange={(e) => { handleSponsorChange(index, "sponsorLink", e.target.value) }}
-                                    value={sponsorData.sponsorLink}
-                                />
-                                <input
-                                    placeholder="tag1, tag2, etc"
-                                    className="admin-dash__form-input"
-                                    onChange={(e) => { handleSponsorChange(index, "tags", e.target.value) }}
-                                    value={sponsorData.tags}
-                                />
-                                <button type="button" onClick={() => handleRemoveSponsor(index)} className="btn admin-dash__form-btn-remove_sponsor">
-                                    Remove
+                            {sponsors.map((sponsorData, index) => {
+                                return <div className="admin-dash__sponsor-info">
+                                    <p className="mb-0">
+                                        Sponsor  {index + 1}:
+                                    </p>
+                                    <input
+                                        placeholder="Sponsor"
+                                        className="admin-dash__form-input"
+                                        onChange={(e) => { handleSponsorChange(index, "sponsor", e.target.value) }}
+                                        value={sponsorData.sponsor}
+                                    />
+                                    <input
+                                        placeholder="Sponsor Link"
+                                        className="admin-dash__form-input"
+                                        onChange={(e) => { handleSponsorChange(index, "sponsorLink", e.target.value) }}
+                                        value={sponsorData.sponsorLink}
+                                    />
+                                    <input
+                                        placeholder="tag1, tag2, etc"
+                                        className="admin-dash__form-input"
+                                        onChange={(e) => { handleSponsorChange(index, "tags", e.target.value) }}
+                                        value={sponsorData.tags}
+                                    />
+                                    <button type="button" onClick={() => handleRemoveSponsor(index)} className="btn admin-dash__form-btn-remove_sponsor">
+                                        Remove
+                                    </button>
+                                </div>
+                            })}
+
+                            <button type="button" onClick={handleAddSponsor} className="btn admin-dash__form-btn-add_sponsor">
+                                <FontAwesomeIcon icon={faPlus} />
+                            </button>
+                            <div className="admin-dash__sponsor-approve">
+                                <button disabled={checkDisabled()} onClick={(e) => handleSubmit(e)} className="btn admin-dash__form-btn admin-dash__form-btn-approve">
+                                    <FontAwesomeIcon icon={faCheck} />
+                                </button>
+                                <button onClick={(e) => handleDeny(e)} className="btn admin-dash__form-btn admin-dash__form-btn-deny">
+                                    <FontAwesomeIcon icon={faTimes} />
                                 </button>
                             </div>
-                        })}
-
-                        <button type="button" onClick={handleAddSponsor} className="btn admin-dash__form-btn-add_sponsor">
-                            <FontAwesomeIcon icon={faPlus} />
-                        </button>
-                        <div className="admin-dash__sponsor-approve">
-                            <button disabled={checkDisabled()} onClick={(e) => handleSubmit(e)} className="btn admin-dash__form-btn admin-dash__form-btn-approve">
-                                <FontAwesomeIcon icon={faCheck} />
-                            </button>
-                            <button onClick={(e) => handleDeny(e)} className="btn admin-dash__form-btn admin-dash__form-btn-deny">
-                                <FontAwesomeIcon icon={faTimes} />
-                            </button>
-                        </div>
-                    </form>
+                        </form>
+                        </>}
                 </div>
             </div>
         </div>

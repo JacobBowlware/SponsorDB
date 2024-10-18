@@ -111,7 +111,9 @@ const Signup = ({ userAuth }: SignupProps) => {
                     />
                     {confirmPasswordError && !error && <div className="form-error">{confirmPasswordError}</div>}
                     {error && <div className="form-error">{error}</div>}
-                    <button disabled={!!emailError || !!passwordError || !!confirmPasswordError || !!error || !email || !password || !confirmPassword} className="btn login-form__btn" type="submit">Signup</button>
+                    <div className="login-form__btn-container">
+                        <button disabled={!!emailError || !!passwordError || !!confirmPasswordError || !!error || !email || !password || !confirmPassword} className="btn login-form__btn" type="submit">Signup</button>
+                    </div>
                     <Link to="/login" className="login-form__link">Have an account?</Link>
                 </form>
             </div>

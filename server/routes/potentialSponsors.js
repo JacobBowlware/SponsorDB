@@ -27,7 +27,8 @@ router.post('/', [auth, admin], async (req, res) => {
     // Create a new potential sponsor
     const potentialSponsor = new PotentialSponsor({
         emailSender: req.body.emailSender,
-        potentialSponsorLinks: req.body.potentialSponsorLinks
+        potentialSponsorLinks: req.body.potentialSponsorLinks,
+        emailLink: req.body.emailLink
     });
 
     // Save the potential sponsor to the database
