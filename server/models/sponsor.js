@@ -22,10 +22,14 @@ const sponsorSchema = new mongoose.Schema({
         maxlength: 5
     },
     newslettersSponsored: {
-        type: [String],
+        type: String,
         required: false,
         minlength: 0,
         maxlength: 1000
+    },
+    lastSponsored: {
+        type: Date,
+        default: Date.now
     }
 })
 
@@ -37,7 +41,8 @@ const validateSponsor = (sponsor) => {
         sponsorName: Joi.string().min(2).max(256).required(),
         sponsorLink: Joi.string().min(2).max(256),
         tags: Joi.array().items(Joi.string()).max(5),
-        newslettersSponsored: Joi.array().items(Joi.string()).max(1000)
+        newslettersSponsored: Joi.string().max(1000),
+        lastSponsored: Joi.date()
     });
 
     return schema.validate(sponsor);
