@@ -1,6 +1,36 @@
+import { useEffect, useState } from "react";
 import AuthAirTable from "../../components/AuthAirTable";
+import axios from "axios";
+import config from "../../config";
 
+// TODO: Pagination, Sponsor Search, Sponsor Filter, Sorting,
 const Sponsors = () => {
+    const [sponsors, setSponsors] = useState([
+        {
+            sponsorName: "",
+            sponsorLink: "",
+            tags: [""],
+            newslettersSponsored: [""]
+        }
+    ]);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const sponsorsPerPage = 20;
+
+    const fetchSponsors = async () => {
+        const headers = {
+            headers: {
+                'x-auth-token': localStorage.getItem('token')
+            }
+        }
+        const res = await axios.get(`${config.backendUrl}sponsors`, headers);
+        console.log(res);
+        setSponsors(res.data);
+    }
+
+    useEffect(() => {
+        fetchSponsors();
+    }, []);
 
     return (
         <div className="web-page">
@@ -15,7 +45,31 @@ const Sponsors = () => {
                     </p>
                 </div>
                 <div className="airtable-cont web-section-content">
-                    <AuthAirTable />
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sponsor Name</th>
+                                <th>Sponsor Link</th>
+                                <th>Tags</th>
+                                <th>Newsletters Sponsored</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sponsors.map((sponsor, index) => (
+                                <tr key={index}>
+                                    <td>{sponsor.sponsorName}</td>
+                                    <td>
+                                        <a href={sponsor.sponsorLink} target="_blank" rel="noopener noreferrer">
+                                            {sponsor.sponsorLink}
+                                        </a>
+                                    </td>
+                                    <td>{sponsor.tags.join(', ')}</td>
+                                    <td>{sponsor.newslettersSponsored.filter(item => item).join(', ')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
                 </div>
             </div>
         </div >

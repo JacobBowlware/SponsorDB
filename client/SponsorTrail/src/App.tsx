@@ -106,7 +106,7 @@ function App() {
         {userAuth && <Route path="/sponsors/" element={<Sponsors />} />}
         {userAuth && <Route path="/profile/" element={<Profile userEmail={user.email} />} />}
         {/* Admin Routes */}
-        {/*!user.isAdmin && */}{<Route path="/admin/" element={<Admin />} />}
+        {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>
     )
   )

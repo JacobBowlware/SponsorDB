@@ -63,7 +63,6 @@ const Admin = () => {
                 console.log(err);
             })
 
-
         handleDeny(e);
     }
 
@@ -140,7 +139,7 @@ const Admin = () => {
                         <strong>Approve </strong> or <strong>Deny</strong> Sponsors
                     </h1>
                 </div>
-                <div className="admin-dash__cont">
+                <div className="admin-dash__cont web-section-content">
                     <p className="admin-dash__text">
                         View all <strong>'Potential Sponsors'</strong> currently in the database.
                     </p>
