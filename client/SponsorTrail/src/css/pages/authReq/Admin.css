@@ -45,6 +45,16 @@
     width: 100%;
 }
 
+.admin-dash__form-input--size {
+    width: 10rem !important;
+    margin: .4rem 0 .1rem 0;
+    padding: .3rem;
+    background: var(--var-color-background);
+    color: var(--var-color-text);
+    font-weight: 600;
+    border: 1px solid var(--var-color-text);
+}
+
 .admin-dash__form {
     display: flex;
     flex-direction: column;

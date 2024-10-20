@@ -22,12 +22,15 @@ const Admin = () => {
             sponsor: "",
             sponsorLink: "",
             tags: [""],
+            subscriberCount: 0,
             _id: ""
         }
     ]);
 
+    const [currentSubscriberCount, setCurrentSubscriberCount] = useState(0);
+
     const handleAddSponsor = () => {
-        setSponsors([...sponsors, { newsletter: sponsors[0].newsletter, sponsor: "", sponsorLink: "", tags: [""], _id: sponsors[0]._id }]);
+        setSponsors([...sponsors, { newsletter: sponsors[0].newsletter, sponsor: "", sponsorLink: "", subscriberCount: 0, tags: [""], _id: sponsors[0]._id }]);
     };
 
     const handleRemoveSponsor = (index: number) => {
@@ -35,8 +38,9 @@ const Admin = () => {
         setSponsors(newSponsors);
     };
 
-    const handleSponsorChange = (index: number, field: string, value: string) => {
+    const handleSponsorChange = (index: number, field: string, value: string | number) => {
         const newSponsors = [...sponsors];
+
         newSponsors[index] = { ...newSponsors[index], [field]: value };
         setSponsors(newSponsors);
     };
@@ -48,6 +52,10 @@ const Admin = () => {
         // Add newsletter to each sponsor
         for (let i = 0; i < sponsors.length; i++) {
             sponsors[i].newsletter = potentialSponsorData[0].emailSender;
+
+            if (currentSubscriberCount > 0) {
+                sponsors[i].subscriberCount = currentSubscriberCount;
+            }
         }
 
         console.log(sponsors);
@@ -170,8 +178,13 @@ const Admin = () => {
                                         Remaining: {potentialSponsorData.length - 1}
                                     </p>
                                     <p className="mb-0">
-                                        Newsletter: <a href={potentialSponsorData[0].emailLink} target="_blank" rel="noreferrer">{potentialSponsorData[0].emailSender}</a>
+                                        Email Sender: <a href={potentialSponsorData[0].emailLink} target="_blank" rel="noreferrer">{potentialSponsorData[0].emailSender}</a>
                                     </p>
+                                    <input placeholder="Newsletter Size"
+                                        type="number"
+                                        className="admin-dash__form-input admin-dash__form-input--size"
+                                        onChange={(e) => { setCurrentSubscriberCount(Number(e.target.value)) }}
+                                    />
                                     <p className="mb-0 admin-dash__form-body__links">
                                         Potential Sponsors:
                                         <ul>

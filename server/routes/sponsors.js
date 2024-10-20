@@ -30,14 +30,21 @@ const formatTags = (tags) => {
 const saveToAirtable = async (sponsor) => {
     let updatedTags = formatTags(sponsor.tags);
     try {
+        let fields = {
+            "Tags": updatedTags, // Ensure tags are formatted correctly
+            "Sponsor": sponsor.sponsor,
+            "Sponsor Link": sponsor.sponsorLink,
+            "Newsletter Sponsored": sponsor.newsletter,
+        };
+
+        // Conditionally add the "Subscriber Count" field if it exists
+        if (sponsor.subscriberCount > 0) {
+            fields["Audience Size"] = sponsor.subscriberCount;
+        }
+
         base('Sponsors').create([
             {
-                "fields": {
-                    "Tags": updatedTags, // Ensure tags are formatted correctly
-                    "Sponsor": sponsor.sponsor,
-                    "Sponsor Link": sponsor.sponsorLink,
-                    "Newsletter Sponsored": sponsor.newsletter
-                }
+                "fields": fields
             }
         ], function (err, records) {
             if (err) {
@@ -85,19 +92,18 @@ router.post('/', auth, async (req, res) => {
 
             // If the sponsor does not already exist with the same newsletter sponsorship, create a new sponsor
             if (!sponsorExists) {
-                console.log("Creating new sponsor", sponsor);
                 const newSponsor = new Sponsor({
                     sponsorName: sponsor.sponsor,
                     sponsorLink: sponsor.sponsorLink,
                     tags: sponsor.tags,
-                    newsletterSponsored: sponsor.newsletter
+                    newsletterSponsored: sponsor.newsletter,
+                    subscriberCount: sponsor.subscriberCount
                 });
                 await newSponsor.save();
 
                 // Save to Airtable
                 await saveToAirtable(sponsor);
             }
-            console.log("Done creating sponsor");
         }
     } catch (e) {
         console.log("Error creating sponsor", e);

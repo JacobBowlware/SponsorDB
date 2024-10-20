@@ -26,6 +26,10 @@ const sponsorSchema = new mongoose.Schema({
         minlength: 0,
         maxlength: 1000
     },
+    subscriberCount: {
+        type: Number,
+        required: false
+    },
     dateAdded: {
         type: Date,
         default: Date.now
@@ -41,6 +45,7 @@ const validateSponsor = (sponsor) => {
         sponsorLink: Joi.string().min(2).max(256),
         tags: Joi.array().items(Joi.string()).max(5),
         newsletterSponsored: Joi.string().max(1000),
+        subscriberCount: Joi.number(),
         dateAdded: Joi.date()
     });
 
