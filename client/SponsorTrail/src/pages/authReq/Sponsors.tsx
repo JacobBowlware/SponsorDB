@@ -1,37 +1,6 @@
-import { useEffect, useState } from "react";
 import AuthAirTable from "../../components/AuthAirTable";
-import axios from "axios";
-import config from "../../config";
 
-// TODO: Pagination, Sponsor Search, Sponsor Filter, Sorting,
 const Sponsors = () => {
-    const [sponsors, setSponsors] = useState([
-        {
-            sponsorName: "",
-            sponsorLink: "",
-            tags: [""],
-            newslettersSponsored: [""]
-        }
-    ]);
-    const [currentPage, setCurrentPage] = useState(1);
-
-    const sponsorsPerPage = 20;
-
-    const fetchSponsors = async () => {
-        const headers = {
-            headers: {
-                'x-auth-token': localStorage.getItem('token')
-            }
-        }
-        const res = await axios.get(`${config.backendUrl}sponsors`, headers);
-        console.log(res);
-        setSponsors(res.data);
-    }
-
-    useEffect(() => {
-        fetchSponsors();
-    }, []);
-
     return (
         <div className="web-page">
             <div className="web-section sponsors" id="">
