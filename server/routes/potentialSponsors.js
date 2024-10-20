@@ -3,8 +3,22 @@ const router = express.Router();
 const { PotentialSponsor, validatePotentialSponsor } = require('../models/potentialSponsor');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
+const emailMonitor = require('../scraper/emailMonitor');
 require('../middleware/corHeaders')(router);
 
+
+// Route to run emailMonitor.js 
+router.get('/emailMonitor', [auth, admin], async (req, res) => {
+    try {
+        emailMonitor();
+    }
+    catch (e) {
+        console.log("Error running email monitor...", e);
+        return res.status(400
+        ).send(e);
+    }
+    res.status(200).send('Email Monitor is running...');
+});
 
 // Get all potential sponsors
 router.get('/', [auth, admin], async (req, res) => {

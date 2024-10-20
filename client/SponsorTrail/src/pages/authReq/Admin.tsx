@@ -120,6 +120,20 @@ const Admin = () => {
         return false;
     }
 
+    const handleEmailMonitor = async (e: any) => {
+        e.preventDefault();
+        await axios.get(`${config.backendUrl}potentialSponsors/emailMonitor`,
+            {
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
+            }).then((res) => {
+                console.log(res);
+            }).catch((err) => {
+                console.log(err);
+            })
+    }
+
     useEffect(() => {
         const fetchData = async () => {
             // call backend to get all potential sponsors
@@ -143,6 +157,11 @@ const Admin = () => {
                     <p className="admin-dash__text">
                         View all <strong>'Potential Sponsors'</strong> currently in the database.
                     </p>
+                    <div className="admin-dash__btn-container">
+                        <button onClick={(e) => { handleEmailMonitor(e) }} className="btn mb-3 admin-dash__btn">
+                            Run EmailMonitor
+                        </button>
+                    </div>
                     {(potentialSponsorData.length === 0) ? <h2 className="admin-dash__form-header">No New Emails</h2> :
                         <><form className="admin-dash__form">
                             <div className="admin-dash__form-header">
@@ -151,7 +170,7 @@ const Admin = () => {
                                         Remaining: {potentialSponsorData.length - 1}
                                     </p>
                                     <p className="mb-0">
-                                        Email Sender: <a href={potentialSponsorData[0].emailLink} target="_blank" rel="noreferrer">{potentialSponsorData[0].emailSender}</a>
+                                        Newsletter: <a href={potentialSponsorData[0].emailLink} target="_blank" rel="noreferrer">{potentialSponsorData[0].emailSender}</a>
                                     </p>
                                     <p className="mb-0 admin-dash__form-body__links">
                                         Potential Sponsors:
