@@ -45,31 +45,7 @@ const Sponsors = () => {
                     </p>
                 </div>
                 <div className="airtable-cont web-section-content">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Sponsor Name</th>
-                                <th>Sponsor Link</th>
-                                <th>Tags</th>
-                                <th>Newsletters Sponsored</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sponsors.map((sponsor, index) => (
-                                <tr key={index}>
-                                    <td>{sponsor.sponsorName}</td>
-                                    <td>
-                                        <a href={sponsor.sponsorLink} target="_blank" rel="noopener noreferrer">
-                                            {sponsor.sponsorLink}
-                                        </a>
-                                    </td>
-                                    <td>{sponsor.tags.join(', ')}</td>
-                                    <td>{sponsor.newslettersSponsored.filter(item => item).join(', ')}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
+                    <AuthAirTable />
                 </div>
             </div>
         </div >
