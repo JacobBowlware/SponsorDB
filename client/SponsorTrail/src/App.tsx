@@ -49,7 +49,8 @@ function App() {
   const [userAuth, setUserAuth] = useState(false);
   const [user, setUser] = useState({
     email: "",
-    isAdmin: false
+    isAdmin: false,
+    isSubscribed: false
   });
 
   const getUserInfo = async () => {
@@ -104,7 +105,7 @@ function App() {
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
         {userAuth && <Route path="/sponsors/" element={<Sponsors />} />}
-        {userAuth && <Route path="/profile/" element={<Profile userEmail={user.email} />} />}
+        {userAuth && <Route path="/profile/" element={<Profile userSubscribed={user.isSubscribed} userEmail={user.email} />} />}
         {/* Admin Routes */}
         {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

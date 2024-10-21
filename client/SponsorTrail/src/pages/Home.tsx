@@ -26,14 +26,17 @@ const Home = () => {
                         Maximize your Newsletter Sponsorships
                     </h1>
                     <p className="airtable-p">
-                        Access our free database of proven newsletter sponsors. Spend less time searching and more time earning.
+                        Access our database of proven newsletter sponsors. Spend less time searching and more time earning.
                     </p>
                     <p>
                         (8,000+ records from 1,000+ companies)
                     </p>
                     <Link to="/login" className="btn home__container-item__input home__container-item__btn mb-3">
-                        Access Full Database (Login)
+                        Access Full Database
                     </Link>
+                    <p className="airtable-p airtable-note">
+                        Below is a sample of the data in our database. For full access, please login.
+                    </p>
                     <div className="airtable-cont">
                         <AirTable />
                     </div>
