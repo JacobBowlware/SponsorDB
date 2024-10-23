@@ -28,6 +28,7 @@ html {
 #pricing,
 #features,
 #how-it-works,
+#subscribe,
 #blog {
   scroll-margin-top: 15rem;
 }
@@ -76,6 +77,14 @@ html {
 }
 
 .web-section__container {
+  width: 100%;
+}
+
+.web-section__container-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   width: 100%;
 }
 

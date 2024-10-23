@@ -34,6 +34,8 @@ import ChangePassword from './pages/ChangePassword';
 import Sponsors from './pages/authReq/Sponsors';
 import Profile from './pages/authReq/Profile';
 import Admin from './pages/authReq/Admin';
+import PaymentSuccess from './pages/authReq/PaymentSuccess';
+import PaymentFail from './pages/authReq/PaymentFail';
 
 // Components
 import Header from './components/common/Header'
@@ -50,7 +52,10 @@ function App() {
   const [user, setUser] = useState({
     email: "",
     isAdmin: false,
-    isSubscribed: false
+    isSubscribed: false,
+    subscriptionPlan: "",
+    currentPeriodEnd: 0,
+    stripeCustomerId: ""
   });
 
   const getUserInfo = async () => {
@@ -61,6 +66,7 @@ function App() {
       }
     }).then((res) => {
       setUser(res.data);
+      console.log(res.data);
     }).catch((err) => {
       console.log(err);
     })
@@ -95,17 +101,26 @@ function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home />} />
-        <Route path="/*" element={<Home />} />
-        <Route path="/login/" element={<Login userAuth={userAuth} />} />
-        <Route path="/signup/" element={<Signup userAuth={userAuth} />} />
+        <Route index element={<Home isSubscribed={user.isSubscribed} email={user.email} />} />
+        <Route path="/*" element={<Home isSubscribed={user.isSubscribed} email={user.email} />} />
+        <Route path="/login/" element={<Login userAuth={userAuth} isSubscribed={user.isSubscribed} />} />
+        <Route path="/signup/" element={<Signup userAuth={userAuth} isSubscribed={user.isSubscribed} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
         {userAuth && <Route path="/sponsors/" element={<Sponsors />} />}
-        {userAuth && <Route path="/profile/" element={<Profile userSubscribed={user.isSubscribed} userEmail={user.email} />} />}
+        {<Route path="/profile/" element={<Profile
+          userSubscribed={user.isSubscribed}
+          userEmail={user.email}
+          subscriptionPlan={user.subscriptionPlan}
+          currentPeriodEnd={user.currentPeriodEnd}
+          stripeCustomerId={user.stripeCustomerId}
+        />} />}
+        {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
+        {userAuth && <Route path="/payment-cancel/" element={<PaymentFail />} />}
+
         {/* Admin Routes */}
         {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

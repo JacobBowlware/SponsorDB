@@ -33,9 +33,6 @@ const Header = () => {
                         <li className="nav-item">
                             <a className="nav-link" href="/#features" onClick={closeNavBar}>Features</a>
                         </li>
-                        <li className="nav-item">
-                            <a className="nav-link" href="/#how-it-works" onClick={closeNavBar}>How It Works</a>
-                        </li>
                         {/* <li className="nav-item">
                             <a className="nav-link" href="/#pricing" onClick={closeNavBar}>Pricing</a>
                         </li> */}

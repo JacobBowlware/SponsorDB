@@ -17,6 +17,25 @@ const userSchema = new mongoose.Schema({
         minlength: 2,
         maxlength: 100
     },
+    isSubscribed: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
+    subscriptionPlan: {
+        type: String,
+        required: false,
+        maxlength: 100
+    },
+    currentPeriodEnd: {
+        type: Number,
+        required: false
+    },
+    stripeCustomerId: {
+        type: String,
+        required: false,
+        maxlength: 100
+    },
     isAdmin: {
         type: Boolean,
         required: false,
@@ -34,7 +53,12 @@ const User = mongoose.model('User', userSchema);
 const validateUser = (user) => {
     const schema = Joi.object({
         email: Joi.string().min(2).max(100).required(),
-        password: Joi.string().min(2).max(100).required()
+        password: Joi.string().min(2).max(100).required(),
+        isSubscribed: Joi.boolean(),
+        subscriptionPlan: Joi.string().max(100),
+        currentPeriodEnd: Joi.number(),
+        stripeCustomerId: Joi.string().max(100),
+        isAdmin: Joi.boolean()
     });
 
     return schema.validate(user);

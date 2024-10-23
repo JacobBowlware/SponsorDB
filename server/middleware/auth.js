@@ -21,7 +21,10 @@ module.exports = async function (req, res, next) {
         }
 
         // If user is found, attach user info to the request object
-        req.user = _.pick(user, ['_id', 'email', 'isAdmin']);
+        req.user = _.pick(user, ['_id', 'email', 'isAdmin', 'isSubscribed']);
+        if (req.tier) {
+            req.user.tier = req.tier;
+        }
 
         // Call next middleware
         next();

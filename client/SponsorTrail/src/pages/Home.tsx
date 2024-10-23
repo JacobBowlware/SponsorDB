@@ -6,17 +6,65 @@ import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 import FAQAccordian from "../components/FAQAccordian";
 import AirTable from "../components/AirTable.js";
+import axios from "axios";
+import config from "../config"
 
 // Font Awesome Icons
-import { faCheckCircle, faCalendarDays, faMoneyBill, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faArrowRight, faThumbsUp, faSyncAlt, faStopwatch } from "@fortawesome/free-solid-svg-icons";
 
 // Images
-import search from './../assets/images/search.png';
-import list from './../assets/images/list.png';
-import growth from './../assets/images/growth.png';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const Home = () => {
+// Stripe
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripeAPIKey = "pk_test_51MpGntBKPgChhmNg63yLnqWVTfzn82jI0aEnzjwvRsTz1tFfUjDnWyMCOXTFuzY4P3QdmRINR04vxOm2pD4vQhyt000Bqbmgv3";
+const stripePromise = loadStripe(stripeAPIKey);
+
+interface HomeProps {
+    isSubscribed: boolean,
+    email: string,
+}
+
+const Home = ({ isSubscribed, email }: HomeProps) => {
+    const handleSubscribe = async (tier: number) => {
+        // Tier 1 = Monthly
+        // Tier 2 = Yearly
+
+        // If user is already subscribed, send them to sponsors page
+        if (isSubscribed) {
+            window.location.href = "/sponsors";
+            return;
+        }
+
+        // Redirect to signup page if user is not logged in, after signup redirect to subscribe page
+        if (!localStorage.getItem('token')) {
+            window.location.href = "/signup/?redirect=subscribe";
+            return;
+        }
+
+
+        // If user is logged in and not subscribed, create a checkout session
+        try {
+            const response = await axios.post(`${config.backendUrl}users/checkout`, { tier: tier },
+                {
+                    headers: {
+                        'x-auth-token': localStorage.getItem('token')
+                    }
+                });
+
+            const sessionId = response.data.sessionId;
+
+            const stripe = await stripePromise;
+
+            await stripe?.redirectToCheckout({
+                sessionId: sessionId
+            });
+
+        } catch (error) {
+            console.log("Error subscribing", error);
+        }
+    }
 
     return (
         <div className="web-page">
@@ -42,45 +90,20 @@ const Home = () => {
                     </div>
                 </div>
             </div>
-            {/* <div className="web-section home" id="hero">
-                <div className="web-section__container home__container">
-                    <div className="home__container-item">
-                        <h2 className="home__container-item__header">
-                            Maximize Newsletter Sponsorships
-                        </h2>
-                        <p className="home__container-item__p">
-                            Access our free database of proven sponsors in your niche. Spend less time searching and more time earning.
-
-                        </p>
-                        <form className="home__container-item__form" onSubmit={(e) => handleSubmit(e)} id="email-form">
-                            <div className="home__container-item__input-wrapper">
-                                <Link to="/login" className="btn home__container-item__input home__container-item__btn-secondary">
-                                    Login
-                                </Link>
-                                <Link to="/signup" className="btn home__container-item__input home__container-item__btn">
-                                    Sign-up for Free
-                                </Link>
-                            </div>
-                            {userEmailCollected && <p className="home__container-item__form-thanks">
-                                Thank you for joining the SponsorDB waitlist! We'll be in touch soon.
-                            </p>}
-                        </form>
-                    </div>
-                </div>
-            </div> */}
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="features">
                     <h2 className="web-section__container-header">
                         Why SponsorDB?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faCalendarDays} header="Stay Updated" text="View the latest sponsorship deals happening among your competitors and other newsletters." />
-                        <FeatureCard icon={faMoneyBill} header="Free to Use" text="Access our database of sponsors for free. No hidden fees or charges." />
-                        <FeatureCard highlighted={true} header="Time Saver" icon={faCheckCircle} text="Spend less time searching for sponsors. Our database is designed to streamline the sponsorship process." />
+                        <FeatureCard icon={faThumbsUp} header="Easy to Use" text="Our database is designed to be user-friendly. Quickly find sponsors that match your newsletter." />
+                        <FeatureCard icon={faSyncAlt} header="Stay Updated" text="We regularly update our database with new sponsors, ensuring you always have the latest opportunities." />
+                        <FeatureCard highlighted={true} header="Time Saver" icon={faStopwatch} text="Spend less time searching for sponsors and more time growing your newsletter." />
                     </div>
                 </div>
             </div>
             <div className="web-section" >
+                {/*TODO: Add a section of images which display the database being used/the profile page of a test user (3 total?) */}
                 <div className="web-section__container web-section-content" id="how-it-works">
                     <h2 className="web-section__container-header-sm">
                         How It Works
@@ -91,11 +114,9 @@ const Home = () => {
                                 1. Data Collection
                             </h3>
                             <p className="home__how-it-works-container__item-text text">
-                                Data is collected from reputable sources, compiling information on real sponsorships, companies, and newsletters.
+                                Data is consistently collected from reputable sources, compiling information on real sponsorships, companies, and newsletters.
                             </p>
                         </div>
-                        <img className="home__how-it-works-container__img" src={search} alt="A team searching the web and gathering data on potential podcast sponsors for our clients." />
-                        <img className="home__how-it-works-container__img" src={list} alt="A team preparing to send a list of potential podcast sponsors to our clients." />
                         <div className="home__how-it-works-container__item">
                             <h3 className="home__how-it-works-container__item-header">
                                 2. Data Verification
@@ -112,29 +133,76 @@ const Home = () => {
                                 With our complete database of sponsors in hand, you can begin applying for sponsorships and growing your newsletter.
                             </p>
                         </div>
-                        <img className="home__how-it-works-container__img home__how-it-works-container__img-shown" src={growth} alt="Person applying themselves and applying for Podcast sponsorships." />
                     </div>
                 </div>
             </div>
-            {/* <div className="web-section" >
-                <div className="web-section__container web-section-content" id="pricing">
-                    <h2 className="web-section__container-header-sm">
-                        Pricing Options
+            <div className="web-section web-section-dark">
+                <div className="web-section__container-center web-section-content" id="subscribe">
+                    <h2 className="subscribe__header">
+                        Pricing
                     </h2>
-                    <div className="home__pricing-container">
-                        <PricingCard header="Monthly"
-                            icon={faRocket}
-                            price="$15"
-                            year={false}
-                            text="Access our database of sponsors for a month. Cancel anytime." />
-                        <PricingCard header="Yearly"
-                            icon={faDiamond}
-                            price="$120"
-                            year={true}
-                            text="Access our database of sponsors for a year. Cancel anytime." />
+                    <div className="subscribe__card-cont">
+                        <div className="subscribe__card">
+                            <div className="subscribe__card-text-cont">
+                                <h3 className="subscribe__card-header">
+                                    Monthly
+                                </h3>
+                                <div className="subscribe__card-body">
+                                    <p>
+                                        <FontAwesomeIcon icon={faCheckCircle} /> Unlimited access to our database of high-quality newsletter sponsors
+                                    </p>
+                                    <p>
+                                        <FontAwesomeIcon icon={faCheckCircle} /> New sponsors added regularly, keeping your opportunities up-to-date
+                                    </p>
+                                    <p>
+                                        <FontAwesomeIcon icon={faCheckCircle} /> No commitment—cancel anytime
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="subscribe__card-footer">
+                                <p className="subscribe__card-price">
+                                    $20/month
+                                </p>
+                                <button disabled={isSubscribed} onClick={() => { handleSubscribe(1); }}
+                                    className="btn subscribe__btn">
+                                    Subscribe
+                                </button>
+                            </div>
+                        </div>
+                        <div className="subscribe__card">
+                            <div className="subscribe__card-text-cont">
+                                <h3 className="subscribe__card-header">
+                                    Yearly
+                                </h3>
+                                <div className="subscribe__card-body">
+                                    <p>
+                                        <FontAwesomeIcon icon={faCheckCircle} /> Unlimited access to our database of high-quality newsletter sponsors                                    </p>
+                                    <p>
+                                        <FontAwesomeIcon icon={faCheckCircle} /> New sponsors added regularly, keeping your opportunities up-to-date
+                                    </p>
+                                    <p>
+                                        <FontAwesomeIcon icon={faCheckCircle} /> No commitment—cancel anytime
+                                    </p>
+                                    <p>
+                                        <FontAwesomeIcon icon={faCheckCircle} /> 25% off the Monthly plan
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="subscribe__card-footer">
+                                <p className="subscribe__card-price">
+                                    $180/year
+                                </p>
+                                <button disabled={isSubscribed} onClick={() => handleSubscribe(2)} className="btn subscribe__btn ">
+                                    Subscribe
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                    <p className="airtable-p airtable-note subscribe-note">
+                        All payments are secured & processed by Stripe
+                    </p>
                 </div>
-            </div> */}
+            </div>
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="testimonials">
                     <h2 className="web-section__container-header-sm">
@@ -144,10 +212,10 @@ const Home = () => {
                         <TestimonialCard name="John D." affiliation="Content Creator" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                         <TestimonialCard name="Alex J." affiliation="Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
                     </div>
-                    <Link className="footer-item footer-item__highlight mt-2" to="/review">
+                    {isSubscribed && <Link className="footer-item footer-item__highlight mt-2" to="/review">
                         Leave a Review
                         &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
-                    </Link>
+                    </Link>}
                 </div>
                 <div className="web-section" >
                     <div className="web-section__container web-section-content" id="FAQ">

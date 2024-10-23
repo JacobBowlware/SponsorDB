@@ -6,17 +6,21 @@ import config from '../config';
 
 interface LoginProps {
     userAuth: boolean;
+    isSubscribed: boolean;
 }
 
-const Login = ({ userAuth }: LoginProps) => {
+const Login = ({ userAuth, isSubscribed }: LoginProps) => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (userAuth) {
-            window.location.href = '/sponsors';
+        if (userAuth && isSubscribed) {
+            window.location.href = '/sponors';
+        }
+        else if (userAuth) {
+            window.location.href = '/profile';
         }
     })
 

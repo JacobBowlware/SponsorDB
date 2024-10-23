@@ -3,7 +3,7 @@ const AuthAirTable = () => {
         <iframe
             title="airtable"
             className="airtable-embed"
-            src="https://airtable.com/embed/appn3l7KEp7wAQOZu/shrDrcTF61hl9sOSU?viewControls=on"
+            src="https://airtable.com/embed/appn3l7KEp7wAQOZu/shry4n8QvOLNeO05o?viewControls=on"
             frameBorder="0"
             width="100%"
             height="533"

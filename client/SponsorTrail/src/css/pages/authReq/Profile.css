@@ -26,6 +26,9 @@
 .profile-cont__card-header {
     font-size: 1.7rem;
     font-weight: 700;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgb(198, 189, 189);
+    width: 90%;
 }
 
 .profile-cont__card-info {
@@ -44,6 +47,7 @@
 
 .profile-cont__card-info-item__value {
     font-weight: 700;
+    margin-top: .2rem;
 }
 
 .profile-cont__card-link {
@@ -74,19 +78,20 @@
     opacity: .8;
 }
 
-.profile-subscribe__header {
-    font-size: 1.4rem;
+.subscribe__header {
+    font-size: 1.7rem;
     font-weight: 700;
     margin: 2rem 0 0 0;
+    text-align: left;
 }
 
-.profile-subscribe__header-note {
+.subscribe__header-note {
     font-size: 1rem;
     font-weight: 500;
     margin: .3rem 0 0 0;
 }
 
-.profile-subscribe__card-cont {
+.subscribe__card-cont {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -96,7 +101,7 @@
     height: 100%;
 }
 
-.profile-subscribe__card {
+.subscribe__card {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -111,26 +116,27 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, .1);
 }
 
-.profile-subscribe__card:first-child {
+.subscribe__card:first-child {
     background: var(--var-color-background);
     color: var(--var-color-text);
 }
 
-.profile-subscribe__card-header {
+.subscribe__card-header {
     font-size: 1.3rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     font-weight: 700;
+    padding-bottom: .5rem;
 }
 
-.profile-subscribed__card-header__note {
+.subscribed__card-header__note {
     font-size: 1.3rem;
     margin-top: .5rem;
 }
 
-.profile-subscribe__card-body {
+.subscribe__card-body {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -139,77 +145,107 @@
     margin-top: 1rem;
 }
 
-.profile-subscribe__card-text-cont {
+.subscribe__card-text-cont {
     width: 100%;
 }
 
-.profile-subscribe__btn {
+.subscribe__card-price {
+    margin: 0 0 .5rem 0;
+    font-size: 1.3rem;
+}
+
+.subscribe__card-footer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    font-size: 1rem;
+    margin-top: 3rem;
+    font-weight: 600;
+}
+
+.subscribe__btn {
+    width: 100%;
+    font-size: 1.1rem;
     font-weight: 700;
     text-align: center;
     color: var(--var-color-text);
     background: var(--var-color-primary);
     padding: .5rem 1rem;
-    margin: 2rem 0 0 0;
+    margin: 0;
     transition: all .3s;
     border-radius: 3px;
 }
 
-.profile-subscribe__btn:hover {
+.subscribe__btn:hover {
     background: var(--var-color-primary);
     color: var(--var-color-text);
     opacity: .8;
+    cursor: pointer;
 }
 
-.profile-subscribe__btn:focus {
+.subscribe__btn:focus {
     outline: none;
     border: 1px solid var(--var-color-primary);
 }
 
 
-.profile-subscribe__card-body p {
+.subscribe__card-body p {
     margin: 0 0 .2rem 0;
     font-size: 1.1rem;
     font-weight: 500;
 }
 
+.cont__card-subscription-info {
+    margin: 1rem 0 0 0;
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
 @media screen and (min-width: 768px) {
 
-    .profile-subscribed__card-header__note {
+    .subscribed__card-header__note {
         font-size: 1.4rem;
     }
 
-    .profile-subscribe {
+    .subscribe {
         margin: 3rem 0 0 0;
     }
 
-    .profile-subscribe__card-cont {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+    .subscribe-note {
+        text-align: center;
     }
 
-    .profile-cont__card-header {
+    .subscribe__card-cont {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+        max-width: 1000px;
+    }
+
+    .cont__card-header {
         font-size: 2rem;
     }
 
-    .profile-subscribe__card-header {
+    .subscribe__card-header {
         font-size: 1.4rem;
     }
 
-    .profile-subscribe__header {
-        font-size: 1.6rem;
+    .subscribe__header {
+        font-size: 1.8rem;
+        text-align: center;
     }
 
-    .profile-subscribe__header-note {
+    .subscribe__header-note {
         font-size: 1.2rem;
+        text-align: center;
     }
 
-    .profile-cont__card-info {
+    .cont__card-info {
         font-size: 1.1rem;
     }
 
-    .profile-cont__card-form__btn {
+    .cont__card-form__btn {
         font-size: 1rem;
     }
 }

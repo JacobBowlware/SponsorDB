@@ -359,9 +359,9 @@
 
 /* How It Works */
 .home__how-it-works-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    justify-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
     /* border-radius: 15px; */
     padding: .7rem;
@@ -400,15 +400,18 @@
     display: none;
 }
 
+.subscribe__card-body p {
+    margin-bottom: .5rem !important;
+}
+
 @media screen and (min-width: 768px) {
     .home__how-it-works-container {
-        grid-template-columns: 1fr 1fr;
         padding: 2rem;
     }
 
     .home__how-it-works-container__img {
         display: block;
-        width: 50%;
+        width: 20%;
     }
 
     .home__how-it-works-container__item {
