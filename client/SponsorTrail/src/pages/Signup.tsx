@@ -20,7 +20,7 @@ const Signup = ({ userAuth, isSubscribed }: SignupProps) => {
 
     useEffect(() => {
         if (userAuth && isSubscribed) {
-            window.location.href = '/sponors';
+            window.location.href = '/sponsors';
         }
         else if (userAuth) {
             window.location.href = '/profile';
@@ -78,7 +78,7 @@ const Signup = ({ userAuth, isSubscribed }: SignupProps) => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
-            window.location.href = '/sponsors';
+            window.location.href = '/subscribe/';
         }).catch((err) => {
             setConfirmPasswordError("An error occurred, please try again.")
         })

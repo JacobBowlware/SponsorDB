@@ -80,7 +80,7 @@ const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan
                                     Change Password
                                 </Link>
                                 <p className="airtable-p airtable-note mt-1">
-                                    All payments are secured & processed by Stripe. We do not store any payment information.
+                                    All payments are processed & secured by Stripe. We do not store any payment information.
                                 </p>
                             </div>
                         </div>

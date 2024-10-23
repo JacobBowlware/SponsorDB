@@ -38,7 +38,12 @@ const Login = ({ userAuth, isSubscribed }: LoginProps) => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
-            window.location.href = '/sponsors';
+            if (res.data.isSubscribed) {
+                window.location.href = '/sponsors';
+                return;
+            }
+
+            window.location.href = '/profile';
         }).catch((err) => {
             setError("Invalid email or password.");
         })

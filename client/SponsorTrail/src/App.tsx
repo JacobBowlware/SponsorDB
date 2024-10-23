@@ -36,6 +36,7 @@ import Profile from './pages/authReq/Profile';
 import Admin from './pages/authReq/Admin';
 import PaymentSuccess from './pages/authReq/PaymentSuccess';
 import PaymentFail from './pages/authReq/PaymentFail';
+import Subscribe from './pages/authReq/Subscribe';
 
 // Components
 import Header from './components/common/Header'
@@ -110,7 +111,6 @@ function App() {
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
-        {userAuth && <Route path="/sponsors/" element={<Sponsors />} />}
         {<Route path="/profile/" element={<Profile
           userSubscribed={user.isSubscribed}
           userEmail={user.email}
@@ -118,9 +118,10 @@ function App() {
           currentPeriodEnd={user.currentPeriodEnd}
           stripeCustomerId={user.stripeCustomerId}
         />} />}
+        {userAuth && <Route path="/subscribe/" element={<Subscribe isSubscribed={user.isSubscribed} />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
-        {userAuth && <Route path="/payment-cancel/" element={<PaymentFail />} />}
-
+        {/* Subscriber Routes */}
+        {userAuth && user.isSubscribed && <Route path="/sponsors/" element={<Sponsors />} />}
         {/* Admin Routes */}
         {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

@@ -6,8 +6,7 @@ import FeatureCard from "../components/FeatureCard";
 import TestimonialCard from "../components/TestimonialCard";
 import FAQAccordian from "../components/FAQAccordian";
 import AirTable from "../components/AirTable.js";
-import axios from "axios";
-import config from "../config"
+import Pricing from "../components/Pricing";
 
 // Font Awesome Icons
 import { faCheckCircle, faArrowRight, faThumbsUp, faSyncAlt, faStopwatch } from "@fortawesome/free-solid-svg-icons";
@@ -15,56 +14,13 @@ import { faCheckCircle, faArrowRight, faThumbsUp, faSyncAlt, faStopwatch } from 
 // Images
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-// Stripe
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripeAPIKey = "pk_test_51MpGntBKPgChhmNg63yLnqWVTfzn82jI0aEnzjwvRsTz1tFfUjDnWyMCOXTFuzY4P3QdmRINR04vxOm2pD4vQhyt000Bqbmgv3";
-const stripePromise = loadStripe(stripeAPIKey);
-
 interface HomeProps {
     isSubscribed: boolean,
     email: string,
 }
 
 const Home = ({ isSubscribed, email }: HomeProps) => {
-    const handleSubscribe = async (tier: number) => {
-        // Tier 1 = Monthly
-        // Tier 2 = Yearly
 
-        // If user is already subscribed, send them to sponsors page
-        if (isSubscribed) {
-            window.location.href = "/sponsors";
-            return;
-        }
-
-        // Redirect to signup page if user is not logged in, after signup redirect to subscribe page
-        if (!localStorage.getItem('token')) {
-            window.location.href = "/signup/?redirect=subscribe";
-            return;
-        }
-
-
-        // If user is logged in and not subscribed, create a checkout session
-        try {
-            const response = await axios.post(`${config.backendUrl}users/checkout`, { tier: tier },
-                {
-                    headers: {
-                        'x-auth-token': localStorage.getItem('token')
-                    }
-                });
-
-            const sessionId = response.data.sessionId;
-
-            const stripe = await stripePromise;
-
-            await stripe?.redirectToCheckout({
-                sessionId: sessionId
-            });
-
-        } catch (error) {
-            console.log("Error subscribing", error);
-        }
-    }
 
     return (
         <div className="web-page">
@@ -79,9 +35,18 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                     <p>
                         (8,000+ records from 1,000+ companies)
                     </p>
-                    <Link to="/login" className="btn home__container-item__input home__container-item__btn mb-3">
+                    <button onClick={() => {
+                        if (email === "") {
+                            window.location.href = "/signup";
+                        } else if (isSubscribed) {
+                            window.location.href = "/sponsors";
+                        }
+                        else {
+                            window.location.href = "/pricing";
+                        }
+                    }} className="btn home__container-item__input home__container-item__btn mb-3">
                         Access Full Database
-                    </Link>
+                    </button>
                     <p className="airtable-p airtable-note">
                         Below is a sample of the data in our database. For full access, please login.
                     </p>
@@ -137,71 +102,7 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                 </div>
             </div>
             <div className="web-section web-section-dark">
-                <div className="web-section__container-center web-section-content" id="subscribe">
-                    <h2 className="subscribe__header">
-                        Pricing
-                    </h2>
-                    <div className="subscribe__card-cont">
-                        <div className="subscribe__card">
-                            <div className="subscribe__card-text-cont">
-                                <h3 className="subscribe__card-header">
-                                    Monthly
-                                </h3>
-                                <div className="subscribe__card-body">
-                                    <p>
-                                        <FontAwesomeIcon icon={faCheckCircle} /> Unlimited access to our database of high-quality newsletter sponsors
-                                    </p>
-                                    <p>
-                                        <FontAwesomeIcon icon={faCheckCircle} /> New sponsors added regularly, keeping your opportunities up-to-date
-                                    </p>
-                                    <p>
-                                        <FontAwesomeIcon icon={faCheckCircle} /> No commitment—cancel anytime
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="subscribe__card-footer">
-                                <p className="subscribe__card-price">
-                                    $20/month
-                                </p>
-                                <button disabled={isSubscribed} onClick={() => { handleSubscribe(1); }}
-                                    className="btn subscribe__btn">
-                                    Subscribe
-                                </button>
-                            </div>
-                        </div>
-                        <div className="subscribe__card">
-                            <div className="subscribe__card-text-cont">
-                                <h3 className="subscribe__card-header">
-                                    Yearly
-                                </h3>
-                                <div className="subscribe__card-body">
-                                    <p>
-                                        <FontAwesomeIcon icon={faCheckCircle} /> Unlimited access to our database of high-quality newsletter sponsors                                    </p>
-                                    <p>
-                                        <FontAwesomeIcon icon={faCheckCircle} /> New sponsors added regularly, keeping your opportunities up-to-date
-                                    </p>
-                                    <p>
-                                        <FontAwesomeIcon icon={faCheckCircle} /> No commitment—cancel anytime
-                                    </p>
-                                    <p>
-                                        <FontAwesomeIcon icon={faCheckCircle} /> 25% off the Monthly plan
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="subscribe__card-footer">
-                                <p className="subscribe__card-price">
-                                    $180/year
-                                </p>
-                                <button disabled={isSubscribed} onClick={() => handleSubscribe(2)} className="btn subscribe__btn ">
-                                    Subscribe
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <p className="airtable-p airtable-note subscribe-note">
-                        All payments are secured & processed by Stripe
-                    </p>
-                </div>
+                <Pricing isSubscribed={isSubscribed} />
             </div>
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="testimonials">
@@ -225,6 +126,18 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                         <FAQAccordian />
                     </div>
                 </div>
+                <button onClick={() => {
+                    if (email === "") {
+                        window.location.href = "/signup";
+                    } else if (isSubscribed) {
+                        window.location.href = "/sponsors";
+                    }
+                    else {
+                        window.location.href = "/pricing";
+                    }
+                }} className="btn home__container-item__btn">
+                    Access Full Database &nbsp; <FontAwesomeIcon icon={faArrowRight} />
+                </button>
             </div>
         </div >
     );
