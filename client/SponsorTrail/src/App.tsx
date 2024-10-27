@@ -12,7 +12,6 @@ import './css/Header.css';
 import './css/Footer.css';
 import './css/pages/Home.css';
 import './css/pages/Login.css';
-import './css/pages/Signup.css';
 import './css/pages/ChangePassword.css';
 import './css/pages/Review.css';
 import './css/pages/PrivacyPolicy.css';
@@ -35,7 +34,6 @@ import Sponsors from './pages/authReq/Sponsors';
 import Profile from './pages/authReq/Profile';
 import Admin from './pages/authReq/Admin';
 import PaymentSuccess from './pages/authReq/PaymentSuccess';
-import PaymentFail from './pages/authReq/PaymentFail';
 import Subscribe from './pages/authReq/Subscribe';
 
 // Components
@@ -56,7 +54,8 @@ function App() {
     isSubscribed: false,
     subscriptionPlan: "",
     currentPeriodEnd: 0,
-    stripeCustomerId: ""
+    stripeCustomerId: "",
+    cancelAtPeriodEnd: false
   });
 
   const getUserInfo = async () => {
@@ -111,12 +110,12 @@ function App() {
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
-        {<Route path="/profile/" element={<Profile
+        {userAuth && <Route path="/profile/" element={<Profile
           userSubscribed={user.isSubscribed}
           userEmail={user.email}
           subscriptionPlan={user.subscriptionPlan}
           currentPeriodEnd={user.currentPeriodEnd}
-          stripeCustomerId={user.stripeCustomerId}
+          cancelAtPeriodEnd={user.cancelAtPeriodEnd}
         />} />}
         {userAuth && <Route path="/subscribe/" element={<Subscribe isSubscribed={user.isSubscribed} />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}

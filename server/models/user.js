@@ -31,6 +31,11 @@ const userSchema = new mongoose.Schema({
         type: Number,
         required: false
     },
+    cancelAtPeriodEnd: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
     stripeCustomerId: {
         type: String,
         required: false,
@@ -57,6 +62,7 @@ const validateUser = (user) => {
         isSubscribed: Joi.boolean(),
         subscriptionPlan: Joi.string().max(100),
         currentPeriodEnd: Joi.number(),
+        cancelAtPeriodEnd: Joi.boolean(),
         stripeCustomerId: Joi.string().max(100),
         isAdmin: Joi.boolean()
     });

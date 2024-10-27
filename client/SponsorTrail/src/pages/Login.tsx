@@ -17,7 +17,7 @@ const Login = ({ userAuth, isSubscribed }: LoginProps) => {
 
     useEffect(() => {
         if (userAuth && isSubscribed) {
-            window.location.href = '/sponors';
+            window.location.href = '/sponsors';
         }
         else if (userAuth) {
             window.location.href = '/profile';

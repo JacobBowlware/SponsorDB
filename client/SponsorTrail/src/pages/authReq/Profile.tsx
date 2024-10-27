@@ -9,45 +9,24 @@ interface ProfileProps {
     userSubscribed: boolean,
     currentPeriodEnd: number,
     subscriptionPlan: string,
-    stripeCustomerId: string
+    cancelAtPeriodEnd: boolean
 }
 
-const stripeAPIKey = "pk_test_51MpGntBKPgChhmNg63yLnqWVTfzn82jI0aEnzjwvRsTz1tFfUjDnWyMCOXTFuzY4P3QdmRINR04vxOm2pD4vQhyt000Bqbmgv3";
-const stripePromise = loadStripe(stripeAPIKey);
+const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan, cancelAtPeriodEnd }: ProfileProps) => {
 
-const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan, stripeCustomerId }: ProfileProps) => {
-    const handleSubscribe = async (tier: number) => {
-        // Tier 1 = Monthly
-        // Tier 2 = Yearly
-
+    const handleBillingPortal = async () => {
         try {
-            const response = await axios.post(`${config.backendUrl}users/checkout`, { tier: tier },
-                {
-                    headers: {
-                        'x-auth-token': localStorage.getItem('token')
-                    }
-                });
 
-            console.log(response.data);
-            const sessionId = response.data.sessionId;
-
-            const stripe = await stripePromise;
-
-            await stripe?.redirectToCheckout({
-                sessionId: sessionId
+            // Get the billing portal link
+            const response = await axios.get(`${config.backendUrl}users/customer-portal`, {
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
             });
+            const { url } = response.data;
 
-        } catch (error) {
-            console.log("Error subscribing", error);
-        }
-    }
-
-    const handleSubscriptionInfo = async () => {
-        try {
-
-            // TEST_LINK for Stripe billing portal: https://billing.stripe.com/p/login/test_14k16G34K17Ycta000
-
-
+            // Redirect to billing portal
+            window.open(url, '_blank');
         }
         catch (e) {
             console.log("Error getting subscription info", e);
@@ -65,20 +44,22 @@ const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan
                         <div className="profile-cont__card-info">
                             <div className="profile-cont__card-info-options">
                                 <p className="profile-cont__card-info-item profile-cont__card-info-item__value mt-0">
-                                    Email:   {userEmail}
+                                    Email:   <span className="text-italic">{userEmail ? userEmail : "..."} </span>
                                 </p>
                                 <p className="profile-cont__card-info-item profile-cont__card-info-item__value">
-                                    Subscription Plan: {userSubscribed ? subscriptionPlan : "Not Subscribed"}
+                                    Subscription Plan: <span className="text-italic">{userSubscribed ? subscriptionPlan : "Not Subscribed"}</span> {cancelAtPeriodEnd ? <span className="text-italic"> (Canceling at the end of the period)</span> : ""}
                                 </p>
                                 <p className="profile-cont__card-info-item profile-cont__card-info-item__value">
-                                    Renewal Date: {currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toLocaleDateString() : 'N/A'}
+                                    Renewal Date: <span className="text-italic">{currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toLocaleDateString() : 'N/A'}</span>
                                 </p>
-                                <Link className="btn profile-cont__card-form__btn mt-2" to="https://billing.stripe.com/p/login/28obKyanW7Rv9205kk">
-                                    Subscription Info
-                                </Link>
-                                <Link className="btn profile-cont__card-form__btn mt-2 ml-2" to="/change-password">
-                                    Change Password
-                                </Link>
+                                <div className="profile-cont__card-form__btn-cont">
+                                    <button className="btn profile-cont__card-form__btn mt-2" onClick={() => handleBillingPortal()}>
+                                        Subscription Info
+                                    </button>
+                                    <Link className="btn profile-cont__card-form__btn mt-2" to="/change-password">
+                                        Change Password
+                                    </Link>
+                                </div>
                                 <p className="airtable-p airtable-note mt-1">
                                     All payments are processed & secured by Stripe. We do not store any payment information.
                                 </p>

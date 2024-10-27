@@ -24,7 +24,7 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // Get subscription info from the current user (from Stripe)
-router.get('/subscriptionInfo', auth, async (req, res) => {
+router.get('/customer-portal', auth, async (req, res) => {
     const user = await User.findById(req.user._id).select('-password');
 
     if (!user.stripeCustomerId) {
@@ -32,31 +32,19 @@ router.get('/subscriptionInfo', auth, async (req, res) => {
     }
 
     try {
-        const customer = await stripe.customers.retrieve(user.stripeCustomerId);
-        // log customer
-        console.log("Customer Info: ", customer);
-
-        // List subscriptions for the customer
-        const subscriptions = await stripe.subscriptions.list({
-            customer: customer.id,
-            status: 'active',
+        const session = await stripe.billingPortal.sessions.create({
+            customer: user.stripeCustomerId,
+            return_url: `${process.env.CLIENT_URL}/profile`,
+            metadata: {
+                userId: user._id
+            }
         });
 
-        // Check if customer has subscriptions
-        if (subscriptions.data.length === 0) {
-            return res.status(400).send("No subscriptions found for this customer.");
-        }
-
-        // Retrieve the first subscription (or whichever is relevant)
-        const subscription = subscriptions.data[0];
-        console.log("Subscription Info: ", subscription);
-
-        // Send the subscription info as the response
-        res.status(200).send(subscription).select('-');
+        res.status(200).send({ url: session.url });
     }
     catch (error) {
-        console.log("Error fetching subscription info: ", error);
-        return res.status(400).send("An error occured fetching subscription info");
+        console.log("Error creating a billing portal session: ", error);
+        return res.status(400).send("An error occured creating a billing portal session");
     }
 });
 
@@ -88,9 +76,12 @@ router.post('/', async (req, res) => {
     res.status(200).send(_.pick(user, ['_id', 'email']));
 });
 
+// Create a new user checkout session
 router.post('/checkout', auth, async (req, res) => {
     const tier = req.body.tier;
     const userId = req.user._id;
+
+    console.log("Creating checkout session for user: ", userId, " TIER: ", tier);
 
     if (req.body.isSubscribed) {
         // User is already subscribed, do nothing
@@ -121,8 +112,8 @@ router.post('/checkout', auth, async (req, res) => {
                     },
                 ],
                 mode: 'subscription',
-                success_url: `${process.env.CLIENT_URL}/payment-success`, // URL when payment is successful
-                cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,   // URL when payment fails/cancelled
+                success_url: `${process.env.CLIENT_URL}/sponsors`, // URL when payment is successful
+                cancel_url: `${process.env.CLIENT_URL}/profile`,   // URL when payment fails/cancelled
                 customer_email: req.user.email,  // Optional, to auto-fill Stripe customer info
                 metadata: {
                     userId: userIdToString,
@@ -133,6 +124,7 @@ router.post('/checkout', auth, async (req, res) => {
             res.status(200).send({ sessionId: session.id });
         }
         catch (error) {
+            console.log("Error creating checkout session: ", error);
             return res.status(400).send("An error occured creating checkout session");
         }
     }

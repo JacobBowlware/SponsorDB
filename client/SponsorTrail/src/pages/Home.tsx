@@ -35,18 +35,9 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                     <p>
                         (8,000+ records from 1,000+ companies)
                     </p>
-                    <button onClick={() => {
-                        if (email === "") {
-                            window.location.href = "/signup";
-                        } else if (isSubscribed) {
-                            window.location.href = "/sponsors";
-                        }
-                        else {
-                            window.location.href = "/pricing";
-                        }
-                    }} className="btn home__container-item__input home__container-item__btn mb-3">
+                    <a href="/#pricing" className="btn home__container-item__input home__container-item__btn mb-3">
                         Access Full Database
-                    </button>
+                    </a>
                     <p className="airtable-p airtable-note">
                         Below is a sample of the data in our database. For full access, please login.
                     </p>
@@ -67,41 +58,7 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                     </div>
                 </div>
             </div>
-            <div className="web-section" >
-                {/*TODO: Add a section of images which display the database being used/the profile page of a test user (3 total?) */}
-                <div className="web-section__container web-section-content" id="how-it-works">
-                    <h2 className="web-section__container-header-sm">
-                        How It Works
-                    </h2>
-                    <div className="home__how-it-works-container">
-                        <div className="home__how-it-works-container__item">
-                            <h3 className="home__how-it-works-container__item-header">
-                                1. Data Collection
-                            </h3>
-                            <p className="home__how-it-works-container__item-text text">
-                                Data is consistently collected from reputable sources, compiling information on real sponsorships, companies, and newsletters.
-                            </p>
-                        </div>
-                        <div className="home__how-it-works-container__item">
-                            <h3 className="home__how-it-works-container__item-header">
-                                2. Data Verification
-                            </h3>
-                            <p className="home__how-it-works-container__item-text text">
-                                The data is then verified and organized into our database, ensuring that you're only presented with the most reliable information available.
-                            </p>
-                        </div>
-                        <div className="home__how-it-works-container__item">
-                            <h3 className="home__how-it-works-container__item-header">
-                                3. You Apply
-                            </h3>
-                            <p className="home__how-it-works-container__item-text text">
-                                With our complete database of sponsors in hand, you can begin applying for sponsorships and growing your newsletter.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="web-section web-section-dark">
+            <div className="web-section web-section-dark" id="pricing">
                 <Pricing isSubscribed={isSubscribed} />
             </div>
             <div className="web-section" >
@@ -129,11 +86,11 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                 <button onClick={() => {
                     if (email === "") {
                         window.location.href = "/signup";
-                    } else if (isSubscribed) {
+                    } else if (email !== "" && isSubscribed === true) {
                         window.location.href = "/sponsors";
                     }
                     else {
-                        window.location.href = "/pricing";
+                        window.location.href = "/subscribe";
                     }
                 }} className="btn home__container-item__btn">
                     Access Full Database &nbsp; <FontAwesomeIcon icon={faArrowRight} />

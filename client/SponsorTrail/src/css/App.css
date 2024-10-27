@@ -16,8 +16,9 @@ body {
   overflow-x: hidden;
 }
 
+body,
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: smooth !important;
 }
 
 /* Link Spacing */
@@ -229,4 +230,22 @@ html {
 /* Airtable */
 .airtable-cont {
   width: 100%;
+}
+
+/* Other */
+.privacy-policy {
+  font-size: 1rem;
+}
+
+.policy-text h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.text-italic {
+  font-style: italic;
+}
+
+.text-bold {
+  font-weight: 700;
 }
