@@ -9,7 +9,7 @@ import AirTable from "../components/AirTable.js";
 import Pricing from "../components/Pricing";
 
 // Font Awesome Icons
-import { faCheckCircle, faArrowRight, faThumbsUp, faSyncAlt, faStopwatch } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faThumbsUp, faSyncAlt, faStopwatch } from "@fortawesome/free-solid-svg-icons";
 
 // Images
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

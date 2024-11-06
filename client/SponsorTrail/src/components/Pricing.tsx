@@ -1,11 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { faAward, faCheckCircle, faClock, faCrown, faEarthAmericas, faGem, faLeaf, faPiggyBank, faRocket, faStar } from "@fortawesome/free-solid-svg-icons";
 import config from "../config";
 import axios from "axios";
 
 
 // Stripe
 import { loadStripe } from '@stripe/stripe-js';
+import PricingCard from "./PricingCard";
 
 const stripeAPIKey = "pk_live_51MpGntBKPgChhmNg9wLgFqQICAjXSVAzaEMRKwXjuLQeZZhwghaiA7VDoG0Cov9uEnDGF9RlAKQkQ1xXPSooAX8D00Mp9uCFyO";
 const stripeAPIKeyTest = "pk_test_51MpGntBKPgChhmNg63yLnqWVTfzn82jI0aEnzjwvRsTz1tFfUjDnWyMCOXTFuzY4P3QdmRINR04vxOm2pD4vQhyt000Bqbmgv3";
@@ -61,61 +62,21 @@ const Pricing = ({ isSubscribed, subscribePage }: PricingProps) => {
             {subscribePage ? "Subscribe to SponsorDB" : "Pricing"}
         </h2>
         <div className="subscribe__card-cont">
-            <div className="subscribe__card">
-                <div className="subscribe__card-text-cont">
-                    <h3 className="subscribe__card-header">
-                        Monthly
-                    </h3>
-                    <div className="subscribe__card-body">
-                        <p>
-                            <FontAwesomeIcon icon={faCheckCircle} /> Unlimited access to our database of high-quality newsletter sponsors
-                        </p>
-                        <p>
-                            <FontAwesomeIcon icon={faCheckCircle} /> New sponsors added regularly, keeping your opportunities up-to-date
-                        </p>
-                        <p>
-                            <FontAwesomeIcon icon={faCheckCircle} /> No commitment—cancel anytime
-                        </p>
-                    </div>
-                </div>
-                <div className="subscribe__card-footer">
-                    <p className="subscribe__card-price">
-                        $20/month
-                    </p>
-                    <button disabled={isSubscribed} onClick={() => { handleSubscribe(1, isSubscribed); }}
-                        className="btn subscribe__btn">
-                        Subscribe
-                    </button>
-                </div>
-            </div>
-            <div className="subscribe__card">
-                <div className="subscribe__card-text-cont">
-                    <h3 className="subscribe__card-header">
-                        Yearly
-                    </h3>
-                    <div className="subscribe__card-body">
-                        <p>
-                            <FontAwesomeIcon icon={faCheckCircle} /> Unlimited access to our database of high-quality newsletter sponsors                                    </p>
-                        <p>
-                            <FontAwesomeIcon icon={faCheckCircle} /> New sponsors added regularly, keeping your opportunities up-to-date
-                        </p>
-                        <p>
-                            <FontAwesomeIcon icon={faCheckCircle} /> No commitment—cancel anytime
-                        </p>
-                        <p>
-                            <FontAwesomeIcon icon={faCheckCircle} /> 25% off the Monthly plan
-                        </p>
-                    </div>
-                </div>
-                <div className="subscribe__card-footer">
-                    <p className="subscribe__card-price">
-                        $180/year
-                    </p>
-                    <button disabled={isSubscribed} onClick={() => handleSubscribe(2, isSubscribed)} className="btn subscribe__btn ">
-                        Subscribe
-                    </button>
-                </div>
-            </div>
+            <PricingCard
+                header="Monthly"
+                text="Unlimited access to our database of high-quality newsletter sponsors"
+                price="$20"
+                icon={faEarthAmericas}
+                handleSubscribe={() => handleSubscribe(1, isSubscribed)}
+            />
+            <PricingCard
+                header="Yearly"
+                text="Unlimited access to our database of high-quality newsletter sponsors"
+                price="$180"
+                year={true}
+                icon={faRocket}
+                handleSubscribe={() => handleSubscribe(2, isSubscribed)}
+            />
         </div>
         <p className="airtable-p airtable-note subscribe-note">
             All payments are processed & secured by Stripe

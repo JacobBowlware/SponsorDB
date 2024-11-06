@@ -14,8 +14,7 @@ router.get('/emailMonitor', [auth, admin], async (req, res) => {
     }
     catch (e) {
         console.log("Error running email monitor...", e);
-        return res.status(400
-        ).send(e);
+        return res.status(400).send(e);
     }
     res.status(200).send('Email Monitor is running...');
 });
@@ -27,27 +26,24 @@ router.get('/', [auth, admin], async (req, res) => {
 });
 
 // Create a new potential sponsor
-router.post('/', [auth, admin], async (req, res) => {
-    // Validate the request body
-    const { error } = validatePotentialSponsor(req.body);
-
-    // Return 400 if validation fails
-    if (error) {
-        return res
-            .status(400)
-            .send(error.details[0].message);
+router.post('/', async (req, res) => {
+    // Validate the request body (which could be either a potential sponsor, or an array of potential sponsors)
+    const sponsors = req.body;
+    if (!Array.isArray(sponsors)) {
+        sponsors = [sponsors];
+    }
+    for (const sponsor of sponsors) {
+        const { error } = validatePotentialSponsor(sponsor);
+        if (error) {
+            return res
+                .status(400)
+                .send(error.details[0].message);
+        }
     }
 
-    // Create a new potential sponsor
-    const potentialSponsor = new PotentialSponsor({
-        emailSender: req.body.emailSender,
-        potentialSponsorLinks: req.body.potentialSponsorLinks,
-        emailLink: req.body.emailLink
-    });
-
-    // Save the potential sponsor to the database
-    await potentialSponsor.save().then((potentialSponsor) => {
-        res.send(potentialSponsor);
+    // Save the potential sponsors to the database
+    await PotentialSponsor.insertMany(sponsors).then((sponsors) => {
+        res.send(sponsors);
     }).catch((e) => {
         res.status(400).send("Error saving to database...", e.message);
     });

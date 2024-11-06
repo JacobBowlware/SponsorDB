@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import config from '../../config';
 import axios from "axios";
 
+const tags = [
+    "Technology", "Health", "Sports", "Finance", "Business", "Marketing", "Education", "Entertainment", "Travel", "Lifestyle", "Fashion", "Beauty", "Food", "Music", "Art", "Science", "Politics", "Social", "Ecommerce", "Other"
+]
+
 // TODO: Render the email itself to the side of the form, to allow for easier viewing of the email - should be small and not take up too much space
 const Admin = () => {
     // potentialSponsorData for potential sponsors, from our email scraping tool

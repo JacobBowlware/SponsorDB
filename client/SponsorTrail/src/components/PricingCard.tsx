@@ -7,26 +7,25 @@ interface PricingCardProps {
     price: string;
     text: string;
     year?: boolean;
+    handleSubscribe?: () => void;
 }
 
-const PricingCard = ({ header, icon, price, text, year }: PricingCardProps) => {
-    const textStyle = year ? ' text-highlight' : ' text-dark';
-    const btnStlye = year ? ' ' : ' bg-dark'
+const PricingCard = ({ header, icon, price, text, year, handleSubscribe }: PricingCardProps) => {
     return (
         <div className="home__pricing-card">
-            <h3 className={"home__pricing-card__header" + textStyle}>
+            <h3 className={"home__pricing-card__header"}>
                 {header}
             </h3>
-            <FontAwesomeIcon className={"home__pricing-card__icon" + textStyle} icon={icon} />
+            <FontAwesomeIcon className={"home__pricing-card__icon"} icon={icon} />
             <p className="home__pricing-card__price">
                 {price} {year && <span className="home__pricing-card__price__time">/year</span>} {!year && <span className="home__pricing-card__price__time">/month</span>}
             </p>
             <p className="home__pricing-card__text">
                 {text}
             </p>
-            <Link to="/pricing" className={"btn home__pricing-card__btn" + btnStlye}>
-                Get it Now
-            </Link>
+            <button onClick={handleSubscribe} className="btn home__pricing-card__btn bg-dark">
+                Subscribe
+            </button>
         </div>
     );
 }

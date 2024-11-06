@@ -6,7 +6,7 @@ interface SubscribeProps {
 
 const Subscribe = ({ isSubscribed }: SubscribeProps) => {
     return <div className="web-page">
-        <div className="web-section subscribe">
+        <div className="web-section web-section-dark subscribe">
             <Pricing isSubscribed={isSubscribed} subscribePage={true} />
         </div>
     </div>

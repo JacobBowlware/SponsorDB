@@ -35,6 +35,10 @@
     font-size: 1.1rem;
 }
 
+.nav-icon__dark {
+    color: var(--var-color-background);
+}
+
 .nav-item {
     margin: 0rem;
     padding: .3rem;
@@ -64,14 +68,23 @@
 .nav-item__highlight {
     background: var(--var-color-primary);
     width: auto;
-    padding: 0 1rem;
+    padding: 0 .5rem;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .nav-item__highlight-dark {
+    background: var(--var-color-background);
+    color: var(--var-color-text) !important;
+}
+
+.navbar__dark {
     background: var(--var-color-text);
+}
+
+.navbar-brand__dark {
+    color: var(--var-color-background) !important;
 }
 
 @media screen and (min-width: 768px) {

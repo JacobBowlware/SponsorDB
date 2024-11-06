@@ -85,6 +85,11 @@
     opacity: .8;
 }
 
+.profile-cont__card-form__btn:focus {
+    outline: none;
+    border: 1px solid var(--var-color-text);
+}
+
 .subscribe__header {
     font-size: 1.7rem;
     font-weight: 700;
