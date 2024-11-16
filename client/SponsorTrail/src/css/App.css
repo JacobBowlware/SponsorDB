@@ -103,6 +103,12 @@ html {
   margin-bottom: 2rem;
 }
 
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 @media screen and (min-width: 768px) {
   .web-section {
     padding: 2rem;

@@ -65,20 +65,20 @@ const Pricing = ({ isSubscribed, subscribePage }: PricingProps) => {
             <PricingCard
                 header="Monthly"
                 text="Unlimited access to our database of high-quality newsletter sponsors"
-                price="$20"
+                price="$50"
                 icon={faEarthAmericas}
                 handleSubscribe={() => handleSubscribe(1, isSubscribed)}
             />
             <PricingCard
                 header="Yearly"
                 text="Unlimited access to our database of high-quality newsletter sponsors"
-                price="$180"
+                price="$500"
                 year={true}
                 icon={faRocket}
                 handleSubscribe={() => handleSubscribe(2, isSubscribed)}
             />
         </div>
-        <p className="airtable-p airtable-note subscribe-note">
+        <p className="subscribe-note clearfix">
             All payments are processed & secured by Stripe
         </p>
     </div>;

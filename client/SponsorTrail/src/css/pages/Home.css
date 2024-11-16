@@ -154,8 +154,19 @@
     font-size: .8rem !important;
 }
 
+.subscribe-note {
+    font-size: 1rem;
+    font-weight: 300;
+    opacity: .9;
+    margin-top: .5rem;
+}
+
 
 @media screen and (min-width: 768px) {
+
+    .subscribe-note {
+        font-size: 1.1rem;
+    }
 
     .home-blog__container-item {
         padding: 2rem;
@@ -400,6 +411,14 @@
     display: none;
 }
 
+.subscribe__card-cont {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
 .subscribe__card-body p {
     margin-bottom: .5rem !important;
 }
@@ -424,6 +443,10 @@
 
     .home__how-it-works-container__item-text {
         font-size: 1.1rem;
+    }
+
+    .subscribe__card-cont {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -576,7 +599,6 @@
     background: var(--var-color-background);
     color: var(--var-color-secondary);
     border-radius: 3px;
-    margin-bottom: 2rem;
 }
 
 .home__pricing-card__header {
@@ -584,7 +606,6 @@
     font-weight: 700;
     margin-bottom: .5rem;
     width: 100%;
-    height: 100%;
     text-align: center;
     padding: 1rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -619,6 +640,7 @@
     transition: all .3s;
     background: var(--var-color-tertiary);
     color: var(--var-color-primary);
+    font-size: 1rem;
 }
 
 .home__pricing-card__btn:hover {
@@ -633,5 +655,9 @@
 
     .home__pricing-card__header {
         font-size: 1.5rem;
+    }
+
+    .home__pricing-card__btn {
+        font-size: 1.1rem;
     }
 }

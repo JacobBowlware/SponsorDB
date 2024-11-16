@@ -19,6 +19,7 @@ import './css/pages/TOS.css';
 import './css/pages/authReq/Sponsors.css';
 import './css/pages/authReq/Profile.css';
 import './css/pages/authReq/Admin.css';
+import './css/pages/Subscribe.css'
 
 //Pages
 import Home from './pages/Home';

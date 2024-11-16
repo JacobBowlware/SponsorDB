@@ -8,7 +8,7 @@ require('../middleware/corHeaders')(router);
 
 
 // Route to run emailMonitor.js 
-router.get('/emailMonitor', [auth, admin], async (req, res) => {
+router.get('/emailMonitor', async (req, res) => {
     try {
         emailMonitor();
     }
@@ -28,11 +28,15 @@ router.get('/', [auth, admin], async (req, res) => {
 // Create a new potential sponsor
 router.post('/', async (req, res) => {
     // Validate the request body (which could be either a potential sponsor, or an array of potential sponsors)
-    const sponsors = req.body;
+    let sponsors = req.body.sponsors;
+
     if (!Array.isArray(sponsors)) {
         sponsors = [sponsors];
     }
+
+    console.log("Sponsors:", sponsors);
     for (const sponsor of sponsors) {
+        console.log("Validating sponsor:", sponsor);
         const { error } = validatePotentialSponsor(sponsor);
         if (error) {
             return res
@@ -43,9 +47,10 @@ router.post('/', async (req, res) => {
 
     // Save the potential sponsors to the database
     await PotentialSponsor.insertMany(sponsors).then((sponsors) => {
+        console.log("-----POTENTIAL SPONSORS SAVED TO DATBASE-----");
         res.send(sponsors);
     }).catch((e) => {
-        res.status(400).send("Error saving to database...", e.message);
+        res.status(400).send("Error saving to database...");
     });
 });
 

@@ -1,0 +1,15 @@
+.subscribe-img-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    margin-top: 2rem;
+}
+
+.subscribe-img {
+    width: 80%;
+    height: 100%;
+    object-fit: cover;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+}
