@@ -1,46 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const { Sponsor, validateSponsor } = require('../models/sponsor');
+const { PotentialSponsor } = require('../models/potentialSponsor');
 const auth = require('../middleware/auth');
 require('../middleware/corHeaders')(router);
 
 var Airtable = require('airtable');
+const { isArray } = require('lodash');
 var base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base('appn3l7KEp7wAQOZu');
-
-const formatTags = (tags) => {
-    // tags ==> ['tag1, tag2, tag3'], needs to be ['tag1', 'tag2', 'tag3']
-    let newTags = [];
-    try {
-        if (tags.includes(',')) {
-            newTags = tags.split(',');
-
-            // Trim whitespace from each tag
-            newTags = newTags.map(tag => tag.trim());
-        } else {
-            newTags = [tags]; // Wrap in an array if it's a single tag
-        }
-    } catch (e) {
-        console.log("Error formatting tags", tags, e);
-    }
-
-    return newTags;
-};
 
 // Save new sponsor to Airtable
 const saveToAirtable = async (sponsor) => {
-    let updatedTags = formatTags(sponsor.tags);
     try {
         let fields = {
-            "Tags": updatedTags, // Ensure tags are formatted correctly
-            "Sponsor": sponsor.sponsor,
+            "Tags": sponsor.tags,
+            "Sponsor": sponsor.sponsorName,
             "Sponsor Link": sponsor.sponsorLink,
-            "Newsletter Sponsored": sponsor.newsletter,
+            "Newsletter Sponsored": sponsor.newsletterSponsored,
+            "Audience Size": sponsor.subscriberCount
         };
-
-        // Conditionally add the "Subscriber Count" field if it exists
-        if (sponsor.subscriberCount > 0) {
-            fields["Audience Size"] = sponsor.subscriberCount;
-        }
 
         base('Sponsors').create([
             {
@@ -74,8 +52,13 @@ router.get('/count', async (req, res) => {
     res.status(200).send({ "count": sponsorCount });
 });
 
-// Create a new sponsor
+// Create a new sponsor (or multiple sponsors)
 router.post('/', auth, async (req, res) => {
+    if (!isArray(req.body)) {
+        // If req was not array, we need to wrap it in an array
+        req.body = [req.body];
+    }
+
     // Validate the request body
     let error;
     for (let sponsor of req.body) {
@@ -88,25 +71,44 @@ router.post('/', auth, async (req, res) => {
 
     try {
         for (let sponsor of req.body) {
-            let sponsorExists = await Sponsor.findOne({ sponsorName: sponsor.sponsor, newsletterSponsored: sponsor.newsletter });
+            let sponsorExists = await Sponsor.findOne({ sponsorName: sponsor.sponsorName, newsletterSponsored: sponsor.newsletterSponsored });
+            if (sponsorExists) {
+                console.log("Sponsor already exists");
+                return res.status(400).send("Sponsor already exists");
+            }
 
             // If the sponsor does not already exist with the same newsletter sponsorship, create a new sponsor
-            if (!sponsorExists) {
-                const newSponsor = new Sponsor({
-                    sponsorName: sponsor.sponsor,
-                    sponsorLink: sponsor.sponsorLink,
-                    tags: sponsor.tags,
-                    newsletterSponsored: sponsor.newsletter,
-                    subscriberCount: sponsor.subscriberCount
-                });
-                await newSponsor.save();
+            const newSponsor = new Sponsor({
+                sponsorName: sponsor.sponsorName,
+                sponsorLink: sponsor.sponsorLink,
+                tags: sponsor.tags,
+                newsletterSponsored: sponsor.newsletterSponsored,
+                subscriberCount: sponsor.subscriberCount
+            });
+            await newSponsor.save().then(() => {
+                console.log("Sponsor created successfully.");
+            })
 
-                // Save to Airtable
-                await saveToAirtable(sponsor);
+            // Save to Airtable
+            await saveToAirtable(sponsor).then(() => {
+                console.log("Saved to Airtable");
+            }).catch((e) => {
+                console.log("Error saving to Airtable", e);
+            });
+
+            // Delete potential sponsor from potentialSponsors collection
+            await PotentialSponsor.findByIdAndDelete(sponsor._id).then(() => {
+                console.log("Deleted potential sponsor");
             }
+            ).catch((e) => {
+                console.log("Error deleting potential sponsor", e);
+            });
         }
+
+        res.status(201).send(req.body);
     } catch (e) {
         console.log("Error creating sponsor", e);
+        res.status(500).send("Error creating sponsor");
     }
 });
 

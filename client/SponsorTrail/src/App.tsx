@@ -92,7 +92,7 @@ function App() {
 
   const Root = () => {
     return <>
-      {!userAuth ? <Header /> : <AuthHeader isAdmin={user.isAdmin} />}
+      {!userAuth ? <Header /> : <AuthHeader isAdmin={user.isAdmin} isSubscribed={user.isSubscribed} />}
       <ScrollToTop />
       <Outlet />
       <Footer auth={userAuth} />
@@ -123,7 +123,7 @@ function App() {
         {/* Subscriber Routes */}
         {userAuth && user.isSubscribed && <Route path="/sponsors/" element={<Sponsors />} />}
         {/* Admin Routes */}
-        {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
+        {<Route path="/admin/" element={<Admin />} />}
       </Route>
     )
   )

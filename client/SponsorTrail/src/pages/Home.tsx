@@ -13,7 +13,6 @@ import { faArrowRight, faThumbsUp, faSyncAlt, faStopwatch } from "@fortawesome/f
 
 // Images
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect } from "react";
 
 interface HomeProps {
     isSubscribed: boolean,
@@ -21,15 +20,6 @@ interface HomeProps {
 }
 
 const Home = ({ isSubscribed, email }: HomeProps) => {
-
-    useEffect(() => {
-        // if user is authed and subscribed, do nothing
-        // if user is authed and not subscribed, scroll page to pricing
-        if (email !== "" && isSubscribed === false) {
-            document.getElementById("pricing")?.scrollIntoView();
-        }
-    })
-
     return (
         <div className="web-page">
             <div className="web-section web-section-dark" id="sample-data" >

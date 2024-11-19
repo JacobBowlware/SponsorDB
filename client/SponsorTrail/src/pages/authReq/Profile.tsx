@@ -13,6 +13,7 @@ interface ProfileProps {
 }
 
 const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan, cancelAtPeriodEnd }: ProfileProps) => {
+    const [noStripeInfo, setNoStripeInfo] = useState(false);
 
     const handleBillingPortal = async () => {
         try {
@@ -28,8 +29,11 @@ const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan
             // Redirect to billing portal
             window.open(url, '_blank');
         }
-        catch (e) {
+        catch (e: any) {
             console.log("Error getting subscription info", e);
+            if (e.response.data && e.response.data == "User has no subscription info") {
+                setNoStripeInfo(true);
+            }
         }
     }
 
@@ -53,6 +57,9 @@ const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan
                                     Renewal Date: <span className="text-italic">{currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toLocaleDateString() : 'N/A'}</span>
                                 </p>
                                 <div className="profile-cont__card-form__btn-cont">
+                                    {noStripeInfo && <p className="airtable-p airtable-note mt-2 mb-0">
+                                        You have no subscription information. Please subscribe to access the database.
+                                    </p>}
                                     <button className="btn profile-cont__card-form__btn mt-2" onClick={() => handleBillingPortal()}>
                                         Subscription Info
                                     </button>

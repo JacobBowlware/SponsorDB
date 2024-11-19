@@ -45,6 +45,15 @@
     width: 100%;
 }
 
+.admin-dash__form-input-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: .3rem;
+}
+
 .admin-dash__form-input--size {
     width: 10rem !important;
     margin: .4rem 0 .1rem 0;
@@ -61,8 +70,7 @@
     width: 100%;
     justify-content: center;
     align-items: flex-start;
-    background: var(--var-color-primary);
-    padding: 1rem;
+    gap: 1rem;
 }
 
 .admin-dash__form-header {
@@ -92,18 +100,26 @@
     color: var(--var-color-primary);
 }
 
-.admin-dash__sponsor-info {
+.admin-dash__form-item {
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    border-bottom: 1px solid #b8b6b6;
-    padding: 1rem 0;
+    padding: 1rem;
+    background: #ace2ac
+}
+
+/* Change every other item to slightly different color */
+.admin-dash__form-item:nth-child(odd) {
+    background: #dbcee6
 }
 
 .admin-dash__form-input {
     margin: .4rem 0 .1rem 0;
     padding: .3rem;
+    font-size: .8rem;
+    width: 100%;
 }
 
 .admin-dash__sponsor-approve {
@@ -119,35 +135,14 @@
     background: var(--var-color-text);
     color: var(--var-color-primary);
     width: 10rem;
-    font-weight: 600;
-    font-size: 1rem;
+    font-weight: 700;
+    font-size: .9rem;
     padding: .3rem;
+    margin: .6rem 0 0 0;
 }
 
-.admin-dash__form-btn-remove_sponsor {
-    padding: .3rem;
-    font-size: .8rem;
-    background: var(--var-color-text);
-    color: var(--var-color-primary);
-    width: 10rem;
-    margin: .3rem 0 0 0;
-}
-
-.admin-dash__form-btn-add_sponsor {
-    padding: .3rem;
-    font-size: 1rem;
-    background: var(--var-color-text);
-    color: var(--var-color-primary);
-    width: 10rem;
-    margin: 1rem 0;
-}
-
-.admin-dash__form-btn-approve {
-    background: var(--var-color-text);
-}
-
-.admin-dash__form-btn-deny {
-    background: #D82729;
+.admin-dash__form-btn:focus {
+    outline: none;
 }
 
 .admin-dash__form-body {
@@ -156,13 +151,17 @@
     justify-content: center;
 }
 
-.admin-dash__form-body__links {
-    display: column;
-    justify-content: center;
-}
-
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 1024px) {
     .admin-dash__form {
-        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-dash__form-input {
+        font-size: 1rem;
+    }
+
+    .admin-dash__form-btn {
+        font-size: 1rem;
     }
 }

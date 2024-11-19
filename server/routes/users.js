@@ -11,8 +11,8 @@ const sendEmail = require("../utils/sendEmail");
 
 require('../middleware/corHeaders')(router);
 
-const monthlyStripePriceId = 'price_1QCSZqBKPgChhmNgGnhuNBuz';
-const yearlyStripePriceId = 'price_1QCSb5BKPgChhmNg7mtS0pJj';
+const monthlyStripePriceId = 'price_1QMvbJBKPgChhmNgBbSrkdc1';
+const yearlyStripePriceId = 'price_1QMvawBKPgChhmNgmibqaDMT';
 
 const monthlyStripePriceIdTest = 'price_1QCkC2BKPgChhmNgucfIFi7x';
 const yearlyStripePriceIdTest = 'price_1QCk8DBKPgChhmNgF6h55ncY';
@@ -91,10 +91,10 @@ router.post('/checkout', auth, async (req, res) => {
         try {
             let priceId;
             if (req.body.tier === 1) {
-                priceId = monthlyStripePriceIdTest;
+                priceId = monthlyStripePriceId;
             }
             else if (req.body.tier === 2) {
-                priceId = yearlyStripePriceIdTest;
+                priceId = yearlyStripePriceId;
             }
             else {
                 return res.status(400).send("Invalid tier");

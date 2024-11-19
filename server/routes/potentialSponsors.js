@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PotentialSponsor, validatePotentialSponsor } = require('../models/potentialSponsor');
+const { Sponsor } = require('../models/sponsor');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const emailMonitor = require('../scraper/emailMonitor');
@@ -34,7 +35,17 @@ router.post('/', async (req, res) => {
         sponsors = [sponsors];
     }
 
-    console.log("Sponsors:", sponsors);
+    // Check if we have subscriber count for newsletterSponsored already
+    let newsletterExists = await Sponsor.findOne({ newsletterSponsored: sponsors[0].newsletterSponsored });
+    if (newsletterExists && newsletterExists.subscriberCount) {
+        // Add the subscriber count to the potential sponsors
+        let subscriberCount = newsletterExists.subscriberCount;
+
+        for (let sponsor of sponsors) {
+            sponsor.subscriberCount = subscriberCount;
+        }
+    }
+
     for (const sponsor of sponsors) {
         console.log("Validating sponsor:", sponsor);
         const { error } = validatePotentialSponsor(sponsor);

@@ -26,6 +26,10 @@ const potentialSponsorSchema = new mongoose.Schema({
         minlength: 0,
         maxlength: 1000
     },
+    subscriberCount: {
+        type: Number,
+        required: false
+    },
 })
 
 
@@ -34,9 +38,10 @@ const PotentialSponsor = mongoose.model('Potential Sponsor', potentialSponsorSch
 const validatePotentialSponsor = (sponsor) => {
     const schema = Joi.object({
         sponsorName: Joi.string().min(2).max(256).required(),
-        sponsorLink: Joi.string().min(0).max(256),
+        sponsorLink: Joi.string(),
         tags: Joi.array().items(Joi.string().min(0).max(256)).max(5),
-        newsletterSponsored: Joi.string().min(0).max(100)
+        newsletterSponsored: Joi.string().min(0).max(100),
+        subscriberCount: Joi.number()
     });
 
     return schema.validate(sponsor);

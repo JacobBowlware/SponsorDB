@@ -3,7 +3,7 @@ const AirTable = () => {
         <iframe
             title="airtable"
             className="airtable-embed"
-            src="https://airtable.com/embed/appn3l7KEp7wAQOZu/shrKmz9vCMISikwkJ?viewControls=on"
+            src="https://airtable.com/embed/appn3l7KEp7wAQOZu/shrHfIbbHqCqb9yHN?viewControls=on"
             frameBorder="0"
             width="100%"
             height="533"

@@ -7,9 +7,10 @@ import { Link } from "react-router-dom";
 
 interface AuthHeaderProps {
     isAdmin: boolean;
+    isSubscribed: boolean;
 }
 
-const AuthHeader = ({ isAdmin }: AuthHeaderProps) => {
+const AuthHeader = ({ isAdmin, isSubscribed }: AuthHeaderProps) => {
     const [navOpen, setNavOpen] = useState(false);
 
     const closeNavBar = () => {
@@ -34,7 +35,7 @@ const AuthHeader = ({ isAdmin }: AuthHeaderProps) => {
                             <Link className="nav-link nav-link__dark" to="/admin" onClick={closeNavBar}>Admin</Link>
                         </li>}
                         <li className="nav-item">
-                            <Link className="nav-link nav-link__dark" to="/sponsors" onClick={closeNavBar}>Database</Link>
+                            <Link className="nav-link nav-link__dark" to={isSubscribed ? "/sponsors/" : "/subscribe/"} onClick={closeNavBar}>Database</Link>
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link nav-link__dark" to="/profile" onClick={closeNavBar}>Profile</Link>

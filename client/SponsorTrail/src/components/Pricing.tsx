@@ -10,7 +10,7 @@ import PricingCard from "./PricingCard";
 
 const stripeAPIKey = "pk_live_51MpGntBKPgChhmNg9wLgFqQICAjXSVAzaEMRKwXjuLQeZZhwghaiA7VDoG0Cov9uEnDGF9RlAKQkQ1xXPSooAX8D00Mp9uCFyO";
 const stripeAPIKeyTest = "pk_test_51MpGntBKPgChhmNg63yLnqWVTfzn82jI0aEnzjwvRsTz1tFfUjDnWyMCOXTFuzY4P3QdmRINR04vxOm2pD4vQhyt000Bqbmgv3";
-const stripePromise = loadStripe(stripeAPIKeyTest);
+const stripePromise = loadStripe(stripeAPIKey);
 
 const handleSubscribe = async (tier: number, isSubscribed: boolean) => {
     // Tier 1 = Monthly
