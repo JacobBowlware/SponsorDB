@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
         // Handle the checkout.session.completed event (for successful payments)
         if (event.type === 'checkout.session.completed') {
             const subscription = event.data.object;
-            const tier = subscription.metadata.tier;
+            const tier = Number(subscription.metadata.tier);
             const userId = subscription.metadata.userId;
 
             const user = await User.findById(userId);
@@ -30,7 +30,6 @@ router.post('/', async (req, res) => {
             }
 
             let tierName = "Monthly";
-            console.log("TIER: ", tier);
             if (tier === 2) {
                 tierName = "Yearly";
             }
@@ -39,8 +38,6 @@ router.post('/', async (req, res) => {
                 console.error("User not found: ");
                 return res.status(404).send("User not found");
             }
-
-            console.log("SUBSCRIPTION CREATED: ", subscription);
 
             user.isSubscribed = true;
             user.subscriptionPlan = tierName;
@@ -60,9 +57,6 @@ router.post('/', async (req, res) => {
             }
 
             await user.save();
-
-            console.log("Subscription created for user", user);
-
         }
 
         // Handle the customer.subscription.deleted event (for cancelled subscriptions)

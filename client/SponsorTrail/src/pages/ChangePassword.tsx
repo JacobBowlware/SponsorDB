@@ -1,9 +1,11 @@
-import { Link } from "react-router-dom";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import config from "../config";
 
+//TODO: Currently, the emails are case sensitive. 
+
 const ChangePassword = () => {
+    const [checked, setChecked] = useState(false);
     const [user, setUser] = useState({
         email: ""
     });
@@ -28,8 +30,9 @@ const ChangePassword = () => {
     }
 
     useEffect(() => {
-        if (user.email === "") {
+        if (user.email === "" && !checked && localStorage.getItem('token')) {
             getUserProfile();
+            setChecked(true);
         }
     }, [user.email])
 
@@ -37,17 +40,16 @@ const ChangePassword = () => {
         e.preventDefault();
         setLoading(true);
         // Send a password reset email
-        await axios.post(`${config.backendUrl}users/reset-password`, {
-            email: user.email
+        await axios.post(`${config.backendUrl}users/change-password`, {
+            email: user.email.toLowerCase()
         }).then((res) => {
-            console.log(res.data);
             setEmailSent(true);
+            setError(false);
             const btn = document.getElementById('submitBtn');
             if (btn) {
                 btn.setAttribute('disabled', 'true');
             }
         }).catch((err) => {
-            console.log(err);
             setError(true);
             setEmailSent(false);
         });
@@ -69,13 +71,12 @@ const ChangePassword = () => {
                     </div>
                     <input onChange={(e) => { setUser({ email: e.target.value }) }} value={user.email} className="input form-input change-password-form__input" type="email" placeholder="Email Address" />
                     <button id="submitBtn" className="btn form-btn change-password-form__btn" type="submit">{loading ? "..." : "Send Email"}</button>
-                    {!authedUser && <Link to="/signup" className="login-form__link change-password-form__link">Don't have an account?</Link>}
                     {emailSent && <p className="change-password-form__sent">
                         Email sent! Please check your inbox - if you don't see it, check your spam folder.
                     </p>}
                     {error && <p className="change-password-form__error">
-                        An error occured... Please try again later.
-                    </p> && !emailSent}
+                        No account found with that email address. If this is a mistake, please contact support.
+                    </p>}
                 </form>
             </div>
         </div>

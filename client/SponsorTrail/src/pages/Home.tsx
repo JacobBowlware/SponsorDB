@@ -22,7 +22,7 @@ interface HomeProps {
 const Home = ({ isSubscribed, email }: HomeProps) => {
     return (
         <div className="web-page">
-            <div className="web-section web-section-dark" id="sample-data" >
+            <div className="web-section web-section-dark mt-0" id="sample-data" >
                 <div className="web-section__container web-section-content">
                     <h1 className="web-section__container-header airtable-header">
                         Maximize your Newsletter Sponsorships
@@ -31,7 +31,7 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                         Access our database of proven newsletter sponsors. Spend less time searching and more time earning.
                     </p>
                     <p>
-                        (8,000+ records from 1,000+ companies)
+                        (Updated with New Sponsors Daily)
                     </p>
                     <a href="/#pricing" className="btn home__container-item__input home__container-item__btn mb-3">
                         Access Full Database

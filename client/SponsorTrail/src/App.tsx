@@ -46,6 +46,7 @@ import AuthHeader from './components/common/AuthHeader';
 // Other
 import axios from 'axios';
 import config from './config';
+import ChangePasswordFinal from './pages/ChangePasswordFinal';
 
 function App() {
   const [userAuth, setUserAuth] = useState(false);
@@ -107,6 +108,7 @@ function App() {
         <Route path="/login/" element={<Login userAuth={userAuth} isSubscribed={user.isSubscribed} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} isSubscribed={user.isSubscribed} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
+        <Route path="/change-password-final" element={<ChangePasswordFinal />} />
         <Route path="/review/" element={<Review />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />

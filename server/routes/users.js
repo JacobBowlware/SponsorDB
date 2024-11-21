@@ -4,10 +4,10 @@ const bcrypt = require('bcrypt');
 const _ = require('lodash');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const Token = require("../models/token");
 const config = require("config");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const sendEmail = require("../utils/sendEmail");
+const jwt = require("jsonwebtoken");
 
 require('../middleware/corHeaders')(router);
 
@@ -55,8 +55,9 @@ router.post('/', async (req, res) => {
         return res.status(400).send("Error occured registering new user: " + error.details[0].message);
     }
 
+
     let user = new User({
-        email: req.body.email,
+        email: req.body.email.toLowerCase(),
         password: "",
         isSubscribed: false // New users are not subscribed by default,
 
@@ -72,6 +73,7 @@ router.post('/', async (req, res) => {
     }
 
     const token = user.generateAuthToken();
+
     res.header('x-auth-token', token);
     res.status(200).send(_.pick(user, ['_id', 'email']));
 });
@@ -81,24 +83,12 @@ router.post('/checkout', auth, async (req, res) => {
     const tier = req.body.tier;
     const userId = req.user._id;
 
-    console.log("Creating checkout session for user: ", userId, " TIER: ", tier);
-
     if (req.body.isSubscribed) {
         // User is already subscribed, do nothing
         res.status(400).send("User is already subscribed");
     }
     else {
         try {
-            let priceId;
-            if (req.body.tier === 1) {
-                priceId = monthlyStripePriceId;
-            }
-            else if (req.body.tier === 2) {
-                priceId = yearlyStripePriceId;
-            }
-            else {
-                return res.status(400).send("Invalid tier");
-            }
             // convert userId to string
             let userIdToString = userId.toString();
 
@@ -107,7 +97,7 @@ router.post('/checkout', auth, async (req, res) => {
                 payment_method_types: ['card'],
                 line_items: [
                     {
-                        price: priceId,
+                        price: req.body.tier === 1 ? monthlyStripePriceId : yearlyStripePriceId,
                         quantity: 1
                     },
                 ],
@@ -118,7 +108,8 @@ router.post('/checkout', auth, async (req, res) => {
                 metadata: {
                     userId: userIdToString,
                     tier: tier
-                }
+                },
+                allow_promotion_codes: true
             });
 
             res.status(200).send({ sessionId: session.id });
@@ -130,7 +121,8 @@ router.post('/checkout', auth, async (req, res) => {
     }
 });
 
-router.post("/reset-password", async (req, res) => {
+// Create a new user reset-password token and send session link to the user's email
+router.post("/change-password", async (req, res) => {
     try {
 
         if (!req.body.email) return res.status(400).send("email is required");
@@ -139,14 +131,12 @@ router.post("/reset-password", async (req, res) => {
         if (!user)
             return res.status(400).send("user with given email doesn't exist");
 
-        // Check if token already exists, if not then create a new one
-        let token = await Token.findOne({ userId: user._id });
-        if (!token) {
-            token = user.generateAuthToken();
-        }
+        // Create a new token for user
+        let token = user.generateAuthToken();
 
-        const link = `${config.get('BASE_URL')}/password-reset/${user._id}/${token.token}`;
-        await sendEmail(user.email, "Password reset", link);
+        const link = `${process.env.CLIENT_URL}/change-password-final?token=${token}`;
+        const text = `Click on the link to reset your password: ${link}`;
+        await sendEmail(user.email, "SponsorDB Password Reset Link", text);
 
         res.status(200).send("password reset link sent to your email account");
     } catch (error) {
@@ -155,30 +145,43 @@ router.post("/reset-password", async (req, res) => {
     }
 });
 
-router.post("/:userId/:token", async (req, res) => {
+// After the user clicks the password reset link in their email, they will be redirected to the frontend
+// The frontend will then send a POST request to this endpoint with the new password, only if the token in the link is valid
+router.post("/change-password-final/", async (req, res) => {
     try {
-        const schema = Joi.object({ password: Joi.string().required() });
-        const { error } = schema.validate(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        const authToken = req.body.token;
+        const newPassword = req.body.newPassword;
 
-        const user = await User.findById(req.params.userId);
-        if (!user) return res.status(400).send("invalid link or expired");
+        if (!authToken || !newPassword) {
+            return res.status(400).send("Invalid link");
+        }
 
-        const token = await Token.findOne({
-            userId: user._id,
-            token: req.params.token,
-        });
-        if (!token) return res.status(400).send("Invalid link or expired");
+        // Decode the token
+        const decoded = jwt.verify(authToken, process.env.jwtPrivateKey || config.get('jwtPrivateKey'));
 
-        user.password = req.body.password;
+        if (!decoded) {
+            return res.status(400).send("Invalid token");
+        }
+
+        const userID = decoded._id;
+        const user = await User.findById(userID);
+
+        if (!user) {
+            return res.status(400).send("Invalid userID");
+        }
+
+        // Update the user's password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
         await user.save();
-        await token.delete();
 
-        res.send("password reset sucessfully.");
-    } catch (error) {
-        res.send("An error occured");
+        res.status(200).send("Password reset successfully");
+    }
+    catch (error) {
         console.log(error);
+        res.status(400).send("An error occured resetting the password");
     }
 });
+
 
 module.exports = router;

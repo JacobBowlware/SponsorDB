@@ -34,7 +34,7 @@ const Login = ({ userAuth, isSubscribed }: LoginProps) => {
         }
 
         await axios.post(`${config.backendUrl}auth/login`, {
-            email: email,
+            email: email.toLowerCase(),
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
@@ -70,6 +70,7 @@ const Login = ({ userAuth, isSubscribed }: LoginProps) => {
                         <button disabled={!!emailError || !email || !password || password.length < 8} className="btn login-form__btn" type="submit">Login</button>
                     </div>
                     <Link to="/signup" className="login-form__link">Don't have an account?</Link>
+                    <Link to="/change-password" className="login-form__link">Forgot Password?</Link>
                 </form>
             </div>
         </div>
