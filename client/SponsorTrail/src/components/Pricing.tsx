@@ -58,21 +58,21 @@ interface PricingProps {
 
 const Pricing = ({ isSubscribed, subscribePage }: PricingProps) => {
     return <div className="web-section__container-center web-section-content" id="subscribe">
-        <h2 className="subscribe__header">
-            {subscribePage ? "Subscribe to SponsorDB" : "Pricing"}
+        <h2 className={"subscribe__header mb-2 " + (subscribePage ? 'authed_subscribe-header' : '')}>
+            Choose Your Plan
         </h2>
-        <div className="subscribe__card-cont">
+        <div className={"subscribe__card-cont " + (subscribePage ? 'authed_subcribe-cont' : '')}>
             <PricingCard
                 header="Monthly"
-                text="Unlimited access to our database of high-quality newsletter sponsors"
-                price="$50"
+                text={["Unlimited access to our database of high-quality newsletter sponsors."]}
+                price="$30"
                 icon={faEarthAmericas}
                 handleSubscribe={() => handleSubscribe(1, isSubscribed)}
             />
             <PricingCard
                 header="Yearly"
-                text="Unlimited access to our database of high-quality newsletter sponsors"
-                price="$500"
+                text={["Unlimited access to our database of high-quality newsletter sponsors.", "3 Free Months -- Save $90"]}
+                price="$270"
                 year={true}
                 icon={faRocket}
                 handleSubscribe={() => handleSubscribe(2, isSubscribed)}

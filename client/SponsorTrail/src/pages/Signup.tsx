@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { validateProperty, validateUser } from "../components/common/WebJoi";
 import axios from 'axios';
 import config from '../config';
@@ -18,14 +18,16 @@ const Signup = ({ userAuth, isSubscribed }: SignupProps) => {
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [error, setError] = useState('');
 
+    const navigate = useNavigate();
+
     useEffect(() => {
         if (userAuth && isSubscribed) {
-            window.location.href = '/sponsors';
+            navigate('/sponsors');
         }
         else if (userAuth) {
-            window.location.href = '/profile';
+            navigate('/subscribe');
         }
-    })
+    }, [userAuth, isSubscribed])
 
     const handleChange = (name: string, e: any) => {
         setError('');

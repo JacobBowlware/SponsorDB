@@ -27,15 +27,15 @@ const Header = () => {
                 </button>
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav">
-                        <li className="nav-item">
+                        {/* <li className="nav-item">
                             <a className="nav-link" href="/#sample-data" onClick={closeNavBar}>Database</a>
-                        </li>
+                        </li> */}
                         <li className="nav-item">
                             <a className="nav-link" href="/#features" onClick={closeNavBar}>Features</a>
                         </li>
-                        <li className="nav-item">
+                        {/* <li className="nav-item">
                             <a className="nav-link" href="/#pricing" onClick={closeNavBar}>Pricing</a>
-                        </li>
+                        </li> */}
                         <li className="nav-item">
                             <a className="nav-link" href="/#testimonials" onClick={closeNavBar}>Testimonials</a>
                         </li>

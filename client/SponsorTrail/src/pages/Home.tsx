@@ -28,16 +28,16 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                         Maximize your Newsletter Sponsorships
                     </h1>
                     <p className="airtable-p">
-                        Access our database of proven newsletter sponsors. Spend less time searching and more time earning.
+                        Access our database of proven newsletter sponsors. Spend less time searching and more time growing your newsletter.
                     </p>
                     <p>
-                        (Updated with New Sponsors Daily)
+                        (Updated with new sponsors daily)
                     </p>
-                    <a href="/#pricing" className="btn home__container-item__input home__container-item__btn mb-3">
-                        Access Full Database
-                    </a>
+                    <Link to="/signup" className="btn home__container-item__btn mb-3">
+                        Find Sponsors &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                    </Link>
                     <p className="airtable-p airtable-note">
-                        Below is a sample of the data in our database. For full access, please login.
+                        Below is a sample of the data in our database. For full access, please sign up.
                     </p>
                     <div className="airtable-cont">
                         <AirTable />
@@ -50,14 +50,11 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                         Why SponsorDB?
                     </h2>
                     <div className="home__features-list">
-                        <FeatureCard icon={faThumbsUp} header="Easy to Use" text="Our database is designed to be user-friendly. Quickly find sponsors that match your newsletter." />
-                        <FeatureCard icon={faSyncAlt} header="Stay Updated" text="We regularly update our database with new sponsors, ensuring you always have the latest opportunities." />
-                        <FeatureCard highlighted={true} header="Time Saver" icon={faStopwatch} text="Spend less time searching for sponsors and more time growing your newsletter." />
+                        <FeatureCard icon={faThumbsUp} header="Easy to Use" text="Our database is designed to be user-friendly. Quickly find sponsors that match your newsletter by sorting & filtering" />
+                        <FeatureCard icon={faSyncAlt} header="Stay Updated" text="We regularly update our database with new sponsors, ensuring you always have the latest opportunities" />
+                        <FeatureCard highlighted={true} header="Time Saver" icon={faStopwatch} text="Spend less time searching for sponsors and more time growing your newsletter" />
                     </div>
                 </div>
-            </div>
-            <div className="web-section web-section-dark" id="pricing">
-                <Pricing isSubscribed={isSubscribed} />
             </div>
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="testimonials">
@@ -73,28 +70,22 @@ const Home = ({ isSubscribed, email }: HomeProps) => {
                         &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
                     </Link>}
                 </div>
-                <div className="web-section" >
-                    <div className="web-section__container web-section-content" id="FAQ">
-                        <h2 className="web-section__container-header-sm">
-                            Frequently Asked Questions
-                        </h2>
-                        <FAQAccordian />
-                    </div>
-                </div>
-                <button onClick={() => {
-                    if (email === "") {
-                        window.location.href = "/signup";
-                    } else if (email !== "" && isSubscribed === true) {
-                        window.location.href = "/sponsors";
-                    }
-                    else {
-                        window.location.href = "/subscribe";
-                    }
-                }} className="btn home__container-item__btn">
-                    Access Full Database &nbsp; <FontAwesomeIcon icon={faArrowRight} />
-                </button>
             </div>
-        </div >
+            <div className="web-section web-section-dark" id="pricing">
+                <Pricing isSubscribed={isSubscribed} />
+            </div>
+            <div className="web-section" >
+                <div className="web-section__container web-section-content" id="FAQ">
+                    <h2 className="web-section__container-header-sm">
+                        Frequently Asked Questions
+                    </h2>
+                    <FAQAccordian />
+                </div>
+            </div>
+            <Link to="/signup" className="btn home__container-item__btn mb-5">
+                Start Finding Sponsors&nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+            </Link>
+        </div>
     );
 };
 

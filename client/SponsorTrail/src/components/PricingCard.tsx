@@ -5,7 +5,7 @@ interface PricingCardProps {
     header: string;
     icon: any;
     price: string;
-    text: string;
+    text: string[];
     year?: boolean;
     handleSubscribe?: () => void;
 }
@@ -13,19 +13,22 @@ interface PricingCardProps {
 const PricingCard = ({ header, icon, price, text, year, handleSubscribe }: PricingCardProps) => {
     return (
         <div className="home__pricing-card">
-            <h3 className={"home__pricing-card__header"}>
-                {header}
-            </h3>
-            <FontAwesomeIcon className={"home__pricing-card__icon"} icon={icon} />
-            <p className="home__pricing-card__price">
-                {price} {year && <span className="home__pricing-card__price__time">/year</span>} {!year && <span className="home__pricing-card__price__time">/month</span>}
-            </p>
-            <p className="home__pricing-card__text">
-                {text}
-            </p>
-            <button onClick={handleSubscribe} className="btn home__pricing-card__btn bg-dark">
-                Subscribe
-            </button>
+            <div className="home__pricing-card-section__cont">
+                <h3 className="home__pricing-card__header">
+                    {header}
+                </h3>
+                <ul className="home__pricing-card__list">
+                    {text.map((t, i) => <li className="mb-2" key={i}>{t}</li>)}
+                </ul>
+            </div>
+            <div className="home__pricing-card-section__cont">
+                < p className="home__pricing-card__price" >
+                    {price} {year && <span className="home__pricing-card__price__time">/year</span>} {!year && <span className="home__pricing-card__price__time">/month</span>}
+                </p>
+                <button onClick={handleSubscribe} className="btn home__pricing-card__btn bg-dark">
+                    Get Started
+                </button>
+            </div>
         </div>
     );
 }
