@@ -1,13 +1,18 @@
+.review {
+    background: var(--var-color-primary);
+    height: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
 .review-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
-    border: 1px solid var(--var-color-primary);
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     max-width: 50rem;
-    padding: 3rem 1.5rem;
+    padding: .5rem;
 }
 
 .review-form {
@@ -51,17 +56,27 @@
     width: 100%;
     margin-bottom: .3rem;
     padding: .5rem;
-    font-size: 1rem;
+    font-size: .8rem;
 }
 
 .review-btn {
     width: 100% !important;
     margin-bottom: .3rem;
     font-weight: 600;
+    font-size: .8rem;
 }
 
 .review-header {
-    font-size: 1.6rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    text-align: left;
+    width: 100%;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.review-text {
+    text-align: left;
+    width: 100%;
+    font-size: .9rem;
 }

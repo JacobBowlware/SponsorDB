@@ -5,6 +5,7 @@ const _ = require('lodash');
 
 module.exports = async function (req, res, next) {
     const token = req.header('x-auth-token');
+
     if (!token) {
         return res.status(401).send('Access denied. No token provided.');
     }
@@ -21,10 +22,7 @@ module.exports = async function (req, res, next) {
         }
 
         // If user is found, attach user info to the request object
-        req.user = _.pick(user, ['_id', 'email', 'isAdmin', 'isSubscribed']);
-        if (req.tier) {
-            req.user.tier = req.tier;
-        }
+        req.user = _.pick(user, ['_id', 'email', 'purchased', 'isAdmin']);
 
         // Call next middleware
         next();

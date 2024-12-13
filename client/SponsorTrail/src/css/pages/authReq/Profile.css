@@ -23,7 +23,7 @@
 }
 
 .profile-cont__card-header {
-    font-size: 1.7rem;
+    font-size: 1.1rem;
     font-weight: 700;
     padding-bottom: 1rem;
     border-bottom: 1px solid rgb(198, 189, 189);
@@ -31,7 +31,7 @@
 }
 
 .profile-cont__card-info {
-    font-size: 1rem;
+    font-size: .8rem;
     margin-top: 1rem;
     display: flex;
     flex-direction: column;
@@ -47,6 +47,7 @@
 .profile-cont__card-info-item__value {
     font-weight: 700;
     margin-top: .2rem;
+    font-size: .9rem;
 }
 
 .profile-cont__card-link {
@@ -61,14 +62,18 @@
 .profile-cont__card-form__btn {
     margin: 0;
     width: 11rem;
-    font-size: .9rem;
+    font-size: .8rem;
     font-weight: 700;
-    text-align: center;
     color: var(--var-color-primary);
     background: var(--var-color-text);
     padding: .5rem 1rem;
-    margin: 1rem 0 0 0;
+    margin: .5rem 0 0 0;
     transition: all .3s;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
 }
 
 .profile-cont__card-form__btn-cont {
@@ -90,8 +95,14 @@
     border: 1px solid var(--var-color-text);
 }
 
+.profile-note {
+    font-size: .8rem;
+    font-weight: 300;
+    margin-top: 1rem;
+}
+
 .subscribe__header {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     font-weight: 700;
     margin: 2rem 0 0 0;
     text-align: left;
@@ -215,6 +226,18 @@
 }
 
 @media screen and (min-width: 768px) {
+
+    .profile-cont__card-header {
+        font-size: 1.5rem;
+    }
+
+    .profile-cont__card-info-item__value {
+        font-size: 1rem;
+    }
+
+    .profile-note {
+        font-size: .8rem;
+    }
 
     .subscribed__card-header__note {
         font-size: 1.4rem;

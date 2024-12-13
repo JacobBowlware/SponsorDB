@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAward, faCheckCircle, faClock, faCrown, faEarthAmericas, faGem, faLeaf, faPiggyBank, faRocket, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faAward, faBookmark, faCalendarDay, faCheckCircle, faClock, faCrown, faCube, faCubes, faEarthAmericas, faGem, faLeaf, faPiggyBank, faRocket, faRotateRight, faStar, faTag, faTree } from "@fortawesome/free-solid-svg-icons";
 import config from "../config";
 import axios from "axios";
 
@@ -12,12 +12,10 @@ const stripeAPIKey = "pk_live_51MpGntBKPgChhmNg9wLgFqQICAjXSVAzaEMRKwXjuLQeZZhwg
 const stripeAPIKeyTest = "pk_test_51MpGntBKPgChhmNg63yLnqWVTfzn82jI0aEnzjwvRsTz1tFfUjDnWyMCOXTFuzY4P3QdmRINR04vxOm2pD4vQhyt000Bqbmgv3";
 const stripePromise = loadStripe(stripeAPIKey);
 
-const handleSubscribe = async (tier: number, isSubscribed: boolean) => {
-    // Tier 1 = Monthly
-    // Tier 2 = Yearly
+const handlePurchase = async (purchased: boolean) => {
 
     // If user is already subscribed, send them to sponsors page
-    if (isSubscribed) {
+    if (purchased) {
         window.location.href = "/sponsors";
         return;
     }
@@ -29,14 +27,22 @@ const handleSubscribe = async (tier: number, isSubscribed: boolean) => {
     }
 
 
-    // If user is logged in and not subscribed, create a checkout session
+    // If user is logged in and has not purchased, create a checkout session
     try {
-        const response = await axios.post(`${config.backendUrl}users/checkout`, { tier: tier },
-            {
-                headers: {
-                    'x-auth-token': localStorage.getItem('token')
-                }
-            });
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert("No token " + token);
+            return;
+        }
+        alert(token)
+        const response = await axios.post(`${config.backendUrl}users/checkout`, {
+            headers: {
+                'x-auth-token': token
+            },
+            body: {
+                purchased: purchased
+            }
+        });
 
         const sessionId = response.data.sessionId;
 
@@ -52,30 +58,30 @@ const handleSubscribe = async (tier: number, isSubscribed: boolean) => {
 }
 
 interface PricingProps {
-    isSubscribed: boolean;
+    purchased: boolean;
     subscribePage?: boolean;
 }
 
-const Pricing = ({ isSubscribed, subscribePage }: PricingProps) => {
+const Pricing = ({ purchased, subscribePage }: PricingProps) => {
     return <div className="web-section__container-center web-section-content" id="subscribe">
-        <h2 className={"subscribe__header mb-2 " + (subscribePage ? 'authed_subscribe-header' : '')}>
+        <h2 className={"subscribe__header align-left" + (subscribePage ? 'authed_subscribe-header' : '')}>
             Choose Your Plan
         </h2>
-        <div className={"subscribe__card-cont " + (subscribePage ? 'authed_subcribe-cont' : '')}>
+        <div className="subscribe__card-cont authed_subcribe-cont">
             <PricingCard
                 header="Monthly"
                 text={["Unlimited access to our database of high-quality newsletter sponsors."]}
                 price="$30"
-                icon={faEarthAmericas}
-                handleSubscribe={() => handleSubscribe(1, isSubscribed)}
+                icon={faStar}
+                handlePurchase={() => handlePurchase(purchased)}
             />
             <PricingCard
                 header="Yearly"
                 text={["Unlimited access to our database of high-quality newsletter sponsors.", "3 Free Months -- Save $90"]}
                 price="$270"
                 year={true}
-                icon={faRocket}
-                handleSubscribe={() => handleSubscribe(2, isSubscribed)}
+                icon={faTree}
+                handlePurchase={() => handlePurchase(purchased)}
             />
         </div>
         <p className="subscribe-note clearfix">
@@ -84,4 +90,4 @@ const Pricing = ({ isSubscribed, subscribePage }: PricingProps) => {
     </div>;
 }
 
-export default Pricing;
+export { Pricing, handlePurchase };

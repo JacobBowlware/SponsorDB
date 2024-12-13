@@ -27,4 +27,18 @@
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
+    height: auto !important;
+}
+
+.subscribe__header {
+    width: 100%;
+    text-align: left;
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+@media screen and (max-width: 768px) {
+    .subscribe__header {
+        font-size: 1.5rem;
+    }
 }

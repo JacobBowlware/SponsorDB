@@ -6,17 +6,17 @@ import config from '../config';
 
 interface LoginProps {
     userAuth: boolean;
-    isSubscribed: boolean;
+    purchased: boolean;
 }
 
-const Login = ({ userAuth, isSubscribed }: LoginProps) => {
+const Login = ({ userAuth, purchased }: LoginProps) => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (userAuth && isSubscribed) {
+        if (userAuth && purchased) {
             window.location.href = '/sponsors';
         }
         else if (userAuth) {
@@ -38,7 +38,7 @@ const Login = ({ userAuth, isSubscribed }: LoginProps) => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
-            if (res.data.isSubscribed) {
+            if (res.data.purchased) {
                 window.location.href = '/sponsors';
                 return;
             }

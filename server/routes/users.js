@@ -10,12 +10,9 @@ const sendEmail = require("../utils/sendEmail");
 const jwt = require("jsonwebtoken");
 
 require('../middleware/corHeaders')(router);
+const stripePriceIdTest = "";
+const stripePriceId = "price_1QVLYrBKPgChhmNgw8nLtJrU";
 
-const monthlyStripePriceId = 'price_1QMvbJBKPgChhmNgBbSrkdc1';
-const yearlyStripePriceId = 'price_1QMvawBKPgChhmNgmibqaDMT';
-
-const monthlyStripePriceIdTest = 'price_1QCkC2BKPgChhmNgucfIFi7x';
-const yearlyStripePriceIdTest = 'price_1QCk8DBKPgChhmNgF6h55ncY';
 
 // Get current user
 router.get('/me', auth, async (req, res) => {
@@ -80,10 +77,9 @@ router.post('/', async (req, res) => {
 
 // Create a new user checkout session
 router.post('/checkout', auth, async (req, res) => {
-    const tier = req.body.tier;
     const userId = req.user._id;
 
-    if (req.body.isSubscribed) {
+    if (req.body.purchased) {
         // User is already subscribed, do nothing
         res.status(400).send("User is already subscribed");
     }
@@ -97,17 +93,16 @@ router.post('/checkout', auth, async (req, res) => {
                 payment_method_types: ['card'],
                 line_items: [
                     {
-                        price: req.body.tier === 1 ? monthlyStripePriceId : yearlyStripePriceId,
+                        price: stripePriceId,
                         quantity: 1
                     },
                 ],
-                mode: 'subscription',
+                mode: 'payment',
                 success_url: `${process.env.CLIENT_URL}/sponsors`, // URL when payment is successful
                 cancel_url: `${process.env.CLIENT_URL}/profile`,   // URL when payment fails/cancelled
                 customer_email: req.user.email,  // Optional, to auto-fill Stripe customer info
                 metadata: {
-                    userId: userIdToString,
-                    tier: tier
+                    userId: userIdToString
                 },
                 allow_promotion_codes: true
             });
@@ -180,6 +175,28 @@ router.post("/change-password-final/", async (req, res) => {
     catch (error) {
         console.log(error);
         res.status(400).send("An error occured resetting the password");
+    }
+});
+
+
+router.post('/feedback/', async (req, res) => {
+    try {
+        const email = req.body.email;
+        const name = req.body.name;
+        const message = req.body.message;
+
+        if (!email || !message) {
+            return res.status(400).send("Email and message are required");
+        }
+
+        const text = `Email: ${email} \nName: ${name} \nMessage: ${message}`;
+        await sendEmail("info@sponsor-db.com", "SponsorDB Feedback", text);
+
+        res.status(200).send("Feedback sent successfully");
+    }
+    catch (error) {
+        console.log(error);
+        res.status(400).send("An error occured sending feedback");
     }
 });
 

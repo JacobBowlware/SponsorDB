@@ -3,16 +3,15 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import config from '../../config';
 import { loadStripe } from '@stripe/stripe-js';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faExternalLink, faLock, faUser } from "@fortawesome/free-solid-svg-icons";
 
 interface ProfileProps {
     userEmail: string,
-    userSubscribed: boolean,
-    currentPeriodEnd: number,
-    subscriptionPlan: string,
-    cancelAtPeriodEnd: boolean
+    purchased: boolean,
 }
 
-const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan, cancelAtPeriodEnd }: ProfileProps) => {
+const Profile = ({ userEmail, purchased }: ProfileProps) => {
     const [noStripeInfo, setNoStripeInfo] = useState(false);
 
     const handleBillingPortal = async () => {
@@ -51,23 +50,27 @@ const Profile = ({ userEmail, userSubscribed, currentPeriodEnd, subscriptionPlan
                                     Email:   <span className="text-italic">{userEmail ? userEmail : "..."} </span>
                                 </p>
                                 <p className="profile-cont__card-info-item profile-cont__card-info-item__value">
-                                    Subscription Plan: <span className="text-italic">{userSubscribed ? subscriptionPlan : "Not Subscribed"}</span> {cancelAtPeriodEnd ? <span className="text-italic"> (Canceling at the end of the period)</span> : ""}
+                                    Database: <span className="text-italic">{purchased ? "Purchased" : "Not Purchased"}</span>
                                 </p>
-                                <p className="profile-cont__card-info-item profile-cont__card-info-item__value">
+                                {/* <p className="profile-cont__card-info-item profile-cont__card-info-item__value">
                                     Renewal Date: <span className="text-italic">{currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toLocaleDateString() : 'N/A'}</span>
-                                </p>
+                                </p> */}
                                 <div className="profile-cont__card-form__btn-cont">
-                                    {noStripeInfo && <p className="airtable-p airtable-note mt-2 mb-0">
-                                        You have no subscription information. Please subscribe to access the database.
-                                    </p>}
-                                    <button className="btn profile-cont__card-form__btn mt-2" onClick={() => handleBillingPortal()}>
-                                        Subscription Info
-                                    </button>
-                                    <Link className="btn profile-cont__card-form__btn mt-2" to="/change-password">
-                                        Change Password
+                                    {/* <button className="btn profile-cont__card-form__btn" onClick={() => handleBillingPortal()}>
+                                        Subscription Info <FontAwesomeIcon icon={faExternalLink} />
+                                    </button> */}
+                                    <Link className="btn profile-cont__card-form__btn" to="/change-password">
+                                        Change Password <FontAwesomeIcon icon={faLock
+                                        } />
                                     </Link>
+                                    <button className="btn profile-cont__card-form__btn" onClick={() => {
+                                        localStorage.removeItem('token');
+                                        window.location.reload();
+                                    }}>
+                                        Logout <FontAwesomeIcon icon={faUser} />
+                                    </button>
                                 </div>
-                                <p className="airtable-p airtable-note mt-1">
+                                <p className="profile-note">
                                     All payments are processed & secured by Stripe. We do not store any payment information.
                                 </p>
                             </div>

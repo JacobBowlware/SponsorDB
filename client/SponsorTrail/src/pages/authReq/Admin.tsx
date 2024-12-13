@@ -26,6 +26,7 @@ const Admin = () => {
                     }
                 }).then(async (res) => {
                     console.log(res);
+                    // Remove the potential sponsor from the list
                     let tempSponsorData = [...potentialSponsorData];
                     tempSponsorData = tempSponsorData.filter((s) => s._id !== sponsor._id);
                     setPotentialSponsorData(tempSponsorData);

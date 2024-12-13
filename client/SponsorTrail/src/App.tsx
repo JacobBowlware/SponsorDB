@@ -16,14 +16,14 @@ import './css/pages/ChangePassword.css';
 import './css/pages/Review.css';
 import './css/pages/PrivacyPolicy.css';
 import './css/pages/TOS.css';
+import './css/pages/Subscribe.css'
 import './css/pages/authReq/Sponsors.css';
 import './css/pages/authReq/Profile.css';
 import './css/pages/authReq/Admin.css';
-import './css/pages/Subscribe.css'
+import './css/pages/authReq/NavMenu.css'
 
 //Pages
 import Home from './pages/Home';
-import Review from './pages/Review';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TOS from './pages/TOS';
 import Login from './pages/Login';
@@ -31,11 +31,12 @@ import Signup from './pages/Signup';
 import ChangePassword from './pages/ChangePassword';
 
 // Authed Pages
+import Review from './pages/authReq/Review';
 import Sponsors from './pages/authReq/Sponsors';
 import Profile from './pages/authReq/Profile';
 import Admin from './pages/authReq/Admin';
 import PaymentSuccess from './pages/authReq/PaymentSuccess';
-import Subscribe from './pages/authReq/Subscribe';
+import Purchase from './pages/authReq/Purchase';
 
 // Components
 import Header from './components/common/Header'
@@ -47,18 +48,33 @@ import AuthHeader from './components/common/AuthHeader';
 import axios from 'axios';
 import config from './config';
 import ChangePasswordFinal from './pages/ChangePasswordFinal';
+import NavMenu from './components/common/NavMenu';
 
 function App() {
   const [userAuth, setUserAuth] = useState(false);
   const [user, setUser] = useState({
     email: "",
     isAdmin: false,
-    isSubscribed: false,
-    subscriptionPlan: "",
-    currentPeriodEnd: 0,
+    purchased: false,
     stripeCustomerId: "",
-    cancelAtPeriodEnd: false
   });
+  const [dbInfo, setDbInfo] = useState({
+    sponsors: 0,
+    newsletters: 0
+  });
+
+  const getDbInfo = async () => {
+    // Get database info
+    const dbInfo = await axios.get(`${config.backendUrl}sponsors/db-info`, {
+      headers: {
+        'x-auth-token': localStorage.getItem('token')
+      }
+    });
+
+    console.log(dbInfo.data);
+
+    setDbInfo(dbInfo.data);
+  }
 
   const getUserInfo = async () => {
     // Get user profile information
@@ -74,58 +90,75 @@ function App() {
     })
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (user.email === "") {
-        await getUserInfo();
-      }
-    }
+  // useEffect(() => {
+  //   const fetchData = async (num: number) => {
+  //     if (num === 1) {
+  //       await getUserInfo();
+  //     }
+  //     else if (num === 2) {
+  //       await getDbInfo();
+  //     }
+  //   }
 
-    const token = localStorage.getItem('token');
-    if (token) {
-      setUserAuth(true);
+  //   const token = localStorage.getItem('token');
+  //   if (token) {
+  //     setUserAuth(true);
 
-      if (user.email === "") {
-        fetchData();
-      }
-    }
-  }, [])
+  //     if (user.email === "") {
+  //       fetchData(1);
+  //     }
+  //   }
+  //   if (dbInfo.sponsors === 0) {
+  //     fetchData(2);
+  //   }
+  // }, [])
 
   const Root = () => {
-    return <>
-      {!userAuth ? <Header /> : <AuthHeader isAdmin={user.isAdmin} isSubscribed={user.isSubscribed} />}
-      <ScrollToTop />
-      <Outlet />
-      <Footer auth={userAuth} />
-    </>
+    //TODO: Change to !userAuth
+    if (!userAuth) { // Default Navbar (should always be on home page)
+      return <><Header />
+        <ScrollToTop />
+        <Outlet />
+        <Footer auth={userAuth} />
+      </>;
+
+    }
+    else { // Authed NavMenu (aligns on left side of screen vertically)
+      return <div className="authed-app">
+        <NavMenu isAdmin={user.isAdmin} purchased={user.purchased} />
+        <ScrollToTop />
+        <div className="authed-app__content">
+          <Outlet />
+          <Footer auth={userAuth} />
+        </div>
+      </div>
+    }
   }
 
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home isSubscribed={user.isSubscribed} email={user.email} />} />
-        <Route path="/*" element={<Home isSubscribed={user.isSubscribed} email={user.email} />} />
-        <Route path="/login/" element={<Login userAuth={userAuth} isSubscribed={user.isSubscribed} />} />
-        <Route path="/signup/" element={<Signup userAuth={userAuth} isSubscribed={user.isSubscribed} />} />
+        <Route index element={<Home purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route path="/*" element={<Home purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route path="/login/" element={<Login userAuth={userAuth} purchased={user.purchased} />} />
+        <Route path="/signup/" element={<Signup userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
         <Route path="/change-password-final" element={<ChangePasswordFinal />} />
-        <Route path="/review/" element={<Review />} />
+        <Route path="/feedback/" element={<Review email={user.email} />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
+        {userAuth && <Route path="/checkout/" element={<Purchase purchased={user.purchased} />} />}
         {userAuth && <Route path="/profile/" element={<Profile
-          userSubscribed={user.isSubscribed}
+          purchased={user.purchased}
           userEmail={user.email}
-          subscriptionPlan={user.subscriptionPlan}
-          currentPeriodEnd={user.currentPeriodEnd}
-          cancelAtPeriodEnd={user.cancelAtPeriodEnd}
         />} />}
-        {userAuth && <Route path="/subscribe/" element={<Subscribe isSubscribed={user.isSubscribed} />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
-        {/* Subscriber Routes */}
-        {userAuth && user.isSubscribed && <Route path="/sponsors/" element={<Sponsors />} />}
+        {/* Subscriber Routes userAuth && user.isSubscribed &&  */}
+        {user.purchased && <Route path="/sponsors/" element={<Sponsors />} />}
+        {/* If users arnt subscribed, implement this route for sponsors */<Route path="/sponsors/" element={<Purchase purchased={user.purchased} />} />}
         {/* Admin Routes */}
-        {<Route path="/admin/" element={<Admin />} />}
+        {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>
     )
   )

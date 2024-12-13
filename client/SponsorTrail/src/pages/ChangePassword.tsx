@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import config from "../config";
+import { Link } from "react-router-dom";
 
 //TODO: Currently, the emails are case sensitive. 
 
@@ -63,10 +64,10 @@ const ChangePassword = () => {
                 <form className="change-password-form" onSubmit={(e) => handleSubmit(e)}>
                     <div className="change-password-form__header-cont">
                         <h1 className="change-password-form__header">
-                            SponsorTrail
+                            Forgot Your Password?
                         </h1>
                         <p>
-                            Enter the email address associated with your account and we'll send you a link to reset your password.
+                            Enter your email address below and we will send you a link to reset your password.
                         </p>
                     </div>
                     <input onChange={(e) => { setUser({ email: e.target.value }) }} value={user.email} className="input form-input change-password-form__input" type="email" placeholder="Email Address" />
@@ -77,6 +78,7 @@ const ChangePassword = () => {
                     {error && <p className="change-password-form__error">
                         No account found with that email address. If this is a mistake, please contact support.
                     </p>}
+                    <Link to="/login" className="login-form__link">Back to Login</Link>
                 </form>
             </div>
         </div>

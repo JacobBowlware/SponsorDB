@@ -4,12 +4,14 @@ import { validateProperty, validateUser } from "../components/common/WebJoi";
 import axios from 'axios';
 import config from '../config';
 
+import { handlePurchase } from "../components/Pricing";
+
 interface SignupProps {
     userAuth: boolean;
-    isSubscribed: boolean;
+    purchased: boolean;
 }
 
-const Signup = ({ userAuth, isSubscribed }: SignupProps) => {
+const Signup = ({ userAuth, purchased }: SignupProps) => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
@@ -21,13 +23,13 @@ const Signup = ({ userAuth, isSubscribed }: SignupProps) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (userAuth && isSubscribed) {
+        if (userAuth && purchased) {
             navigate('/sponsors');
         }
         else if (userAuth) {
             navigate('/subscribe');
         }
-    }, [userAuth, isSubscribed])
+    }, [userAuth, purchased])
 
     const handleChange = (name: string, e: any) => {
         setError('');
@@ -80,7 +82,8 @@ const Signup = ({ userAuth, isSubscribed }: SignupProps) => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
-            window.location.href = '/subscribe/';
+            navigate('/sponsors');
+
         }).catch((err) => {
             setConfirmPasswordError("An error occurred, please try again.")
         })

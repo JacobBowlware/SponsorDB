@@ -4,7 +4,7 @@ const PrivacyPolicy = () => {
             <div className="web-section web-section-content" id="review">
                 <div className="web-section__container policy-text">
                     <h1>Privacy Policy</h1>
-                    <p>Effective Date: 08/05/2024</p>
+                    <p className="effective-date">Effective Date: 08/05/2024</p>
 
                     <p>SponsorDB ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our website and services. By using our services, you consent to the collection and use of your information as described in this policy.</p>
 
@@ -39,7 +39,7 @@ const PrivacyPolicy = () => {
                     <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated effective date. You will be notified of significant changes via email or through a notice on our website.</p>
 
                     <h3>11. Contact Us</h3>
-                    <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:SponsorDatabase@gmail.com">SponsorDatabase@gmail.com</a>.</p>
+                    <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:info@sponsor-db.com">info@sponsor-db.com</a>.</p>
                 </div>
             </div>
         </div>

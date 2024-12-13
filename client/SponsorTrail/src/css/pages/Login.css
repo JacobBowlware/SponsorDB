@@ -72,8 +72,8 @@
 .login-form__link {
     width: 100%;
     text-align: left;
-    margin: 1rem 0 0 0;
-    font-size: 1rem;
+    margin: .5rem 0 0 0;
+    font-size: .9rem;
 }
 
 @media screen and (min-width: 768px) {
@@ -82,7 +82,7 @@
     }
 
     .login-form__header {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
     }
 
     .login-form__input {

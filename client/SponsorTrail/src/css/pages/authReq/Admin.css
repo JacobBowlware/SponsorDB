@@ -9,6 +9,7 @@
     width: 100%;
     padding: 1rem 0;
     border-bottom: 1px solid #e0e0e0;
+    font-size: 1.4rem;
 }
 
 .admin-dash__cont {
@@ -38,8 +39,8 @@
 }
 
 .admin-dash__text {
-    font-size: 1.2rem;
-    font-weight: 300;
+    font-size: .9rem;
+    font-weight: 400;
     color: var(--var-color-text);
     text-align: left;
     width: 100%;
@@ -98,6 +99,7 @@
     width: 10rem;
     background: var(--var-color-text);
     color: var(--var-color-primary);
+    font-size: .8rem;
 }
 
 .admin-dash__form-item {
@@ -136,7 +138,7 @@
     color: var(--var-color-primary);
     width: 10rem;
     font-weight: 700;
-    font-size: .9rem;
+    font-size: .8rem;
     padding: .3rem;
     margin: .6rem 0 0 0;
 }
@@ -158,10 +160,10 @@
     }
 
     .admin-dash__form-input {
-        font-size: 1rem;
+        font-size: .9rem;
     }
 
     .admin-dash__form-btn {
-        font-size: 1rem;
+        font-size: .9rem;
     }
 }

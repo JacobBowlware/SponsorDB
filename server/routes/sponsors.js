@@ -38,18 +38,42 @@ const saveToAirtable = async (sponsor) => {
     }
 };
 
-// Get all sponsors
+// Get a page of sponsors (default page 1, limit 40), get it from URL query params
 router.get('/', auth, async (req, res) => {
-    const sponsors = await Sponsor.find();
-    res.status(200).send(sponsors);
+    try {
+        console.log(req.body);
+
+        const page = parseInt(req.body.page) || 1;
+        const limit = 50;
+
+        if (page < 1) {
+            return res.status(400).send("Invalid page or limit");
+        }
+
+        // Fetch sponsors with pagination
+        const sponsors = await Sponsor.find().skip((page - 1) * limit).limit(limit);
+        res.status(200).send(sponsors);
+    } catch (e) {
+        console.log("Error getting sponsors", e);
+        res.status(500).send("Error getting sponsors");
+    }
 });
 
-// Get the number of sponsors
-router.get('/count', async (req, res) => {
-    const sponsors = await Sponsor.find();
+// Get DB info
+router.get('/db-info', async (req, res) => {
+    try {
+        const sponsors = await Sponsor.find();
+        const sponsorCount = sponsors.length;
 
-    const sponsorCount = sponsors.length;
-    res.status(200).send({ "count": sponsorCount });
+        // Get newsletter length
+        const newsletters = await Sponsor.distinct("newsletterSponsored");
+        const newsletterCount = newsletters.length;
+        res.status(200).send({ "sponsors": sponsorCount, "newsletters": newsletterCount });
+    }
+    catch (e) {
+        console.log("Error getting DB info", e);
+        res.status(500).send("Error getting DB info");
+    }
 });
 
 // Create a new sponsor (or multiple sponsors)
@@ -75,6 +99,14 @@ router.post('/', auth, async (req, res) => {
             if (sponsorExists) {
                 console.log("Sponsor already exists");
                 return res.status(400).send("Sponsor already exists");
+            }
+
+            // If the newsletterSponsored already exists, get the subscriber count
+            let newsletterExists = await Sponsor.findOne({ newsletterSponsored: sponsor.newsletterSponsored });
+
+            if (newsletterExists && newsletterExists.subscriberCount) {
+                // Add the subscriber count to the sponsor
+                sponsor.subscriberCount = newsletterExists.subscriberCount;
             }
 
             // If the sponsor does not already exist with the same newsletter sponsorship, create a new sponsor

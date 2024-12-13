@@ -2,27 +2,28 @@ const nodemailer = require("nodemailer");
 
 const sendEmail = async (email, subject, text) => {
     try {
+        // Create transporter using Zoho's SMTP server details
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            service: 'Gmail',
-            port: 587,
-            secure: false,
+            host: 'smtppro.zoho.com',      // Zoho SMTP server
+            port: 465,                    // SSL port for Zoho
+            secure: true,                 // Use SSL
             auth: {
-                user: 'sponsordatabase@gmail.com',
-                pass: process.env.sponsorDBGmailPass,
+                user: 'info@sponsor-db.com', // Your Zoho email
+                pass: process.env.sponsorDBEmailPassword, // Zoho email password or App password if 2FA enabled
             },
         });
 
+        // Send the email
         await transporter.sendMail({
-            from: "sponsordatabase@gmail.com",
-            to: email,
-            subject: subject,
-            text: text,
+            from: 'info@sponsor-db.com',    // Sender address
+            to: email,                    // Receiver email
+            subject: subject,             // Email subject
+            text: text,                   // Email body
         });
 
-        console.log("email sent sucessfully");
+        console.log("Email sent successfully!");
     } catch (error) {
-        console.log(error, "email not sent");
+        console.error("Email not sent:", error);
     }
 };
 
