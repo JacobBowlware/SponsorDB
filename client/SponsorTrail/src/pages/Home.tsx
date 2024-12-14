@@ -48,13 +48,13 @@ const Home = ({ purchased, email, sponsorCount }: HomeProps) => {
                     </Link>
                     <div className="instructions">
                         <h2 className="web-section__container-header-sm airtable-header-sm">
-                            Connecting with Potential Sponsors
+                            Connecting with Sponsors
                         </h2>
                         <p className="airtable-p">
                             Browse sponsor websites for partnership or advertising info. If none is available, email them with your newsletter's details, such as subscriber count and audience demographics.
                         </p>
                         <p className="airtable-p airtable-note">
-                            Signup to access the full database of {sponsorCount} sponsors.
+                            Signup to access the full database of <strong>{sponsorCount}</strong> sponsors.
                         </p>
                     </div>
                     <div className="airtable-cont">
@@ -65,12 +65,44 @@ const Home = ({ purchased, email, sponsorCount }: HomeProps) => {
             <div className="web-section" >
                 <div className="web-section__container web-section-content" id="features">
                     <h2 className="web-section__container-header-sm features-header">
-                        Why SponsorDB?
+                        Why SponsorDB
                     </h2>
                     <div className="home__features-list">
                         <FeatureCard icon={faSliders} header="Easy to Use" text="Effortlessly filter and sort the database by audience size, tags, date added, or sponsor name." />
                         <FeatureCard icon={faSyncAlt} header="Stay Updated" text="We regularly update our database with new sponsors, ensuring you always have the latest opportunities." />
                         <FeatureCard highlighted={true} header="No Hidden Fees" icon={faStopwatch} text="No commissions, middleman fees, or extra charges. Just a straightforward one-time payment for full access to the database." />
+                    </div>
+                </div>
+            </div>
+            <div className="web-section web-section-dark subscribe">
+                <div className="web-section__container web-section-content">
+                    <div className="home__pricing-container" id="pricing">
+                        <div className="home__pricing-item">
+                            <h2 className="home__pricing-header">
+                                One Time Payment. Full Access.
+                            </h2>
+                            <div className="home__pricing-card">
+                                <h3 className="home__pricing-card__header">
+                                    $29.99
+                                </h3>
+                                <p className="home__pricing-card__text">
+                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Unlimited access to our database of high-quality newsletter sponsors.
+                                </p>
+                                <p className="home__pricing-card__text">
+                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Sort sponsors by audience size, tags, date added, or sponsor name.
+                                </p>
+                                <p className="home__pricing-card__text">
+                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Regularly updated, giving you the latest opportunities.
+                                </p>
+                                <p className="home__pricing-card__text">
+                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Easily download the database into a CSV file.
+                                </p>
+                                <Link className="btn home__pricing-card__btn" to="/signup">
+                                    Get Started <FontAwesomeIcon icon={faArrowRight} />
+                                </Link>
+                            </div>
+                        </div>
+                        <img className="home__pricing-img" src={ExampleSponsors} alt="Ghost, which sponsored the newsletter Thebrowser.com, with an audience size of 150,000, sponsor link https://ghost.org/, in the Technology market." />
                     </div>
                 </div>
             </div>

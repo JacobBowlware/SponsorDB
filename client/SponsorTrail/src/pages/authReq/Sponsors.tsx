@@ -41,7 +41,7 @@ const Sponsors = () => {
                         Newsletter Sponsor Database
                     </h2>
                     <p className="sponsor-table__cont-header-p">
-                        Currently showcasing <strong>{dbInfo.sponsors}</strong> from <strong>{dbInfo.newsletters}</strong> newsletters.
+                        Currently showcasing <strong>{dbInfo.sponsors}</strong> sponsors from <strong>{dbInfo.newsletters}</strong> newsletters.
                     </p>
                     <div className="airtable-cont">
                         <AuthAirTable />

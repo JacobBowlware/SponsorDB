@@ -90,28 +90,28 @@ function App() {
     })
   }
 
-  // useEffect(() => {
-  //   const fetchData = async (num: number) => {
-  //     if (num === 1) {
-  //       await getUserInfo();
-  //     }
-  //     else if (num === 2) {
-  //       await getDbInfo();
-  //     }
-  //   }
+  useEffect(() => {
+    const fetchData = async (num: number) => {
+      if (num === 1) {
+        await getUserInfo();
+      }
+      else if (num === 2) {
+        await getDbInfo();
+      }
+    }
 
-  //   const token = localStorage.getItem('token');
-  //   if (token) {
-  //     setUserAuth(true);
+    const token = localStorage.getItem('token');
+    if (token) {
+      setUserAuth(true);
 
-  //     if (user.email === "") {
-  //       fetchData(1);
-  //     }
-  //   }
-  //   if (dbInfo.sponsors === 0) {
-  //     fetchData(2);
-  //   }
-  // }, [])
+      if (user.email === "") {
+        fetchData(1);
+      }
+    }
+    if (dbInfo.sponsors === 0 && !window.location.href.includes('localhost')) {
+      fetchData(2);
+    }
+  }, [])
 
   const Root = () => {
     //TODO: Change to !userAuth
