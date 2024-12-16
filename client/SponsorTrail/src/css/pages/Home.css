@@ -632,7 +632,7 @@
 }
 
 .home__pricing-card__header {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: .3rem;
     padding: 0 0 .5rem 0;
@@ -701,7 +701,7 @@
     transition: all .3s;
     background: var(--var-color-text) !important;
     color: var(--var-color-primary);
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin: 1rem 0 0 0;
 }
 
@@ -711,7 +711,7 @@
 }
 
 .home__pricing-header {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 700;
     margin-bottom: 1rem;
     text-align: left;
@@ -737,7 +737,7 @@
 @media screen and (min-width: 768px) {
 
     .home__pricing-card__btn {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 
     .home__pricing-card {
@@ -746,7 +746,7 @@
     }
 
     .home__pricing-card__header {
-        font-size: 2rem;
+        font-size: 1.6rem;
     }
 
     .home__pricing-container {
@@ -759,11 +759,7 @@
         display: block;
     }
 
-    .home__pricing-card__text {
-        font-size: 1.1rem;
-    }
-
     .home__pricing-header {
-        font-size: 2.2rem;
+        font-size: 2rem;
     }
 }

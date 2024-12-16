@@ -86,19 +86,19 @@ const Home = ({ purchased, email, sponsorCount }: HomeProps) => {
                                     $29.99
                                 </h3>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Unlimited access to our database of high-quality newsletter sponsors.
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Unlimited access to our database of high-quality newsletter sponsors.
                                 </p>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Sort sponsors by audience size, tags, date added, or sponsor name.
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Sort sponsors by audience size, tags, date added, or sponsor name.
                                 </p>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Regularly updated, giving you the latest opportunities.
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Regularly updated, giving you the latest opportunities.
                                 </p>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheck} />&nbsp; Easily download the database into a CSV file.
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Easily download the database into a CSV file.
                                 </p>
                                 <Link className="btn home__pricing-card__btn" to="/signup">
-                                    Get Started <FontAwesomeIcon icon={faArrowRight} />
+                                    Get Started <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                                 </Link>
                             </div>
                         </div>

@@ -76,66 +76,50 @@ router.get('/db-info', async (req, res) => {
     }
 });
 
-// Create a new sponsor (or multiple sponsors)
+// Create a new sponsor
 router.post('/', auth, async (req, res) => {
-    if (!isArray(req.body)) {
-        // If req was not array, we need to wrap it in an array
-        req.body = [req.body];
-    }
+    const sponsor = req.body;
 
     // Validate the request body
-    let error;
-    for (let sponsor of req.body) {
-        const { sponsorError } = validateSponsor(sponsor);
-        if (sponsorError) {
-            error = sponsorError;
-            return res.status(400).send(error);
-        }
+    const { sponsorError } = validateSponsor(sponsor);
+    if (sponsorError) {
+        return res.status(400).send(sponsorError);
     }
 
+
     try {
-        for (let sponsor of req.body) {
-            let sponsorExists = await Sponsor.findOne({ sponsorName: sponsor.sponsorName, newsletterSponsored: sponsor.newsletterSponsored });
-            if (sponsorExists) {
-                console.log("Sponsor already exists");
-                return res.status(400).send("Sponsor already exists");
-            }
-
-            // If the newsletterSponsored already exists, get the subscriber count
-            let newsletterExists = await Sponsor.findOne({ newsletterSponsored: sponsor.newsletterSponsored });
-
-            if (newsletterExists && newsletterExists.subscriberCount) {
-                // Add the subscriber count to the sponsor
-                sponsor.subscriberCount = newsletterExists.subscriberCount;
-            }
-
-            // If the sponsor does not already exist with the same newsletter sponsorship, create a new sponsor
-            const newSponsor = new Sponsor({
-                sponsorName: sponsor.sponsorName,
-                sponsorLink: sponsor.sponsorLink,
-                tags: sponsor.tags,
-                newsletterSponsored: sponsor.newsletterSponsored,
-                subscriberCount: sponsor.subscriberCount
-            });
-            await newSponsor.save().then(() => {
-                console.log("Sponsor created successfully.");
-            })
-
-            // Save to Airtable
-            await saveToAirtable(sponsor).then(() => {
-                console.log("Saved to Airtable");
-            }).catch((e) => {
-                console.log("Error saving to Airtable", e);
-            });
-
-            // Delete potential sponsor from potentialSponsors collection
-            await PotentialSponsor.findByIdAndDelete(sponsor._id).then(() => {
-                console.log("Deleted potential sponsor");
-            }
-            ).catch((e) => {
-                console.log("Error deleting potential sponsor", e);
-            });
+        let sponsorExists = await Sponsor.findOne({ sponsorName: sponsor.sponsorName, newsletterSponsored: sponsor.newsletterSponsored });
+        if (sponsorExists) {
+            console.log("Sponsor already exists");
+            return res.status(400).send("Sponsor already exists");
         }
+
+        // If the sponsor does not already exist with the same newsletter sponsorship, create a new sponsor
+        const newSponsor = new Sponsor({
+            sponsorName: sponsor.sponsorName,
+            sponsorLink: sponsor.sponsorLink,
+            tags: sponsor.tags,
+            newsletterSponsored: sponsor.newsletterSponsored,
+            subscriberCount: sponsor.subscriberCount
+        });
+        await newSponsor.save().then(() => {
+            console.log("Sponsor created successfully.");
+        })
+
+        // Save to Airtable
+        await saveToAirtable(sponsor).then(() => {
+            console.log("Saved to Airtable");
+        }).catch((e) => {
+            console.log("Error saving to Airtable", e);
+        });
+
+        // Delete potential sponsor from potentialSponsors collection
+        await PotentialSponsor.findByIdAndDelete(sponsor._id).then(() => {
+            console.log("Deleted potential sponsor");
+        }
+        ).catch((e) => {
+            console.log("Error deleting potential sponsor", e);
+        });
 
         res.status(201).send(req.body);
     } catch (e) {

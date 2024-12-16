@@ -8,7 +8,7 @@ const Admin = () => {
     // Array of potential sponsors
     const [potentialSponsorData, setPotentialSponsorData] = useState([
         {
-            newsletterSponsored: "",
+            newsletterSponsored: "", // Our format for the newsletter name
             sponsorName: "",
             sponsorLink: "",
             tags: [""],
@@ -76,6 +76,7 @@ const Admin = () => {
             }).then((res) => {
                 const potentialSponsorData = res.data;
                 console.log(res.data);
+
                 setPotentialSponsorData(potentialSponsorData);
                 setChecked(true);
             }).catch((err) => {

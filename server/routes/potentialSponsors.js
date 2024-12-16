@@ -28,22 +28,23 @@ router.get('/', [auth, admin], async (req, res) => {
 
 // Create a new potential sponsor
 router.post('/', async (req, res) => {
-    // Validate the request body (which could be either a potential sponsor, or an array of potential sponsors)
+    // Validate the request body (which could be either a potential sponsor, or an array of potential sponsors for one Newsletter)
     let sponsors = req.body.sponsors;
 
     if (!Array.isArray(sponsors)) {
         sponsors = [sponsors];
     }
 
-    // Check if we have subscriber count for newsletterSponsored already
-    let newsletterExists = await Sponsor.findOne({ newsletterSponsored: sponsors[0].newsletterSponsored });
-    if (newsletterExists && newsletterExists.subscriberCount) {
-        // Add the subscriber count to the potential sponsors
-        let subscriberCount = newsletterExists.subscriberCount;
-
-        for (let sponsor of sponsors) {
-            sponsor.subscriberCount = subscriberCount;
+    const newsletterExists = await Sponsor.findOne({
+        newsletterSponsored: sponsors[0].newsletterSponsored, subscriberCount: {
+            $gt: 0
         }
+    }); // Only get if subscriberCount > 0
+    if (newsletterExists) {
+        // Add the newsletters subscriber count to the potential sponsors
+        sponsors.forEach(sponsor => {
+            sponsor.subscriberCount = newsletterExists.subscriberCount;
+        });
     }
 
     for (const sponsor of sponsors) {
