@@ -1,0 +1,58 @@
+[debug] [2024-12-26T21:05:57.897Z] ----------------------------------------------------------------------
+[debug] [2024-12-26T21:05:57.898Z] Command:       /Users/jacobbowlware/.nvm/versions/node/v20.18.0/bin/node /usr/local/bin/firebase deploy
+[debug] [2024-12-26T21:05:57.899Z] CLI Version:   11.20.0
+[debug] [2024-12-26T21:05:57.899Z] Platform:      darwin
+[debug] [2024-12-26T21:05:57.899Z] Node Version:  v20.18.0
+[debug] [2024-12-26T21:05:57.899Z] Time:          Thu Dec 26 2024 15:05:57 GMT-0600 (Central Standard Time)
+[debug] [2024-12-26T21:05:57.899Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2024-12-26T21:05:57.900Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2024-12-26T21:05:57.962Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-12-26T21:05:57.963Z] > authorizing via signed-in user (jacobbowlware@gmail.com)
+[debug] [2024-12-26T21:05:57.963Z] [iam] checking project sponsor-trail for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2024-12-26T21:05:57.963Z] > refreshing access token with scopes: []
+[debug] [2024-12-26T21:05:57.963Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2024-12-26T21:05:57.963Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-12-26T21:05:58.097Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2024-12-26T21:05:58.097Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-12-26T21:05:58.112Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/sponsor-trail:testIamPermissions [none]
+[debug] [2024-12-26T21:05:58.112Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/sponsor-trail:testIamPermissions x-goog-quota-user=projects/sponsor-trail
+[debug] [2024-12-26T21:05:58.112Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/sponsor-trail:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2024-12-26T21:05:58.209Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2024-12-26T21:05:58.209Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2024-12-26T21:05:58.371Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/sponsor-trail:testIamPermissions 200
+[debug] [2024-12-26T21:05:58.371Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/sponsor-trail:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2024-12-26T21:05:58.371Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/sponsor-trail [none]
+[debug] [2024-12-26T21:05:58.670Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/sponsor-trail 200
+[debug] [2024-12-26T21:05:58.670Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/sponsor-trail {"projectId":"sponsor-trail","projectNumber":"939217999818","displayName":"Sponsor Trail","name":"projects/sponsor-trail","resources":{"hostingSite":"sponsor-trail"},"state":"ACTIVE","etag":"1_f5d55078-e901-4e41-9c94-9086473fbe78"}
+[info] 
+[info] === Deploying to 'sponsor-trail'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2024-12-26T21:05:58.675Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sponsor-trail/versions [none]
+[debug] [2024-12-26T21:05:58.675Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sponsor-trail/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2024-12-26T21:05:59.788Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sponsor-trail/versions 200
+[debug] [2024-12-26T21:05:59.788Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/sponsor-trail/versions {"name":"projects/939217999818/sites/sponsor-trail/versions/b8a0c34553bbeecf","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[sponsor-trail]: beginning deploy... 
+[info] i  hosting[sponsor-trail]: found 12 files in build 
+[debug] [2024-12-26T21:05:59.799Z] [hosting] uploading with 200 concurrency
+[debug] [2024-12-26T21:05:59.983Z] [hosting] hash cache [YnVpbGQ] stored for 12 files
+[debug] [2024-12-26T21:05:59.983Z] [hosting][hash queue][FINAL] {"max":176,"min":7,"avg":23.833333333333332,"active":0,"complete":12,"success":12,"errored":0,"retried":0,"total":12,"elapsed":181}
+[debug] [2024-12-26T21:05:59.983Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/939217999818/sites/sponsor-trail/versions/b8a0c34553bbeecf:populateFiles [none]
+[debug] [2024-12-26T21:05:59.983Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/939217999818/sites/sponsor-trail/versions/b8a0c34553bbeecf:populateFiles {"files":{"/asset-manifest.json":"b650ac0b7dd8506ebc66435bba82e46250e51fb22f02c92a1521677ec919e3d0","/robots.txt":"391d14b3c2f8c9143a27a28c7399585142228d4d1bdbe2c87ac946de411fa9a2","/favicon.ico":"84321448bd8c0296d07dc80943bb4a4143a485ac41ab344a9e7c9e345554ec92","/manifest.json":"4e1d3adad9ce7e17c0d13fac197f1c27091906f4ecf3909c9f51247bff345118","/index.html":"00c3ace60162d7b8f0247daa7f3527afced507aaddacf1ddfaab61dae353b9b9","/static/js/453.65ceefd3.chunk.js":"2b85a49bed4fd67534c0d26857571a5891a5ad8640b100699867a47631bf1b7d","/static/css/main.35c64321.css":"f2077df8b65e12253d161e80a3ef0abb3270b6d8d0200f40a68f4327c67eb672","/static/js/main.0bac1fa7.js.LICENSE.txt":"3b548e1bcc8822c541bf3aa6ce517c809b5856538a3f382b0e78996f55aeb33f","/static/js/453.65ceefd3.chunk.js.map":"56c66cd9f4d1dbb447e19df880d4712e2e98838367e1b5ad6f6f98ebd696dd47","/static/css/main.35c64321.css.map":"243ac0c15b38177c62ce4efdf0d12a0aab9b86118b57e5b1c02aed6da6909ff0","/static/js/main.0bac1fa7.js":"948f6747ab74156e9812160b93315cd62a532be24fafa656b531a423ede4c3c5","/static/js/main.0bac1fa7.js.map":"52541d9fbe53c1781f463ec9230144a694e162f915919e788d4720d2e52c8695"}}
+[debug] [2024-12-26T21:06:00.467Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/939217999818/sites/sponsor-trail/versions/b8a0c34553bbeecf:populateFiles 200
+[debug] [2024-12-26T21:06:00.467Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/939217999818/sites/sponsor-trail/versions/b8a0c34553bbeecf:populateFiles {"uploadRequiredHashes":["948f6747ab74156e9812160b93315cd62a532be24fafa656b531a423ede4c3c5","f2077df8b65e12253d161e80a3ef0abb3270b6d8d0200f40a68f4327c67eb672","52541d9fbe53c1781f463ec9230144a694e162f915919e788d4720d2e52c8695","b650ac0b7dd8506ebc66435bba82e46250e51fb22f02c92a1521677ec919e3d0","243ac0c15b38177c62ce4efdf0d12a0aab9b86118b57e5b1c02aed6da6909ff0","00c3ace60162d7b8f0247daa7f3527afced507aaddacf1ddfaab61dae353b9b9"],"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files"}
+[debug] [2024-12-26T21:06:00.469Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/948f6747ab74156e9812160b93315cd62a532be24fafa656b531a423ede4c3c5 [none]
+[debug] [2024-12-26T21:06:00.469Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/948f6747ab74156e9812160b93315cd62a532be24fafa656b531a423ede4c3c5 [stream]
+[debug] [2024-12-26T21:06:00.471Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/f2077df8b65e12253d161e80a3ef0abb3270b6d8d0200f40a68f4327c67eb672 [none]
+[debug] [2024-12-26T21:06:00.471Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/f2077df8b65e12253d161e80a3ef0abb3270b6d8d0200f40a68f4327c67eb672 [stream]
+[debug] [2024-12-26T21:06:00.472Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/52541d9fbe53c1781f463ec9230144a694e162f915919e788d4720d2e52c8695 [none]
+[debug] [2024-12-26T21:06:00.472Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/52541d9fbe53c1781f463ec9230144a694e162f915919e788d4720d2e52c8695 [stream]
+[debug] [2024-12-26T21:06:00.474Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/b650ac0b7dd8506ebc66435bba82e46250e51fb22f02c92a1521677ec919e3d0 [none]
+[debug] [2024-12-26T21:06:00.474Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/b650ac0b7dd8506ebc66435bba82e46250e51fb22f02c92a1521677ec919e3d0 [stream]
+[debug] [2024-12-26T21:06:00.475Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/243ac0c15b38177c62ce4efdf0d12a0aab9b86118b57e5b1c02aed6da6909ff0 [none]
+[debug] [2024-12-26T21:06:00.475Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/243ac0c15b38177c62ce4efdf0d12a0aab9b86118b57e5b1c02aed6da6909ff0 [stream]
+[debug] [2024-12-26T21:06:00.477Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/00c3ace60162d7b8f0247daa7f3527afced507aaddacf1ddfaab61dae353b9b9 [none]
+[debug] [2024-12-26T21:06:00.477Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/sponsor-trail/versions/b8a0c34553bbeecf/files/00c3ace60162d7b8f0247daa7f3527afced507aaddacf1ddfaab61dae353b9b9 [stream]
+[debug] [2024-12-26T21:06:00.478Z] [hosting][populate queue][FINAL] {"max":487,"min":487,"avg":487,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":496}
+[debug] [2024-12-26T21:06:00.478Z] [hosting] uploads queued: 6

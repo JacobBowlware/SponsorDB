@@ -31,7 +31,7 @@ import Signup from './pages/Signup';
 import ChangePassword from './pages/ChangePassword';
 
 // Authed Pages
-import Review from './pages/authReq/Review';
+import Review from './pages/Review';
 import Sponsors from './pages/authReq/Sponsors';
 import Profile from './pages/authReq/Profile';
 import Admin from './pages/authReq/Admin';
@@ -58,9 +58,11 @@ function App() {
     purchased: false,
     stripeCustomerId: "",
   });
+
   const [dbInfo, setDbInfo] = useState({
     sponsors: 0,
-    newsletters: 0
+    newsletters: 0,
+    lastUpdated: ""
   });
 
   const getDbInfo = async () => {
@@ -138,8 +140,8 @@ function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
-        <Route path="/*" element={<Home purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         <Route path="/login/" element={<Login userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
@@ -148,15 +150,15 @@ function App() {
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
         {/* Authed Routes */}
-        {userAuth && <Route path="/checkout/" element={<Purchase purchased={user.purchased} />} />}
+        {userAuth && <Route path="/checkout/" element={<Purchase purchased={user.purchased} sponsorCount={dbInfo.sponsors} />} />}
         {userAuth && <Route path="/profile/" element={<Profile
           purchased={user.purchased}
           userEmail={user.email}
         />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
         {/* Subscriber Routes userAuth && user.isSubscribed &&  */}
-        {user.purchased && <Route path="/sponsors/" element={<Sponsors />} />}
-        {/* If users arnt subscribed, implement this route for sponsors */<Route path="/sponsors/" element={<Purchase purchased={user.purchased} />} />}
+        {user.purchased && <Route path="/sponsors/" element={<Sponsors sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} />} />}
+        {/* If users arnt subscribed, implement this route for sponsors */<Route path="/sponsors/" element={<Purchase purchased={user.purchased} sponsorCount={dbInfo.sponsors} />} />}
         {/* Admin Routes */}
         {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

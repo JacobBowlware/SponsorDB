@@ -2,10 +2,10 @@
 import { useState } from "react";
 
 // Other
-import config from "../../config";
+import config from "../config";
 
 // Components
-import LoadingBtn from "../../components/common/LoadingBtn";
+import LoadingBtn from "../components/common/LoadingBtn";
 import axios from "axios";
 
 interface ReviewProps {
@@ -56,7 +56,7 @@ const Review = ({ email }: ReviewProps) => {
             <div className="web-section all-blogs web-section-content" id="review">
                 <div className="web-section__container review-container">
                     <h1 className="review-header">
-                        Customer Feedback
+                        SponsorDB Feedback
                     </h1>
                     <p className="review-text">
                         We'd love to hear your feedback! Please fill out the form below to submit a review.

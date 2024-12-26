@@ -1,3 +1,7 @@
+.sponsors {
+    background: var(--var-color-primary);
+}
+
 .sponsors-header__cont {
     display: flex;
     flex-direction: column;
@@ -36,7 +40,7 @@
     width: 100%;
     font-weight: 700;
     margin: 0;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
 }
 
 .sponsor-table__cont-header-p {
@@ -44,6 +48,13 @@
     font-weight: 500;
     width: 100%;
     margin: .5rem 0;
+}
+
+.sponsor-table__cont-header-h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 100%;
+    margin: 1rem 0 .3rem 0;
 }
 
 .sponsor-table__header {
@@ -54,364 +65,88 @@
     text-align: left;
 }
 
-.sponsor-table__header-text-cont {
+.sponsor-tables__cont {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.sponsor-table__header-text {
-    font-weight: 700;
-    margin: 0 1rem 0 0;
-}
-
-.sponsor-table__item {
     width: 100%;
-    text-align: left
-}
-
-
-.sponsor-table__item:nth-child(even) {
-    background: #e8e8e8;
-}
-
-.sponsor-table__item-text {
-    font-size: .8rem;
-    padding: .5rem;
-    border: 1px solid #7d757591;
-    font-weight: 700;
-}
-
-.sponsor-table__item-link {
-    font-size: .9rem;
-    font-weight: 800;
-    color: var(--var-color-text);
-    text-decoration: none;
-
-}
-
-.sponsor-table__item-link:hover {
-    text-decoration: underline;
-    color: #DC143C;
-    opacity: 0.8;
-}
-
-.sponsor-table__item-tag {
-    display: inline-block;
-    margin: 0 .3rem 0 0;
-    background: var(--var-color-text);
-    color: #fff;
-    padding: .3rem .5rem;
-    margin: .3rem;
-    font-weight: 700;
-    border-radius: 3px;
-    font-size: .9rem;
-    outline: none;
-    border: none;
-    transition: all .3s;
-    min-width: 6rem;
-}
-
-.sponsor-table__header-tag {
-    font-weight: 700;
-    font-size: .8rem;
-    outline: none;
-    border: none;
-    transition: all .3s;
-    padding: .2rem .4rem;
-    margin: .2rem .4rem;
-    border-radius: 3px;
-    text-wrap: nowrap;
-}
-
-.sponsor-table__header-tag__icon {
-    margin-left: .3rem;
-}
-
-.sponsor-table__header-tag:hover {
-    cursor: pointer;
-    opacity: 0.8;
-}
-
-.sponsor-table__item-tag:hover {
-    opacity: 0.8;
-    cursor: pointer;
-}
-
-.tag-technology {
-    background: #5c7ea4;
-    /* Muted blue */
-    color: #f5f5f5;
-    /* Light text for contrast */
-}
-
-.tag-education {
-    background: #6da76f;
-    /* Soft green */
-    color: #f5f5f5;
-}
-
-.tag-health {
-    background: #5ea6b0;
-    /* Muted teal */
-    color: #f5f5f5;
-}
-
-.tag-entertainment {
-    background: #d4a641;
-    /* Muted gold */
-    color: #1e1e1e;
-    /* Dark text for readability */
-}
-
-.tag-finance {
-    background: #a45c5c;
-    /* Muted red */
-    color: #f5f5f5;
-}
-
-.tag-ecommerce {
-    background: #dadada;
-    /* Light grey */
-    color: #1e1e1e;
-    /* Dark text for contrast */
-}
-
-.tag-ai {
-    background: #3e444a;
-    /* Dark grey */
-    color: #f5f5f5;
-}
-
-.tag-business {
-    background: #6da76f;
-    /* Soft green (same as education for consistency) */
-    color: #f5f5f5;
-}
-
-.tag-travel {
-    background: #d4a641;
-    /* Muted gold (same as entertainment) */
-    color: #1e1e1e;
-}
-
-.tag-sports {
-    background: #a45c5c;
-    /* Muted red (same as finance for consistency) */
-    color: #f5f5f5;
-}
-
-.tag-fashion {
-    background: #dadada;
-    /* Light grey (same as ecommerce) */
-    color: #1e1e1e;
-}
-
-.tag-productivity {
-    background: #3e444a;
-    /* Dark grey (same as AI for a balanced tone) */
-    color: #f5f5f5;
-}
-
-.tag-marketing {
-    background: #5c7ea4;
-    /* Muted blue (same as technology for consistency) */
-    color: #f5f5f5;
-}
-
-.tag-other {
-    background: #8a8d91;
-    /* Neutral grey */
-    color: #f5f5f5;
-}
-
-.sponsor-ai__search-cont {
-    width: 100%;
-}
-
-.sponsor-ai__search-header {
-    width: 100%;
-    text-align: left;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.sponsor-ai__search-input {
-    width: 100%;
-    padding: .5rem;
-    font-size: .8rem;
-    border: 1px solid #7d757591;
-    outline: none;
-    margin: .5rem 0;
-    display: flex;
-    justify-content: space-between;
-    border-top-left-radius: 3px;
-    border-bottom-left-radius: 3px;
-}
-
-.sponsor-ai__search-input-wrap {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    align-items: center;
-    padding: 0 0 1rem 0;
-}
-
-.sponsor-ai__search-note {
-    font-size: 1rem;
-    color: var(--var-color-text);
-    margin: .5rem 0 0 0;
-}
-
-.sponsor-ai__search-button {
-    padding: .5rem;
-    font-size: .8rem;
-    background: var(--var-color-text);
-    color: var(--var-color-primary);
-    border: none;
-    outline: none;
-    cursor: pointer;
-    transition: all .3s;
-    border-top-right-radius: 3px;
-    border-bottom-right-radius: 3px;
-    width: 5rem;
-    height: 37.2px;
-}
-
-.sponsors-info {
-    display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
     gap: .5rem;
-    width: 100%;
+    flex-wrap: wrap;
 }
 
-.sponsors-info__icon {
-    color: var(--var-color-primary);
-    background: var(--var-color-text);
-    font-size: 1rem;
-}
-
-
-.sponsors-info__item {
+.sponsor-tables__cont-link {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: .5rem 1rem;
     border: 1px solid #7d757591;
-    margin: 1rem 0;
     border-radius: 3px;
-    font-size: .9rem;
-    height: 3rem;
-}
-
-
-
-@media screen and (min-width: 768px) {
-    .sponsor-table__header {
-        padding: .7rem;
-        font-size: 1rem;
-    }
-
-    .sponsor-table__item-link {
-        font-size: 1rem;
-    }
-
-    .sponsor-table__header-tag:first-child {
-        margin-left: 1rem;
-    }
-
-    .sponsor-ai__search-input,
-    .sponsor-ai__search-button {
-        height: 41px;
-        font-size: .9rem;
-    }
-
-    .sponsor-ai__search-button {
-        width: 8rem;
-    }
-
-    .sponsor-table {
-        display: table;
-    }
-
-    .sponsor-ai__search-header {
-        font-size: 1.3rem;
-    }
-}
-
-@media screen and (min-width: 1024px) {
-
-    .sponsor-table__item-text {
-        font-size: .9rem;
-    }
-}
-
-.sponsor-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
     padding: 1rem;
-    border: 1px solid #7d757591;
-    margin: .5rem 0;
-    border-radius: 3px;
-    background: var(--var-color-primary);
-}
-
-.sponsor-card:nth-child(even) {
-    background: #e8e8e8;
-}
-
-.sponsor-card:first-child {
-    margin-top: 0;
-}
-
-.sponsor-card__header {
-    width: 100%;
-    font-weight: 800;
-    font-size: 1.1rem;
-}
-
-.sponsor-card__header:hover {
-    cursor: pointer;
-}
-
-.sponsor-card__header-link {
-    color: var(--var-color-text);
-}
-
-.sponsor-card__header-link:hover {
-    text-decoration: none;
-    color: var(--var-color-text);
-    opacity: 0.8rem;
-    cursor: pointer;
-}
-
-.sponsor-card__cont {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-}
-
-.sponsor-card__body-text {
-    font-size: .9rem;
-    margin: .5rem 0;
     font-weight: 600;
+    font-size: .8rem;
+    cursor: pointer;
+    transition: all .3s;
+    color: var(--var-color-text);
 }
 
-.sponsor-card__body {
-    width: 100%;
-    text-align: left;
+.sponsor-tables__cont-link:hover {
+    opacity: 0.7;
+    border: 1px solid #7d7575;
+    color: var(--var-color-text);
+    text-decoration: none;
 }
+
+.sponsor-tables__cont-link__icon {
+    font-size: 1.5rem;
+    margin: 0 0 .5rem 0;
+}
+
+.link-technology {
+    background: #d1e2ff;
+}
+
+.link-health {
+    background: #fad2fc;
+}
+
+.link-finance {
+    background: #cff5d1;
+}
+
+.link-lifestyle {
+    background: #fce0cc;
+}
+
+.link-marketing {
+    background: #c1f5f0;
+}
+
+.link-education {
+    background: #f2dcf0;
+}
+
+.link-ecommerce {
+    background: #f5f0c1;
+}
+
+.sponsor-table__cont-p {
+    font-size: .8rem;
+    font-weight: 500;
+    margin: 0 0 .5rem 0;
+    text-align: left;
+    width: 100%;
+}
+
 
 @media screen and (min-width: 768px) {
-    .sponsor-card__cont {
-        display: none;
+    .sponsor-tables__cont-link {}
+
+    .sponsor-table__cont-p {
+        font-size: .9rem;
+    }
+
+    .sponsor-table__cont-header {
+        font-size: 1.8rem;
     }
 }

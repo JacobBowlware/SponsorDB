@@ -4,8 +4,6 @@ import { validateProperty, validateUser } from "../components/common/WebJoi";
 import axios from 'axios';
 import config from '../config';
 
-import { handlePurchase } from "../components/Pricing";
-
 interface SignupProps {
     userAuth: boolean;
     purchased: boolean;
