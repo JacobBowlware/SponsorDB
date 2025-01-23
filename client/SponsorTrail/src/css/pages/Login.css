@@ -12,10 +12,10 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: var(--var-color-primary);
-    padding: 1rem;
+    padding: 3rem;
     max-width: 440px;
     font-size: .8rem;
+    box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .login-form__header {
@@ -47,13 +47,13 @@
 }
 
 .login-form__btn {
-    width: 10rem;
-    margin-top: 1rem;
+    width: 15rem;
     background: var(--var-color-text);
     color: var(--var-color-primary);
-    opacity: 0.8;
     transition: all .3s;
-    font-size: .8rem;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: .2rem 0 0 0;
 }
 
 .login-form__btn-container {
@@ -64,6 +64,16 @@
     align-items: flex-start;
 }
 
+
+
+.loign-form__btn:focus {
+    outline: none !important;
+}
+
+.login-form__btn:hover {
+    color: var(--var-color-primary);
+}
+
 .login-form__btn:disabled {
     opacity: 0.5;
     cursor: default;
@@ -72,7 +82,7 @@
 .login-form__link {
     width: 100%;
     text-align: left;
-    margin: .5rem 0 0 0;
+    margin: .7rem 0 0 0;
     font-size: .9rem;
 }
 
@@ -91,10 +101,5 @@
 
     .login-form__header-note {
         font-size: 1rem;
-    }
-
-    .login-form__btn {
-        font-size: 1rem;
-        width: 15rem;
     }
 }

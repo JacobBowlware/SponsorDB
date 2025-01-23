@@ -2,22 +2,39 @@ import { useEffect, useState } from "react";
 import config from '../../config';
 import axios from "axios";
 
+// Font Awesome
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
+
+interface Sponsor {
+    newsletterSponsored: string;
+    sponsorName: string;
+    sponsorLink: string;
+    tags: string[];
+    subscriberCount: number;
+    businessContact?: string;
+    _id: string;
+}
+
 const Admin = () => {
     const [checked, setChecked] = useState(false);
+    const [potentialSponsorAccordionClosed, setPotentialSponsorAccordionClosed] = useState(true);
 
     // Array of potential sponsors
     const [potentialSponsorData, setPotentialSponsorData] = useState([
         {
-            newsletterSponsored: "", // Our format for the newsletter name
+            newsletterSponsored: "",
             sponsorName: "",
             sponsorLink: "",
             tags: [""],
             subscriberCount: 0,
+            businessContact: "",
             _id: "",
         }]);
 
     // Submit a sponsor to the database
     const handleSubmit = async (sponsor: any) => {
+
         try {
             await axios.post(`${config.backendUrl}sponsors/`, sponsor,
                 {
@@ -25,7 +42,6 @@ const Admin = () => {
                         'x-auth-token': localStorage.getItem('token')
                     }
                 }).then(async (res) => {
-                    console.log(res);
                     // Remove the potential sponsor from the list
                     let tempSponsorData = [...potentialSponsorData];
                     tempSponsorData = tempSponsorData.filter((s) => s._id !== sponsor._id);
@@ -101,111 +117,132 @@ const Admin = () => {
             <div className="web-section admin" id="">
                 <div className="admin-header__cont web-section-content">
                     <h1 className="admin-header">
-                        <strong>Approve </strong> or <strong>Deny</strong> Sponsors
+                        <strong>Admin Dashboard</strong>
                     </h1>
                 </div>
                 <div className="admin-dash__cont web-section-content">
                     <p className="admin-dash__text">
                         View all <strong> Potential Sponsors</strong> currently in the database. ({potentialSponsorData.length})
                     </p>
-                    {(potentialSponsorData.length === 0) ? <h2 className="admin-dash__form-header">No New Emails</h2> :
-                        <><form className="admin-dash__form">
-                            {potentialSponsorData.map((sponsorData, index) => {
-                                return <div className="admin-dash__form-item">
-                                    <div className="admin-dash__form-input-container">
-                                        <input
-                                            placeholder="Newsletter"
-                                            className="admin-dash__form-input"
-                                            onChange={(e) => {
-                                                let tempSponsorData = [...potentialSponsorData];
-                                                tempSponsorData[index].newsletterSponsored = e.target.value;
-
-                                                setPotentialSponsorData(tempSponsorData);
+                    <div className="admin-dash__form-accordian-container">
+                        <div className="admin-dash__form-accordian" onClick={() => {
+                            const element = document.querySelector(".admin-dash__form") as HTMLElement;
+                            element.classList.toggle("active");
+                            setPotentialSponsorAccordionClosed(!potentialSponsorAccordionClosed);
+                        }}>
+                            <h2 className="admin-dash__form-accordian-header-text">Potential Sponsors</h2>
+                            <FontAwesomeIcon icon={potentialSponsorAccordionClosed ? faChevronDown : faChevronUp} className="admin-dash__form-accordian-icon" />
+                        </div>
+                        {(potentialSponsorData.length === 0) ? <h2 className="admin-dash__form-header">No Potential Sponsors in Database.</h2> :
+                            <><form className="admin-dash__form">
+                                {potentialSponsorData.map((sponsorData, index) => {
+                                    return <div className="admin-dash__form-item">
+                                        <div className="admin-dash__form-input-container">
+                                            <input
+                                                placeholder="Newsletter"
+                                                className="admin-dash__form-input"
+                                                onChange={(e) => {
+                                                    let tempSponsorData = [...potentialSponsorData];
+                                                    tempSponsorData[index].newsletterSponsored = e.target.value;
+                                                    setPotentialSponsorData(tempSponsorData);
+                                                }}
+                                                value={sponsorData.newsletterSponsored}
+                                            />
+                                            <input
+                                                placeholder="Sponsor"
+                                                className="admin-dash__form-input"
+                                                onChange={(e) => {
+                                                    let tempSponsorData = [...potentialSponsorData];
+                                                    tempSponsorData[index].sponsorName = e.target.value;
+                                                    setPotentialSponsorData(tempSponsorData);
+                                                }}
+                                                value={sponsorData.sponsorName}
+                                            />
+                                        </div>
+                                        <div className="admin-dash__form-input-container">
+                                            <input
+                                                placeholder="Sponsor Link"
+                                                className="admin-dash__form-input"
+                                                onChange={(e) => {
+                                                    let tempSponsorData = [...potentialSponsorData];
+                                                    tempSponsorData[index].sponsorLink = e.target.value;
+                                                    setPotentialSponsorData(tempSponsorData);
+                                                }}
+                                                value={sponsorData.sponsorLink}
+                                            />
+                                            <input
+                                                placeholder="tag1, tag2"
+                                                className="admin-dash__form-input"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === ' ' || e.key === 'Tab') {
+                                                        e.preventDefault(); // Prevent space or tab
+                                                    }
+                                                }}
+                                                onChange={(e) => {
+                                                    let tempSponsorData = [...potentialSponsorData];
+                                                    tempSponsorData[index].tags = e.target.value.split(",");
+                                                    setPotentialSponsorData(tempSponsorData);
+                                                }}
+                                                value={sponsorData.tags}
+                                            />
+                                        </div>
+                                        <div className="admin-dash__form-input-container">
+                                            <input
+                                                placeholder="Subscriber Count"
+                                                className="admin-dash__form-input"
+                                                onChange={(e) => {
+                                                    const updatedSubscriberCount = Number(e.target.value);
+                                                    // Copy subscriber count to all sponsors that have the same newsletterSponsored field
+                                                    if (updatedSubscriberCount > 0) {
+                                                        const tempSponsorData = potentialSponsorData.map((sponsor, idx) => {
+                                                            return sponsorData.newsletterSponsored === sponsor.newsletterSponsored
+                                                                ? { ...sponsor, subscriberCount: updatedSubscriberCount }
+                                                                : sponsor;
+                                                        });
+                                                        setPotentialSponsorData(tempSponsorData);
+                                                    }
+                                                }}
+                                                value={sponsorData.subscriberCount}
+                                            />
+                                            <input
+                                                placeholder="Business Contact"
+                                                className="admin-dash__form-input"
+                                                onChange={(e) => {
+                                                    // Copy business contact to all sponsors that have the same newsletterSponsored field
+                                                    const tempSponsorData = potentialSponsorData.map((sponsor, idx) => {
+                                                        return sponsorData.newsletterSponsored === sponsor.newsletterSponsored
+                                                            ? { ...sponsor, businessContact: e.target.value }
+                                                            : sponsor;
+                                                    });
+                                                    setPotentialSponsorData(tempSponsorData);
+                                                }}
+                                                value={sponsorData.businessContact}
+                                            />
+                                        </div>
+                                        <div className="admin-dash__form-btn-container">
+                                            <button type="button" onClick={async () => {
+                                                // Submit the sponsor to DB
+                                                await handleSubmit(sponsorData);
+                                                // Remove the potential sponsor from the list
+                                                setPotentialSponsorData(potentialSponsorData.filter((_, i) => i !== index));
+                                                // Remove from DB
+                                                await handleDeny(sponsorData);
                                             }}
-                                            value={sponsorData.newsletterSponsored}
-                                        />
-                                        <input
-                                            placeholder="Sponsor"
-                                            className="admin-dash__form-input"
-                                            onChange={(e) => {
-                                                let tempSponsorData = [...potentialSponsorData];
-                                                tempSponsorData[index].sponsorName = e.target.value;
-
-                                                setPotentialSponsorData(tempSponsorData);
-                                            }}
-                                            value={sponsorData.sponsorName}
-                                        />
+                                                className="btn admin-dash__form-btn">
+                                                APPROVE
+                                            </button>
+                                            <button type="button" onClick={async () => {
+                                                // Remove from DB
+                                                await handleDeny(sponsorData)
+                                            }} className="btn admin-dash__form-btn">
+                                                DENY
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="admin-dash__form-input-container">
-                                        <input
-                                            placeholder="Sponsor Link"
-                                            className="admin-dash__form-input"
-                                            onChange={(e) => {
-                                                let tempSponsorData = [...potentialSponsorData];
-                                                tempSponsorData[index].sponsorLink = e.target.value;
-
-                                                setPotentialSponsorData(tempSponsorData);
-                                            }}
-                                            value={sponsorData.sponsorLink}
-                                        />
-                                        <input
-                                            placeholder="tag1, tag2"
-                                            className="admin-dash__form-input"
-                                            onKeyDown={(e) => {
-                                                if (e.key === ' ' || e.key === 'Tab') {
-                                                    e.preventDefault(); // Prevent space or tab
-                                                }
-                                            }}
-                                            onChange={(e) => {
-                                                let tempSponsorData = [...potentialSponsorData];
-                                                tempSponsorData[index].tags = e.target.value.split(",");
-
-                                                setPotentialSponsorData(tempSponsorData);
-                                            }}
-                                            value={sponsorData.tags}
-                                        />
-                                        <input
-                                            placeholder="Subscriber Count"
-                                            className="admin-dash__form-input"
-                                            onChange={(e) => {
-                                                const updatedSubscriberCount = Number(e.target.value);
-
-                                                // Deep copy the sponsor object at the index
-                                                const tempSponsorData = potentialSponsorData.map((sponsor, idx) => {
-                                                    return idx === index
-                                                        ? { ...sponsor, subscriberCount: updatedSubscriberCount }
-                                                        : sponsor;
-                                                });
-
-                                                setPotentialSponsorData(tempSponsorData);
-                                            }}
-                                            value={sponsorData.subscriberCount}
-                                        />
-                                    </div>
-                                    <div className="admin-dash__form-input-container">
-                                        <button type="button" onClick={async () => {
-                                            // Submit the sponsor to DB
-                                            await handleSubmit(sponsorData);
-                                            // Remove the potential sponsor from the list
-                                            setPotentialSponsorData(potentialSponsorData.filter((_, i) => i !== index));
-                                            // Remove from DB
-                                            await handleDeny(sponsorData);
-                                        }}
-                                            className="btn admin-dash__form-btn">
-                                            APPROVE
-                                        </button>
-                                        <button type="button" onClick={async () => {
-
-                                            // Remove from DB
-                                            await handleDeny(sponsorData)
-                                        }} className="btn admin-dash__form-btn">
-                                            DENY
-                                        </button>
-                                    </div>
-                                </div>
-                            })}
-                        </form>
-                        </>}
+                                })}
+                            </form>
+                            </>}
+                    </div>
                 </div>
             </div>
         </div>

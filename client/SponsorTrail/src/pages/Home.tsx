@@ -27,7 +27,7 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
             <div className="web-section web-section-dark mt-0" id="sample-data" >
                 <div className="web-section__container web-section-content">
                     <h1 className="web-section__container-header airtable-header">
-                        Find your next newsletter sponsor
+                        Easily Find Your Next Newsletter Sponsor
                     </h1>
                     <p className="airtable-p">
                         Access our curated list of proven newsletter sponsors, so you can spend less time searching and more time growing your newsletter.                    </p>
@@ -41,7 +41,7 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                         <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; No hidden fees or commissions. Just a one-time payment for full access to the database.
                     </p>
                     <p className="airtable-p">
-                        <FontAwesomeIcon icon={faCheckCircle} /> &nbsp; Easily download the database to a CSV file.
+                        <FontAwesomeIcon icon={faCheckCircle} /> &nbsp; Easily download the database into a CSV file.
                     </p>
                     <Link to="/signup" className="btn home__container-item__btn mb-3">
                         Find Sponsors &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />

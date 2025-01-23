@@ -66,17 +66,17 @@ const ChangePassword = () => {
                         <h1 className="change-password-form__header">
                             Forgot Your Password?
                         </h1>
-                        <p>
-                            Enter your email address below and we will send you a link to reset your password.
+                        <p className="change-password-form__p mb-3">
+                            Enter your email address below and we will send you a link to reset it.
                         </p>
                     </div>
-                    <input onChange={(e) => { setUser({ email: e.target.value }) }} value={user.email} className="input form-input change-password-form__input" type="email" placeholder="Email Address" />
-                    <button id="submitBtn" className="btn form-btn change-password-form__btn" type="submit">{loading ? "..." : "Send Email"}</button>
+                    <input type="email" onChange={(e) => { setUser({ email: e.target.value }) }} value={user.email} className="input form-input change-password-form__input" placeholder="Email Address" />
+                    <button disabled={!user.email} id="submitBtn" className="btn form-btn change-password-form__btn" type="submit">{loading ? "..." : "Reset Password"}</button>
                     {emailSent && <p className="change-password-form__sent">
                         Email sent! Please check your inbox - if you don't see it, check your spam folder.
                     </p>}
                     {error && <p className="change-password-form__error">
-                        No account found with that email address. If this is a mistake, please contact support.
+                        No account found with that email address. If this is a mistake, please <a href="mailto:info@sponsor-db.com">contact support.</a>
                     </p>}
                     <Link to="/login" className="login-form__link">Back to Login</Link>
                 </form>

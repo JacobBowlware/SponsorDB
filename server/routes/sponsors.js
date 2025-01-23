@@ -16,7 +16,8 @@ const saveToAirtable = async (sponsor) => {
             "Sponsor": sponsor.sponsorName,
             "Sponsor Link": sponsor.sponsorLink,
             "Newsletter Sponsored": sponsor.newsletterSponsored,
-            "Audience Size": sponsor.subscriberCount
+            "Audience Size": sponsor.subscriberCount,
+            "Business Contact": sponsor.businessContact
         };
 
         base('Sponsors').create([
@@ -105,7 +106,8 @@ router.post('/', auth, async (req, res) => {
             sponsorLink: sponsor.sponsorLink,
             tags: sponsor.tags,
             newsletterSponsored: sponsor.newsletterSponsored,
-            subscriberCount: sponsor.subscriberCount
+            subscriberCount: sponsor.subscriberCount,
+            businessContact: sponsor.businessContact
         });
         await newSponsor.save().then(() => {
             console.log("Sponsor created successfully.");

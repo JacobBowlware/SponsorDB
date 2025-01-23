@@ -11,6 +11,7 @@ import './css/App.css';
 import './css/Header.css';
 import './css/Footer.css';
 import './css/pages/Home.css';
+import './css/pages/Newsletter.css';
 import './css/pages/Login.css';
 import './css/pages/ChangePassword.css';
 import './css/pages/Review.css';
@@ -22,6 +23,7 @@ import './css/pages/authReq/Profile.css';
 import './css/pages/authReq/Admin.css';
 import './css/pages/authReq/NavMenu.css'
 
+
 //Pages
 import Home from './pages/Home';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -29,6 +31,7 @@ import TOS from './pages/TOS';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ChangePassword from './pages/ChangePassword';
+import Newsletter from './pages/Newsletter';
 
 // Authed Pages
 import Review from './pages/Review';
@@ -142,6 +145,7 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route path="/newsletter/" element={<Newsletter />} />
         <Route path="/login/" element={<Login userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
@@ -160,7 +164,7 @@ function App() {
         {user.purchased && <Route path="/sponsors/" element={<Sponsors sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} />} />}
         {/* If users arnt subscribed, implement this route for sponsors */<Route path="/sponsors/" element={<Purchase purchased={user.purchased} sponsorCount={dbInfo.sponsors} />} />}
         {/* Admin Routes */}
-        {user.isAdmin && <Route path="/admin/" element={<Admin />} />}
+        {<Route path="/admin/" element={<Admin />} />}
       </Route>
     )
   )

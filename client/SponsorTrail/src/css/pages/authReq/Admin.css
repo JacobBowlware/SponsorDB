@@ -26,6 +26,7 @@
     justify-content: center;
     align-items: flex-start;
     width: 100%;
+    padding-top: 2rem;
 }
 
 .admin-dash__btn {
@@ -55,6 +56,16 @@
     gap: .3rem;
 }
 
+.admin-dash__form-btn-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+    margin: .5rem 0 0 0;
+}
+
 .admin-dash__form-input--size {
     width: 10rem !important;
     margin: .4rem 0 .1rem 0;
@@ -71,7 +82,7 @@
     width: 100%;
     justify-content: center;
     align-items: flex-start;
-    gap: 1rem;
+    display: none;
 }
 
 .admin-dash__form-header {
@@ -108,13 +119,17 @@
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: 1rem;
-    background: #ace2ac
+    padding: 2rem 1rem;
+    background: #b9b9b9;
+}
+
+.active {
+    display: flex;
 }
 
 /* Change every other item to slightly different color */
 .admin-dash__form-item:nth-child(odd) {
-    background: #dbcee6
+    background: #ededed
 }
 
 .admin-dash__form-input {
@@ -147,23 +162,51 @@
     outline: none;
 }
 
+.admin-dash__form-btn:nth-child(1) {
+    background: #196f66;
+}
+
 .admin-dash__form-body {
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
+.admin-dash__form-accordian-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    background: var(--var-color-text);
+}
+
+.admin-dash__form-accordian {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 3px;
+    background: var(--var-color-text);
+    color: var(--var-color-primary);
+}
+
+.admin-dash__form-accordian-header-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--var-color-primary);
+}
+
 @media screen and (min-width: 1024px) {
-    .admin-dash__form {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-    }
+    .admin-dash__form {}
 
     .admin-dash__form-input {
-        font-size: .9rem;
+        font-size: 1rem;
     }
 
     .admin-dash__form-btn {
-        font-size: .9rem;
+        font-size: 1rem;
     }
 }
