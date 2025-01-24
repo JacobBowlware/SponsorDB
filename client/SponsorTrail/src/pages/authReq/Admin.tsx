@@ -208,9 +208,9 @@ const Admin = () => {
                                                 placeholder="Business Contact"
                                                 className="admin-dash__form-input"
                                                 onChange={(e) => {
-                                                    // Copy business contact to all sponsors that have the same newsletterSponsored field
+                                                    // Copy business contact to all sponsors that have the same sponsorName field
                                                     const tempSponsorData = potentialSponsorData.map((sponsor, idx) => {
-                                                        return sponsorData.newsletterSponsored === sponsor.newsletterSponsored
+                                                        return sponsorData.sponsorName === sponsor.sponsorName
                                                             ? { ...sponsor, businessContact: e.target.value }
                                                             : sponsor;
                                                     });
