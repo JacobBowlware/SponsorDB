@@ -42,9 +42,6 @@ const Header = () => {
                         <li className="nav-item">
                             <a className="nav-link" href="/#FAQ" onClick={closeNavBar}>FAQ</a>
                         </li>
-                        <li className="nav-item  nav-item__highlight nav-item__highlight-dark">
-                            <Link className="nav-link nav-link__highlight nav-link__highlight-dark " to="/newsletter" onClick={closeNavBar}>Newsletter</Link>
-                        </li>
                         <li className="nav-item  nav-item__highlight">
                             <Link className="nav-link nav-link__highlight " to="/login" onClick={closeNavBar}>Login</Link>
                         </li>

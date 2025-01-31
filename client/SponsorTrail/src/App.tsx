@@ -145,7 +145,7 @@ function App() {
       <Route path="/" element={<Root />}>
         <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
-        <Route path="/newsletter/" element={<Newsletter />} />
+        {/* <Route path="/newsletter/" element={<Newsletter />} /> */}
         <Route path="/login/" element={<Login userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/change-password/" element={<ChangePassword />} />

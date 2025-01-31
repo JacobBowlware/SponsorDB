@@ -17,7 +17,7 @@ const saveToAirtable = async (sponsor) => {
             "Sponsor Link": sponsor.sponsorLink,
             "Newsletter Sponsored": sponsor.newsletterSponsored,
             "Audience Size": sponsor.subscriberCount,
-            "Business Contact": sponsor.businessContact
+            "Apply for Sponsorship": sponsor.businessContact
         };
 
         base('Sponsors').create([

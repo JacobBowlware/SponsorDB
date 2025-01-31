@@ -205,10 +205,10 @@ const Admin = () => {
                                                 value={sponsorData.subscriberCount}
                                             />
                                             <input
-                                                placeholder="Business Contact"
+                                                placeholder="Apply for Sponsorship"
                                                 className="admin-dash__form-input"
                                                 onChange={(e) => {
-                                                    // Copy business contact to all sponsors that have the same sponsorName field
+                                                    // Copy Apply for Sponsorship to all sponsors that have the same sponsorName field
                                                     const tempSponsorData = potentialSponsorData.map((sponsor, idx) => {
                                                         return sponsorData.sponsorName === sponsor.sponsorName
                                                             ? { ...sponsor, businessContact: e.target.value }
