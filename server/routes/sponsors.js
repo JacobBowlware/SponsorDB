@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { Sponsor, validateSponsor } = require('../models/sponsor');
 const { PotentialSponsor } = require('../models/potentialSponsor');
+const csv = require('csv-parser');
+const fs = require('fs');
 const auth = require('../middleware/auth');
 require('../middleware/corHeaders')(router);
 
+// Import sponsors csv
 var Airtable = require('airtable');
 var base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base('appn3l7KEp7wAQOZu');
 
@@ -133,6 +136,45 @@ router.post('/', auth, async (req, res) => {
         console.log("Error creating sponsor", e);
         res.status(500).send("Error creating sponsor");
     }
+});
+
+// Update entire database to match CSV sponsors table (TODO: Must call locally to use the csv, this is not yet implemented)
+router.post('/updateFromCSV', async (req, res) => {
+    const csvFilePath = 'server/utils/sponsors.csv'; // Provide the path to your CSV file
+
+    const sponsors = [];
+
+    // Read and parse the CSV file
+    fs.createReadStream(csvFilePath)
+        .pipe(csv()) // Default assumes CSV headers are used
+        .on('data', (row) => {
+            const sponsor = {
+                sponsorName: row['Sponsor'], // Adjust based on your CSV column names
+                sponsorLink: row['Sponsor Link'],
+                tags: row['Market'],
+                newsletterSponsored: row['Newsletter Sponsored'],
+                subscriberCount: row['Audience Size'],
+                businessContact: row['Apply for Sponsorship'],
+            };
+            sponsors.push(sponsor);
+        })
+        .on('end', async () => {
+            try {
+                // Optionally, delete all existing sponsors before inserting new ones
+                await Sponsor.deleteMany();
+
+                // Insert all the new sponsors into MongoDB
+                await Sponsor.insertMany(sponsors);
+                res.status(200).send("Database updated successfully with CSV data.");
+            } catch (error) {
+                console.error(error);
+                res.status(500).send("Error saving data to the database.");
+            }
+        })
+        .on('error', (error) => {
+            console.error(error);
+            res.status(500).send("Error reading the CSV file.");
+        });
 });
 
 module.exports = router;

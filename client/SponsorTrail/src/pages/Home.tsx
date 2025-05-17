@@ -9,10 +9,10 @@ import AirTable from "../components/AirTable.js";
 
 // Font Awesome Icons
 import { faArrowRight, faSyncAlt, faStopwatch, faSliders, faCheckCircle, faComputer, faHardDrive, faMoneyCheckDollar, faSuitcase, faSpa, faFilm, faCartShopping } from "@fortawesome/free-solid-svg-icons";
-
-// Images
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+// Images
+import ProjectSS from '../assets/images/ProjectSS.png';
 interface HomeProps {
     purchased: boolean,
     email: string,
@@ -32,19 +32,19 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                     <p className="airtable-p">
                         Access our curated list of proven newsletter sponsors, so you can spend less time searching and more time growing your newsletter.                    </p>
                     <p className="airtable-p">
-                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; High quality sponsors with proven track records, updated regularly.
+                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; {sponsorCount} sponsors from {newsletterCount} newsletters, including TLDR Daily, The Hustle, and Morning Brew.
                     </p>
                     <p className="airtable-p">
-                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; Easily filter and sort our database to find the perfect sponsor for your newsletter.
+                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; Sort by market type or audience size to find your perfect match.
                     </p>
                     <p className="airtable-p">
-                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; No hidden fees or commissions. Just a one-time payment for full access to the database.
+                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; No middlemen. Direct contact details for every sponsor – no hidden fees or commissions.
                     </p>
                     <p className="airtable-p">
-                        <FontAwesomeIcon icon={faCheckCircle} /> &nbsp; Easily download the database into a CSV file.
+                        <FontAwesomeIcon icon={faCheckCircle} /> &nbsp; Download the full database as a CSV and start pitching in minutes.
                     </p>
                     <Link to="/signup" className="btn home__container-item__btn mb-3">
-                        Find Sponsors &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                        Find Sponsors Now &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                     </Link>
                 </div>
             </div>
@@ -70,7 +70,7 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                             Signup for full access to our datasets & database of <strong>{sponsorCount ? sponsorCount : 200}+</strong> sponsors from <strong>{newsletterCount ? newsletterCount : 50}+</strong> newsletters.
                         </p>
                         <p className="sponsor-table__cont-header-h3 mb-0">
-                            <strong>Popular Datasets</strong>
+                            <strong>Sample Datasets</strong>
                         </p>
                         <div className="sponsor-tables__cont mb-2 mt-2">
                             <a href="https://airtable.com/appn3l7KEp7wAQOZu/shrPy6pdhaTW2abA4" target="_blank" rel="noreferrer" className="sponsor-tables__cont-link">
@@ -130,15 +130,16 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                                     </p>
                                 </div>
                                 <p className="home__pricing-card__text mt-2">
-                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Access our growing database of high-quality newsletter sponsors
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>{sponsorCount}+ Sponsors:</strong> From companies like Eight Sleep, ExpressVPN, and EmailTree.
                                 </p>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Sort sponsors by audience size, market type, or date added to find the perfect match for your newsletter
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Advanced Filters:</strong> Sort by market type or audience size to find the perfect sponsors.
                                 </p>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Updated daily with new sponsorship opportunities </p>
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Daily Updates:</strong> New sponsors added every week – never miss an opportunity.
+                                </p>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Easily download the database into a CSV file
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Export & Go:</strong> Download the full database as a CSV and start pitching in minutes.
                                 </p>
                                 <Link className="btn home__pricing-card__btn" to="/signup">
                                     $29.99 -- Get Started
@@ -148,27 +149,28 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                     </div>
                 </div>
             </div>
-            {/*<div className="web-section" >
+            {/* <div className="web-section" >
                 <div className="web-section__container web-section-content" id="testimonials">
                     <h2 className="web-section__container-header-sm">
                         Testimonials
                     </h2>
                     <div className="home__testimonials-list">
-                        <TestimonialCard name="John D." affiliation="Content Creator" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
-                        <TestimonialCard name="Alex J." affiliation="Sponsor" quote="Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem recusandae commodi, neque laudantium soluta nihil quae enim expedita odit aliquam." />
+                        <TestimonialCard name="John D." affiliation="Content Creator" quote="I was able to find 3 sponsors in 2 weeks using SponsorDB. It saved me hours of research!" />
+                        <TestimonialCard name="Alex J." affiliation="Sponsor" quote="We’re just launching, and we’d love your feedback! Be one of the first to try SponsorDB and leave a review." />
                     </div>
                     {purchased && <Link className="footer-item footer-item__highlight mt-2" to="/review">
                         Leave a Review
                         &nbsp; <FontAwesomeIcon className="footer-item__highlight-arrow-icon" icon={faArrowRight} />
                     </Link>}
                 </div>
-            </div>*/}
+            </div> */}
             {/* <div className="web-section web-section-dark" id="pricing">
                 <div className="web-section-content home__pricing-container">
                     <Pricing isSubscribed={isSubscribed} />
                     <img className="home__pricing-img" src={ExampleSponsors} alt="Pricing" />
                 </div>
             </div> */}
+
             <div className="web-section web-section__container web-section-content" id="FAQ">
                 <h2 className="web-section__container-header-sm">
                     Frequently Asked Questions

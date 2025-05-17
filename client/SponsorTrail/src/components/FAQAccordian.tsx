@@ -12,7 +12,7 @@ const FAQAccordian = () => {
     return (
         <div className="faq-accordian__container">
             <AccordianItem
-                title="How can I apply for sponsorships?"
+                title="How to get newsletter sponsors?"
                 content="Depending on the sponsor, you may be able to apply directly through their company website. If you're interested in a company that doesn't have an application process, we recommend reaching out to them directly via email with your newsletter's audience size and demograhics."
                 onPress={() => setAcc3Open(!acc3Open)}
                 isOpen={acc3Open}

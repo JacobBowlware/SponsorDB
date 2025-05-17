@@ -7,6 +7,37 @@ const admin = require('../middleware/admin');
 const emailMonitor = require('../scraper/emailMonitor');
 require('../middleware/corHeaders')(router);
 
+// Check if a sponsor already exists in either collection
+router.get('/checkDuplicate', async (req, res) => {
+    try {
+        const { sponsorName, newsletterSponsored } = req.query;
+        
+        if (!sponsorName || !newsletterSponsored) {
+            return res.status(400).send('Missing required parameters');
+        }
+        
+        // Check if sponsor exists in PotentialSponsor collection
+        const potentialSponsorExists = await PotentialSponsor.findOne({
+            sponsorName: sponsorName,
+            newsletterSponsored: newsletterSponsored
+        });
+        
+        // Check if sponsor exists in Sponsor collection
+        const sponsorExists = await Sponsor.findOne({
+            sponsorName: sponsorName,
+            newsletterSponsored: newsletterSponsored
+        });
+        
+        // Return true if sponsor exists in either collection
+        const exists = !!potentialSponsorExists || !!sponsorExists;
+        
+        res.status(200).send({ exists });
+    } catch (error) {
+        console.error('Error checking for duplicate sponsor:', error);
+        res.status(500).send('Error checking for duplicate sponsor');
+    }
+});
+
 
 // Route to run emailMonitor.js 
 router.get('/emailMonitor', async (req, res) => {

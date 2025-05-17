@@ -649,7 +649,7 @@
 
 .home__pricing-card__header-h3 {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: .3rem;
     width: 100%;
     text-align: left;
@@ -758,7 +758,43 @@
     color: #2b2b2b;
 }
 
+.home__pricing-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.home__pricing-card__content-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.home__pricing-img {
+    max-width: 100%;
+}
+
+.home__pricing-card__content-left {}
+
+.home__pricing-card__content-right {}
+
 @media screen and (min-width: 768px) {
+
+    .home__pricing-container {
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    .home__pricing-card__content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
 
     .home__pricing-card__btn {
         font-size: 1.1rem;
