@@ -1,5 +1,5 @@
 {
-    "jwtPrivateKey": "1234",
+    "JWT_PRIVATE_KEY": "1234",
     "db": "https://sponsor-db-server-f6ca7971af31.herokuapp.com",
     "port": 3001
 }

@@ -30,6 +30,10 @@ const potentialSponsorSchema = new mongoose.Schema({
         type: Number,
         required: false
     },
+    confidence: {
+        type: Number,
+        default: 0
+    }
 })
 
 
@@ -41,8 +45,9 @@ const validatePotentialSponsor = (sponsor) => {
         sponsorLink: Joi.string(),
         tags: Joi.array().items(Joi.string().min(0).max(256)).max(5),
         newsletterSponsored: Joi.string().min(0).max(100),
-        subscriberCount: Joi.number()
-    });
+        subscriberCount: Joi.number(),
+        confidence: Joi.number(),
+    }).options({ allowUnknown: true });
 
     return schema.validate(sponsor);
 }

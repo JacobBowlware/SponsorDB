@@ -25,7 +25,7 @@ describe('auth middleware', () => {
             _id: user._id,
             'email': user.email,
             'password': user.password
-        }, config.get('jwtPrivateKey')))
+        }, config.get('JWT_PRIVATE_KEY')))
     };
 
     it('should populate req.user with the payload of a valid JWT', () => {

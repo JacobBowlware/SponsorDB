@@ -11,7 +11,7 @@ module.exports = async function (req, res, next) {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.jwtPrivateKey || config.get('jwtPrivateKey'));
+        const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || config.get('JWT_PRIVATE_KEY'));
 
         // Get user from the token, call database to get the user from their ID
         console.log(decoded);

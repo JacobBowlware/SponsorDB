@@ -98,8 +98,8 @@ router.post('/checkout', auth, async (req, res) => {
                     },
                 ],
                 mode: 'payment',
-                success_url: `${process.env.CLIENT_URL}/sponsors`, // URL when payment is successful
-                cancel_url: `${process.env.CLIENT_URL}/profile`,   // URL when payment fails/cancelled
+                success_url: `${process.env.CLIENT_URL}sponsors`, // URL when payment is successful
+                cancel_url: `${process.env.CLIENT_URL}profile`,   // URL when payment fails/cancelled
                 customer_email: req.user.email,  // Optional, to auto-fill Stripe customer info
                 metadata: {
                     userId: userIdToString
@@ -152,7 +152,7 @@ router.post("/change-password-final/", async (req, res) => {
         }
 
         // Decode the token
-        const decoded = jwt.verify(authToken, process.env.jwtPrivateKey || config.get('jwtPrivateKey'));
+        const decoded = jwt.verify(authToken, process.env.JWT_PRIVATE_KEY || config.get('JWT_PRIVATE_KEY'));
 
         if (!decoded) {
             return res.status(400).send("Invalid token");

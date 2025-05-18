@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
             }
 
             user.purchased = true;
-            user.stripeCustomerId = purchase.customer;
+            user.stripeCustomerId = purchase.id;
 
             await user.save();
         }

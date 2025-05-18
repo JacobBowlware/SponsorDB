@@ -11,8 +11,8 @@ TODO:
 */
 
 // Check for JWT private key
-if (!process.env.jwtPrivateKey) {
-    logger.error('FATAL ERROR: jwtPrivateKey is not defined.');
+if (!process.env.JWT_PRIVATE_KEY) {
+    logger.error('FATAL ERROR: JWT_PRIVATE_KEY is not defined.');
     process.exit(1);
 }
 

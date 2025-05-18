@@ -13,6 +13,7 @@ interface Sponsor {
     tags: string[];
     subscriberCount: number;
     businessContact?: string;
+    confidence: number
     _id: string;
 }
 
@@ -95,6 +96,13 @@ const Admin = () => {
 
                 setPotentialSponsorData(potentialSponsorData);
                 setChecked(true);
+
+                // Sort by confidence score
+                const sortedData = potentialSponsorData.sort((a: Sponsor, b: Sponsor) => {
+                    return b.confidence - a.confidence;
+                });
+                setPotentialSponsorData(sortedData);
+
             }).catch((err) => {
                 console.log(err);
                 return [];

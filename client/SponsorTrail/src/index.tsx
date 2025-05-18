@@ -4,6 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// Import Firebase services
+import './firebase/firebase'; // This initializes Firebase
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );

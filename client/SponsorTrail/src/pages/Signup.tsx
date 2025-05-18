@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { validateProperty, validateUser } from "../components/common/WebJoi";
 import axios from 'axios';
 import config from '../config';
+import { logEvent } from "firebase/analytics";
+import { analytics } from "../firebase/firebase";
 
 interface SignupProps {
     userAuth: boolean;
@@ -65,7 +67,6 @@ const Signup = ({ userAuth, purchased }: SignupProps) => {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-
         const errors = validateUser({ email: email, password: password, confirmPassword: confirmPassword });
         if (errors) {
             setConfirmPasswordError("Invalid input, please try again.")
@@ -80,6 +81,16 @@ const Signup = ({ userAuth, purchased }: SignupProps) => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
+            
+            // Safely log signup event
+            try {
+                logEvent(analytics, 'sign_up');
+                console.log("Signup event logged");
+            } catch (error) {
+                // Silently handle analytics errors to prevent app crashes
+                console.error("Analytics error (non-fatal):", error);
+            }
+
             navigate('/sponsors');
 
         }).catch((err) => {

@@ -95,6 +95,7 @@ function App() {
     })
   }
 
+  // Handle auth and data fetching
   useEffect(() => {
     const fetchData = async (num: number) => {
       if (num === 1) {
@@ -116,7 +117,7 @@ function App() {
     if (dbInfo.sponsors === 0 && !window.location.href.includes('localhost')) {
       fetchData(2);
     }
-  }, [])
+  }, [user.email, dbInfo.sponsors]);
 
   const Root = () => {
     //TODO: Change to !userAuth
@@ -143,7 +144,7 @@ function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route  index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         {/* <Route path="/newsletter/" element={<Newsletter />} /> */}
         <Route path="/login/" element={<Login userAuth={userAuth} purchased={user.purchased} />} />

@@ -138,7 +138,8 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// Update entire database to match CSV sponsors table (TODO: Must call locally to use the csv, this is not yet implemented)
+
+// Update entire database to match CSV sponsors
 router.post('/updateFromCSV', async (req, res) => {
     const csvFilePath = 'server/utils/sponsors.csv'; // Provide the path to your CSV file
 

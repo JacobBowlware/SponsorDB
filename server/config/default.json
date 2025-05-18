@@ -1,6 +1,6 @@
 {
     "openai_api_key": "",
-    "jwtPrivateKey": "",
+    "JWT_PRIVATE_KEY": "",
     "db_auth_token": "",
     "db": "mongodb://localhost/sponsortrail",
     "BASE_URL": "http://localhost:3001/api/",
