@@ -37,11 +37,11 @@ const Footer = ({ auth }: FooterProps) => {
                         Login
                     </Link>
                 </div>}
-                <div className="footer-item__cont">
+                {/* <div className="footer-item__cont">
                     <Link className="footer-item" to="/newsletter">
                         Subscribe to our Newsletter
                     </Link>
-                </div>
+                </div> */}
             </div>
         </div>
     );

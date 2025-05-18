@@ -19,19 +19,19 @@ const FAQAccordian = () => {
             />
             <AccordianItem
                 title="Am I guaranteed a sponsorship?"
-                content="We can't guarantee sponsorships, however, the companies in our database have demonstrated an interest in this type of advertising in the past and may be open to future opportunities."
+                content="We can't guarantee sponsorships, however, the companies in our database have demonstrated an interest in this type of advertising in the past and may be open to future opportunities. We recommend reaching out to multiple companies to increase your chances of success."
                 onPress={() => setAcc4Open(!acc4Open)}
                 isOpen={acc4Open}
             />
             <AccordianItem
                 title="How do we gather our data?"
-                content="We gather our data directly from newsletters and sponsors themselves. Our process ensures that the information provided is accurate and up-to-date."
+                content="We gather our data directly from newsletters and sponsors themselves. If we notice a company sponsoring a newsletter, we add it to our database, along with the newsletter's audience size and demograhics (if available)."
                 onPress={() => setAcc5Open(!acc5Open)}
                 isOpen={acc5Open}
             />
             <AccordianItem
                 title="How often is the database updated?"
-                content="Our database is updated daily, ensuring that you have access to the most current information."
+                content="Our database is updated regularly -multiple times a week- ensuring that you have access to the most current information."
                 onPress={() => setAcc2Open(!acc2Open)}
                 isOpen={acc2Open}
             />

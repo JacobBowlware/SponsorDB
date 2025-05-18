@@ -20,7 +20,7 @@
 .home__container-item__btn-arrow-icon {
     margin-left: .4rem;
     position: relative;
-    top: 1px;
+    transition: transform 0.2s ease;
 }
 
 .home__container-item__header {
@@ -75,21 +75,34 @@
     height: 3rem;
     font-weight: 700;
     font-size: .9rem;
-    background: var(--var-color-text);
+    background: var(--var-color-accent);
     color: #fff;
     border: none !important;
-    /* border-radius: 0 15px 15px 0; */
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all .3s;
+    transition: all 0.2s ease;
     max-width: 15rem;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
 }
 
 .home__container-item__btn:hover {
     cursor: pointer;
-    opacity: .8;
-    color: var(--var-color-background)
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
+    color: white !important;
+}
+
+.home__container-item__btn-arrow-icon {
+    margin-left: .4rem;
+    position: relative;
+    top: 1px;
+}
+
+.home__container-item__btn:hover .home__container-item__btn-arrow-icon {
+    transform: translateX(3px);
 }
 
 .home__container-item__form {
@@ -198,8 +211,8 @@
     }
 
     .home__container-item__btn {
-        font-size: 1.1rem;
-        max-width: 20rem;
+        font-size: 1rem;
+        max-width: 18rem;
     }
 
     .home__container-item__p {
@@ -601,6 +614,7 @@
     justify-content: center;
     align-items: center;
     gap: 1rem;
+    position: relative;
 }
 
 .home__pricing-img {
@@ -616,13 +630,140 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
+    padding: 2rem;
     background: var(--var-color-background);
     color: var(--var-color-text);
-    border-radius: 3px;
+    border-radius: 12px;
     width: 100%;
-    max-width: 50rem;
-    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+    max-width: 45rem;
+    position: relative;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.home__pricing-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    margin: -2px;
+    border-radius: inherit;
+    background: linear-gradient(120deg, var(--var-color-tertiary), var(--var-color-accent));
+    opacity: 0.1;
+    transition: opacity 0.3s ease;
+}
+
+.home__pricing-card:hover::before {
+    opacity: 0.2;
+}
+
+.home__pricing-card__header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.home__pricing-card__header-h3 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0;
+    width: 100%;
+    text-align: left;
+    color: var(--var-color-text);
+    line-height: 1.2;
+}
+
+.home__pricing-card__text {
+    font-size: 1rem;
+    font-weight: 400;
+    text-align: left;
+    width: 100%;
+    margin: 0.4rem 0;
+    color: var(--var-color-text-light);
+    text-align: left;
+    padding-left: .3rem;
+}
+
+.home__pricing-card__text:first-of-type {
+    margin-top: 1.5rem;
+}
+
+.home__pricing-card__text:last-of-type {
+    margin-bottom: 1.5rem;
+}
+
+.home__pricing-card__text svg {
+    color: var(--var-color-accent);
+    font-size: 0.9rem;
+}
+
+.home__pricing-card__btn {
+    width: 100%;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+    background: var(--var-color-accent) !important;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+    color: white !important;
+}
+
+.home__pricing-card__btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, var(--var-color-tertiary), var(--var-color-accent));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.home__pricing-card__btn:hover {
+    transform: translateY(-2px);
+}
+
+.home__pricing-card__btn:hover::before {
+    opacity: 0.1;
+}
+
+.home__pricing-card__price {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0;
+    text-align: left;
+    width: 100%;
+    color: var(--var-color-text);
+    line-height: 1;
+    letter-spacing: -1px;
+}
+
+.home__pricing-card__price__time {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--var-color-text-light);
+    margin-left: 0.5rem;
+}
+
+.home__pricing-card__header-p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--var-color-accent);
+    background: rgba(255, 107, 107, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    margin-left: 1rem;
+    white-space: nowrap;
 }
 
 .home-sponsors__header {
@@ -637,133 +778,11 @@
     width: 100%;
 }
 
-.home__pricing-card__header {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 0 0 .5rem 0;
-}
-
-.home__pricing-card__header-h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: .3rem;
-    width: 100%;
-    text-align: left;
-}
-
-.home__pricing-card__header-p {
-    font-size: 1rem;
-    font-weight: 400;
-    margin-bottom: 0;
-    opacity: .8;
-    text-align: left;
-    text-wrap: nowrap;
-    font-style: italic;
-}
-
-.home__pricing-card__header__cont {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.home__pricing-card__icon {
-    font-size: 2rem !important;
-    position: relative;
-    top: -10px;
-}
-
-.home__pricing-card-section__cont {
-    width: 100%;
-}
-
-.home__pricing-card__list {
-    text-align: left;
-    width: 100%;
-    margin-bottom: 1.5rem;
-    list-style-type: none;
-    padding: 0;
-}
-
-.home__pricing-card__list-item {
-    font-size: .9rem;
-    font-weight: 400;
-    margin-bottom: .5rem;
-}
-
-.home__pricing-card__price {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: .5rem;
-    text-align: left;
-    width: 100%;
-}
-
-.home__pricing-card__price__time {
-    font-size: 1rem;
-    font-weight: 400;
-    margin-bottom: 1rem;
-}
-
-.home__pricing-card__icon {
-    font-size: 3rem;
-    margin: 1rem 0;
-}
-
-.instructions {
-    margin-top: 3rem;
-}
-
-.home__pricing-card__btn {
-    border-radius: 3px;
-    font-weight: 700;
-    transition: all .3s;
-    background: var(--var-color-text) !important;
-    color: var(--var-color-primary);
-    font-size: 1rem;
-    margin: 1rem 0 0 0;
-}
-
-.home__pricing-card__btn:hover {
-    color: var(--var-color-primary);
-    opacity: .8;
-}
-
-.home__pricing-header {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    text-align: center;
-    width: 100%;
-}
-
 .home__pricing-card__header-note {
     font-size: 1.1rem;
     margin-top: .5rem;
     font-weight: 400;
     font-style: italic;
-}
-
-.home__pricing-card__text {
-    font-size: 1rem;
-    font-weight: 400;
-    text-align: left;
-    width: 100%;
-    margin: .3rem 0;
-    color: #2b2b2b;
-}
-
-.home__pricing-item {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
 }
 
 .home__pricing-card__content-item {
@@ -784,10 +803,10 @@
 .home__pricing-card__content-right {}
 
 @media screen and (min-width: 768px) {
-
     .home__pricing-container {
         flex-direction: row;
-        gap: 1rem;
+        gap: 2rem;
+        padding: 2rem 0;
     }
 
     .home__pricing-card__content {
@@ -801,12 +820,15 @@
     }
 
     .home__pricing-card {
-        height: 100%;
-
+        padding: 2.5rem;
     }
 
-    .home__pricing-card__header {
-        font-size: 1.6rem;
+    .home__pricing-card__header-h3 {
+        font-size: 2.2rem;
+    }
+
+    .home__pricing-card__price {
+        font-size: 3.5rem;
     }
 
     .home__pricing-img {
@@ -817,11 +839,11 @@
         font-size: 1.8rem;
     }
 
-    .home__pricing-card__header-h3 {
-        font-size: 1.7rem;
-    }
-
     .home-sponsors__header {
         font-size: 2.2rem;
+    }
+
+    .home__pricing-card__text {
+        font-size: 1.1rem;
     }
 }

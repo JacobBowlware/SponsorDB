@@ -38,7 +38,7 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                         <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; Sort by market type or audience size to find your perfect match.
                     </p>
                     <p className="airtable-p">
-                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; No middlemen. Direct contact details for every sponsor – no hidden fees or commissions.
+                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; No middlemen. Direct contact details for sponsors – no hidden fees or commissions.
                     </p>
                     <p className="airtable-p">
                         <FontAwesomeIcon icon={faCheckCircle} /> &nbsp; Download the full database as a CSV and start pitching in minutes.
@@ -136,7 +136,7 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                                     <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Advanced Filters:</strong> Sort by market type or audience size to find the perfect sponsors.
                                 </p>
                                 <p className="home__pricing-card__text">
-                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Daily Updates:</strong> New sponsors added every week – never miss an opportunity.
+                                    <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Regular Updates:</strong> New sponsors added every week – never miss an opportunity.
                                 </p>
                                 <p className="home__pricing-card__text">
                                     <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Export & Go:</strong> Download the full database as a CSV and start pitching in minutes.
