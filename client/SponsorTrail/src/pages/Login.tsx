@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { validateProperty } from "../components/common/WebJoi";
 import axios from "axios";
 import config from '../config';
+import GoogleLoginButton from "../components/common/GoogleLoginButton";
 
 interface LoginProps {
     userAuth: boolean;
@@ -55,6 +56,10 @@ const Login = ({ userAuth, purchased }: LoginProps) => {
                 <form className="login-form " onSubmit={(e) => { handleSubmit(e) }}>
                     <div className="login-form__header-cont">
                         <h1 className="login-form__header">Welcome Back to SponsorDB</h1>
+                    </div>
+                    <GoogleLoginButton />
+                    <div className="login-form__divider">
+                        <span>or</span>
                     </div>
                     <input className="input login-form__input" type="email" placeholder="Email Address"
                         onChange={(e) => {

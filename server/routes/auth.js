@@ -5,10 +5,12 @@ const bcrypt = require('bcrypt');
 const _ = require('lodash');
 const router = express.Router();
 const Joi = require('joi');
+const passport = require('passport');
 
 require('../middleware/corHeaders')(router);
+require('../config/passport');
 
-// Login
+// Login with email/password
 router.post('/login', async (req, res) => {
     const { error } = validate(req.body);
     if (error) {
@@ -25,6 +27,24 @@ router.post('/login', async (req, res) => {
 
     res.header('x-auth-token', token).status(200).send(_.pick(user, ['_id', 'email']))
 });
+
+// Google OAuth routes
+router.get('/google',
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get('/google/callback',
+    passport.authenticate('google', { session: false }),
+    async (req, res) => {
+        const token = req.user.generateAuthToken();
+        const baseUrl = process.env.NODE_ENV === 'production' 
+            ? 'https://sponsor-db.com'
+            : 'http://localhost:3000';
+            
+        // Redirect to a special route that will handle storing the token
+        res.redirect(`${baseUrl}/auth-callback?token=${token}`);
+    }
+);
 
 const validate = (req) => {
     const schema = Joi.object({

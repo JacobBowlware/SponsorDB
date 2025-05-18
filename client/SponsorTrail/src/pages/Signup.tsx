@@ -5,6 +5,7 @@ import axios from 'axios';
 import config from '../config';
 import { logEvent } from "firebase/analytics";
 import { analytics } from "../firebase/firebase";
+import GoogleLoginButton from "../components/common/GoogleLoginButton";
 
 interface SignupProps {
     userAuth: boolean;
@@ -106,6 +107,10 @@ const Signup = ({ userAuth, purchased }: SignupProps) => {
                         <h1 className="login-form__header">
                             Signup for SponsorDB
                         </h1>
+                    </div>
+                    <GoogleLoginButton />
+                    <div className="login-form__divider">
+                        <span>or</span>
                     </div>
                     <input value={email} className="input login-form__input" type="email" placeholder="Email Address"
                         onChange={(e) => {

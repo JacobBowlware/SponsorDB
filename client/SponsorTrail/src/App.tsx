@@ -32,6 +32,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ChangePassword from './pages/ChangePassword';
 import Newsletter from './pages/Newsletter';
+import AuthCallback from './pages/AuthCallback';
 
 // Authed Pages
 import Review from './pages/Review';
@@ -144,13 +145,14 @@ function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route  index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         {/* <Route path="/newsletter/" element={<Newsletter />} /> */}
         <Route path="/login/" element={<Login userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} purchased={user.purchased} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
         <Route path="/change-password-final" element={<ChangePasswordFinal />} />
+        <Route path="/auth-callback" element={<AuthCallback />} />
         <Route path="/feedback/" element={<Review email={user.email} />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />

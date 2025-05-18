@@ -13,9 +13,23 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
         minlength: 2,
         maxlength: 100
+    },
+    googleId: {
+        type: String,
+        required: false,
+        unique: true,
+        sparse: true
+    },
+    name: {
+        type: String,
+        required: false
+    },
+    picture: {
+        type: String,
+        required: false
     },
     purchased: {
         type: Boolean,
@@ -43,7 +57,10 @@ const User = mongoose.model('User', userSchema);
 const validateUser = (user) => {
     const schema = Joi.object({
         email: Joi.string().min(2).max(100).required(),
-        password: Joi.string().min(2).max(100).required(),
+        password: Joi.string().min(2).max(100),
+        googleId: Joi.string(),
+        name: Joi.string(),
+        picture: Joi.string(),
         purchased: Joi.boolean(),
         stripeCustomerId: Joi.string(),
         isAdmin: Joi.boolean()

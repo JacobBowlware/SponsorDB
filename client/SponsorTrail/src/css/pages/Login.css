@@ -64,7 +64,34 @@
     align-items: flex-start;
 }
 
+.google-btn {
+    background-color: white;
+    color: var(--var-color-text);
+    border: 1px solid #e0e0e0;
+    margin-top: 1rem;
+    width: 100%;
+}
 
+.google-btn:hover {
+    background-color: #f8f8f8;
+    color: var(--var-color-text) !important;
+    border-color: #d0d0d0;
+}
+
+.login-form__divider {
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    line-height: 0.1em;
+    margin: 1.5rem 0;
+}
+
+.login-form__divider span {
+    background: #fff;
+    padding: 0 10px;
+    color: #666;
+    font-size: 0.9rem;
+}
 
 .loign-form__btn:focus {
     outline: none !important;
