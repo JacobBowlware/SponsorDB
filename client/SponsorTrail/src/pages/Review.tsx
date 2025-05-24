@@ -54,7 +54,7 @@ const Review = ({ email }: ReviewProps) => {
     return (
         <div className="web-page review">
             <div className="web-section all-blogs web-section-content" id="review">
-                <div className="web-section__container review-container">
+                <div className="review-container">
                     <h1 className="review-header">
                         SponsorDB Feedback
                     </h1>

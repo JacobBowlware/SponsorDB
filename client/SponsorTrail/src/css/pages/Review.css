@@ -7,6 +7,10 @@
     justify-content: center;
 }
 
+#review {
+    max-width: 50rem;
+}
+
 .review-container {
     display: flex;
     flex-direction: column;

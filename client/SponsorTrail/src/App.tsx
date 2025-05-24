@@ -81,7 +81,6 @@ function App() {
       }
     });
 
-    console.log(dbInfo.data);
 
     setDbInfo(dbInfo.data);
   }
@@ -94,9 +93,7 @@ function App() {
       }
     }).then((res) => {
       setUser(res.data);
-      console.log(res.data);
     }).catch((err) => {
-      console.log(err);
     })
   }
 

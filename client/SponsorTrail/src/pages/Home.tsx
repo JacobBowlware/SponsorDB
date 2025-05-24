@@ -10,7 +10,7 @@ import AirTable from "../components/AirTable.js";
 import SponsorTable from '../components/SponsorTable';
 
 // Font Awesome Icons
-import { faArrowRight, faSyncAlt, faStopwatch, faSliders, faCheckCircle, faComputer, faHardDrive, faMoneyCheckDollar, faSuitcase, faSpa, faFilm, faCartShopping, faExternalLink, faDatabase, faUsers, faGraduationCap, faHeartbeat, faLaptopCode, faGamepad, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faSyncAlt, faStopwatch, faSliders, faCheckCircle, faComputer, faHardDrive, faMoneyCheckDollar, faSuitcase, faSpa, faFilm, faCartShopping, faExternalLink, faDatabase, faUsers, faGraduationCap, faHeartbeat, faLaptopCode, faGamepad, faEnvelope, faSort, faSortUp, faSortDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Images
@@ -116,6 +116,8 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeFilter, setActiveFilter] = useState<string>('all');
+    const [sortColumn, setSortColumn] = useState<string>('subscribers');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const filteredSponsors = activeFilter === 'all' 
         ? sampleSponsors 
@@ -123,9 +125,34 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
             sponsor.tags.some(tag => tag.toLowerCase() === activeFilter.toLowerCase())
         );
 
+    const sortedSponsors = [...filteredSponsors].sort((a, b) => {
+        if (sortColumn === 'subscribers') {
+            return sortDirection === 'asc' ? a.subscriberCount - b.subscriberCount : b.subscriberCount - a.subscriberCount;
+        } else if (sortColumn === 'date') {
+            return sortDirection === 'asc' ? new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime() : new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+        }
+        return 0;
+    });
+
     const getTagClass = (tag: string) => {
         const tagClass = tag.toLowerCase().replace(/\s+/g, '-');
         return `sponsor-table__tag sponsor-table__tag--${tagClass}`;
+    };
+
+    const getSortIcon = (column: string) => {
+        if (sortColumn === column) {
+            return sortDirection === 'asc' ? faSortUp : faSortDown;
+        }
+        return faSort;
+    };
+
+    const handleSort = (column: string) => {
+        if (column === sortColumn) {
+            setSortDirection(prevDirection => prevDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
     };
 
     return (
@@ -134,27 +161,27 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                 <div className="web-section__container web-section-content">
                     <div className="hero-content">
                         <div className="hero-text">
-                            <h1 className="web-section__container-header airtable-header">
-                                Easily Find Your Next Newsletter Sponsor
-                            </h1>
-                            <p className="airtable-p">
+                    <h1 className="web-section__container-header airtable-header">
+                        Easily Find Your Next Newsletter Sponsor
+                    </h1>
+                    <p className="airtable-p">
                                 Access our curated list of proven newsletter sponsors, so you can spend less time searching and more time growing your newsletter.
                             </p>
-                            <p className="airtable-p">
-                                <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; {sponsorCount} sponsors from {newsletterCount} newsletters, including TLDR Daily, The Hustle, and Morning Brew.
-                            </p>
-                            <p className="airtable-p">
-                                <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; Sort by market type or audience size to find your perfect match.
-                            </p>
-                            <p className="airtable-p">
-                                <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; No middlemen. Direct contact details for sponsors – no hidden fees or commissions.
-                            </p>
-                            <p className="airtable-p">
-                                <FontAwesomeIcon icon={faCheckCircle} /> &nbsp; Download the full database as a CSV and start pitching in minutes.
-                            </p>
-                            <Link to="/signup" className="btn home__container-item__btn mb-3">
-                                Find Sponsors Now &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
-                            </Link>
+                    <p className="airtable-p">
+                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; {sponsorCount} sponsors from {newsletterCount} newsletters, including TLDR Daily, The Hustle, and Morning Brew.
+                    </p>
+                    <p className="airtable-p">
+                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; Sort by market type or audience size to find your perfect match.
+                    </p>
+                    <p className="airtable-p">
+                        <FontAwesomeIcon icon={faCheckCircle} className="airtable-icon" /> &nbsp; No middlemen. Direct contact details for sponsors – no hidden fees or commissions.
+                    </p>
+                    <p className="airtable-p">
+                        <FontAwesomeIcon icon={faCheckCircle} /> &nbsp; Download the full database as a CSV and start pitching in minutes.
+                    </p>
+                    <Link to="/signup" className="btn home__container-item__btn mb-3">
+                        Find Sponsors Now &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                    </Link>
                         </div>
                         <div className="hero-video">
                             Demo Video Coming Soon
@@ -230,18 +257,32 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                                     <table>
                                         <thead>
                                             <tr>
-                                                <th>Sponsor</th>
-                                                <th>Newsletter</th>
-                                                <th>Business Contact</th>
-                                                <th>Subscribers</th>
-                                                <th>Tags</th>
-                                                <th>Date Added</th>
+                                                <th className="sponsor-table__column-header">Sponsor</th>
+                                                <th className="sponsor-table__column-header">Contact/Apply</th>
+                                                <th className="sponsor-table__column-header">Newsletter</th>
+                                                <th style={{textWrap: 'nowrap'}}>
+                                                    Subscribers
+                                                    <FontAwesomeIcon 
+                                                        icon={getSortIcon('subscribers')} 
+                                                        className="sponsor-table__sort-icon"
+                                                        onClick={() => handleSort('subscribers')}
+                                                    />
+                                                </th>
+                                                <th style={{textAlign: 'left'}}>Tags</th>
+                                                <th style={{textWrap: 'nowrap'}}>
+                                                    Date Added
+                                                    <FontAwesomeIcon 
+                                                        icon={getSortIcon('date')} 
+                                                        className="sponsor-table__sort-icon"
+                                                        onClick={() => handleSort('date')}
+                                                    />
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredSponsors.map((sponsor, index) => (
-                                                <tr key={index}>
-                                                    <td>
+                                            {sortedSponsors.map((sponsor, index) => (
+                                                <tr  key={index}>
+                                                    <td className="sponsor-table__row">
                                                         <a 
                                                             href={sponsor.sponsorLink} 
                                                             target="_blank" 
@@ -255,8 +296,7 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                                                             />
                                                         </a>
                                                     </td>
-                                                    <td>{sponsor.newsletterSponsored}</td>
-                                                    <td>
+                                                    <td className="sponsor-table__row">
                                                         {sponsor.businessContact.includes('@') ? (
                                                             <a 
                                                                 href={`mailto:${sponsor.businessContact}`}
@@ -271,15 +311,12 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                                                                 rel="noopener noreferrer"
                                                                 className="sponsor-table__link"
                                                             >
-                                                                {sponsor.businessContact}
-                                                                <FontAwesomeIcon 
-                                                                    icon={faExternalLink} 
-                                                                    className="sponsor-table__link-icon" 
-                                                                />
+                                                                Apply
                                                             </a>
                                                         )}
                                                     </td>
-                                                    <td>{sponsor.subscriberCount.toLocaleString()}</td>
+                                                    <td className="sponsor-table__row">{sponsor.newsletterSponsored}</td>
+                                                    <td className="sponsor-table__row">{sponsor.subscriberCount.toLocaleString()}</td>
                                                     <td>
                                                         <div className="sponsor-table__tags">
                                                             {sponsor.tags.map((tag, tagIndex) => (
@@ -289,7 +326,7 @@ const Home = ({ purchased, email, newsletterCount, sponsorCount, lastUpdated }: 
                                                             ))}
                                                         </div>
                                                     </td>
-                                                    <td>{new Date(sponsor.dateAdded).toLocaleDateString()}</td>
+                                                    <td className="sponsor-table__row">{new Date(sponsor.dateAdded).toLocaleDateString()}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

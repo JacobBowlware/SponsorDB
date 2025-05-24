@@ -41,20 +41,11 @@ const saveToAirtable = async (sponsor) => {
     }
 };
 
-// Get a page of sponsors (default page 1, limit 40), get it from URL query params
+// Get all sponsors
 router.get('/', auth, async (req, res) => {
     try {
-        console.log(req.body);
-
-        const page = parseInt(req.body.page) || 1;
-        const limit = 50;
-
-        if (page < 1) {
-            return res.status(400).send("Invalid page or limit");
-        }
-
-        // Fetch sponsors with pagination
-        const sponsors = await Sponsor.find().skip((page - 1) * limit).limit(limit);
+        // Fetch all sponsors
+        const sponsors = await Sponsor.find();
         res.status(200).send(sponsors);
     } catch (e) {
         console.log("Error getting sponsors", e);

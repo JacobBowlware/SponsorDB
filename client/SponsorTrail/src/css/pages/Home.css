@@ -845,3 +845,9 @@
         font-size: 1.1rem;
     }
 }
+
+.sponsor-table__sort-icon {
+    font-size: 0.875rem;
+    color: #666;
+    margin-left: 0.25rem;
+}
