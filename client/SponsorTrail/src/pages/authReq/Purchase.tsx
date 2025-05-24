@@ -74,7 +74,7 @@ const Subscribe = ({ purchased, sponsorCount }: SubscribeProps) => {
                             <button className="btn home__pricing-card__btn" onClick={() => {
                                 handlePurchase(purchased);
                             }}>
-                                $29.99 -- Get Started
+                                $64.99 -- Get Started
                             </button>
                         </div>
                     </div>

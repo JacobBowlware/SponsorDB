@@ -22,6 +22,8 @@ import './css/pages/authReq/Sponsors.css';
 import './css/pages/authReq/Profile.css';
 import './css/pages/authReq/Admin.css';
 import './css/pages/authReq/NavMenu.css'
+import './css/pages/Blog.css'
+import './css/pages/BlogPost.css'
 
 
 //Pages
@@ -33,6 +35,8 @@ import Signup from './pages/Signup';
 import ChangePassword from './pages/ChangePassword';
 import Newsletter from './pages/Newsletter';
 import AuthCallback from './pages/AuthCallback';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 
 // Authed Pages
 import Review from './pages/Review';
@@ -156,6 +160,8 @@ function App() {
         <Route path="/feedback/" element={<Review email={user.email} />} />
         <Route path="/privacy-policy/" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service/" element={<TOS />} />
+        <Route path="/blog/" element={<Blog />} />
+        <Route path="/blog/:id" element={<BlogPost />} />
         {/* Authed Routes */}
         {userAuth && <Route path="/checkout/" element={<Purchase purchased={user.purchased} sponsorCount={dbInfo.sponsors} />} />}
         {userAuth && <Route path="/profile/" element={<Profile

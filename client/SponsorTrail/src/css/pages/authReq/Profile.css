@@ -1,8 +1,10 @@
 .profile {
     background: var(--var-color-primary);
-    height: 100%;
-    padding-top: 0;
-    padding-bottom: 0;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-cont {
@@ -16,89 +18,89 @@
 .profile-cont__card {
     display: flex;
     flex-direction: column;
-    align-items: left;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
     width: 100%;
-    max-width: 1200px;
+    max-width: 500px;
+    background: var(--var-color-background);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .profile-cont__card-header {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.8rem;
+    font-weight: 800;
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgb(198, 189, 189);
-    width: 90%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    width: 100%;
+    color: var(--var-color-text);
+    margin-bottom: 1.5rem;
 }
 
 .profile-cont__card-info {
-    font-size: .8rem;
-    margin-top: 1rem;
+    font-size: 1rem;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: left;
+    gap: 1rem;
 }
 
 .profile-cont__card-info-item {
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.profile-cont__card-info-item__label {
+    font-weight: 600;
+    color: var(--var-color-text-light);
+    font-size: 0.9rem;
 }
 
 .profile-cont__card-info-item__value {
-    font-weight: 700;
-    margin-top: .2rem;
-    font-size: .9rem;
-}
-
-.profile-cont__card-link {
+    font-weight: 500;
+    font-size: 1.1rem;
     color: var(--var-color-text);
-    font-size: 1rem;
-}
-
-.profile-cont__card-info-options {
-    margin-bottom: .5rem;
-}
-
-.profile-cont__card-form__btn {
-    margin: 0;
-    width: 11rem;
-    font-size: .8rem;
-    font-weight: 700;
-    color: var(--var-color-primary);
-    background: var(--var-color-text);
-    padding: .5rem 1rem;
-    margin: .5rem 0 0 0;
-    transition: all .3s;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-
 }
 
 .profile-cont__card-form__btn-cont {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
+    gap: 0.8rem;
     width: 100%;
+    margin-top: 2rem;
+}
+
+.profile-cont__card-form__btn {
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 700;
+    color: white !important;
+    background: var(--var-color-accent) !important;
+    padding: 0.8rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .profile-cont__card-form__btn:hover {
-    background: var(--var-color-text);
-    color: var(--var-color-primary);
-    opacity: .8;
-}
-
-.profile-cont__card-form__btn:focus {
-    outline: none;
-    border: 1px solid var(--var-color-text);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
 }
 
 .profile-note {
-    font-size: .9rem;
-    font-weight: 300;
-    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--var-color-text-light);
+    margin-top: 1.5rem;
+    line-height: 1.4;
+    text-align: center;
 }
 
 .subscribe__header {
@@ -226,13 +228,24 @@
 }
 
 @media screen and (min-width: 768px) {
+    .profile {
+        padding: 3rem 2rem;
+    }
+
+    .profile-cont__card {
+        padding: 3rem;
+    }
 
     .profile-cont__card-header {
-        font-size: 1.5rem;
+        font-size: 2rem;
     }
 
     .profile-cont__card-info-item__value {
-        font-size: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .profile-cont__card-form__btn {
+        font-size: 1.1rem;
     }
 
     .profile-note {

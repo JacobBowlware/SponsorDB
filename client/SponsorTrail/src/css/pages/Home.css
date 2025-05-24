@@ -569,9 +569,6 @@
 }
 
 /* Air Table */
-.airtable-cont {
-    border: 1px solid var(--var-color-text);
-}
 
 .airtable-header {
     margin: 1rem 0;
@@ -768,6 +765,7 @@
 
 .home-sponsors__header {
     font-size: 1.9rem;
+    color: var(--var-color-text) !important;
 }
 
 .home__pricing-item {

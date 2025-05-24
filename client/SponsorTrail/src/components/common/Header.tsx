@@ -31,9 +31,6 @@ const Header = () => {
                             <a className="nav-link" href="/#sample-data" onClick={closeNavBar}>Database</a>
                         </li> */}
                         <li className="nav-item">
-                            <a className="nav-link" href="/#features" onClick={closeNavBar}>Features</a>
-                        </li>
-                        <li className="nav-item">
                             <a className="nav-link" href="/#pricing" onClick={closeNavBar}>Pricing</a>
                         </li>
                         {/* <li className="nav-item">
@@ -41,6 +38,9 @@ const Header = () => {
                         </li> */}
                         <li className="nav-item">
                             <a className="nav-link" href="/#FAQ" onClick={closeNavBar}>FAQ</a>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/blog" onClick={closeNavBar}>Blog</Link>
                         </li>
                         <li className="nav-item  nav-item__highlight">
                             <Link className="nav-link nav-link__highlight " to="/login" onClick={closeNavBar}>Login</Link>

@@ -178,4 +178,24 @@ router.post('/updateFromCSV', async (req, res) => {
         });
 });
 
+// Get sample sponsors (8 random sponsors)
+router.get('/sample', async (req, res) => {
+    try {
+        const sampleSponsors = await Sponsor.aggregate([
+            { $sample: { size: 8 } },
+            { $project: {
+                sponsorName: 1,
+                sponsorLink: 1,
+                tags: 1,
+                newsletterSponsored: 1,
+                subscriberCount: 1
+            }}
+        ]);
+        res.status(200).send(sampleSponsors);
+    } catch (e) {
+        console.log("Error getting sample sponsors", e);
+        res.status(500).send("Error getting sample sponsors");
+    }
+});
+
 module.exports = router;

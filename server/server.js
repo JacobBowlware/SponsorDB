@@ -16,8 +16,7 @@ if (!process.env.JWT_PRIVATE_KEY) {
     process.exit(1);
 }
 
-const setPort = config.get('port');
-let port = process.env.PORT || setPort || 4000;
+const port = process.env.PORT || 3001;
 app.listen(port, () => {
     logger.info(`Listening on port ${port}...`);
 });

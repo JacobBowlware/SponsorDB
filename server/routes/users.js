@@ -11,8 +11,12 @@ const jwt = require("jsonwebtoken");
 
 require('../middleware/corHeaders')(router);
 const stripePriceIdTest = "";
-const stripePriceId = "price_1QVLYrBKPgChhmNgw8nLtJrU";
+const stripePriceId = "price_1RS2RRBKPgChhmNgHhLwtLzP"; 
 
+router.get('/test', (req, res) => {
+    res.send("Test route, it works!");
+}
+);
 
 // Get current user
 router.get('/me', auth, async (req, res) => {

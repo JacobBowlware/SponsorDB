@@ -16,7 +16,7 @@ passport.deserializeUser(async (id, done) => {
 });
 
 const callbackURL = process.env.NODE_ENV === 'production'
-    ? 'https://sponsor-db-server-f6ca7971af31.herokuapp.com/api/auth/google/callback'
+    ? 'https://api.sponsor-db.com/api/auth/google/callback'
     : 'http://localhost:3001/api/auth/google/callback';
 
 passport.use(

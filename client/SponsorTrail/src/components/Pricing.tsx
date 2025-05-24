@@ -71,7 +71,7 @@ const Pricing = ({ purchased, subscribePage }: PricingProps) => {
             <PricingCard
                 header="Monthly"
                 text={["Unlimited access to our database of high-quality newsletter sponsors."]}
-                price="$30"
+                price="$64.99"
                 icon={faStar}
                 handlePurchase={() => handlePurchase(purchased)}
             />

@@ -40,6 +40,9 @@ const AuthHeader = ({ isAdmin, isSubscribed }: AuthHeaderProps) => {
                         <li className="nav-item">
                             <Link className="nav-link nav-link__dark" to="/profile" onClick={closeNavBar}>Profile</Link>
                         </li>
+                        <li className="nav-item">
+                            <Link className="nav-link nav-link__dark" to="/blog" onClick={closeNavBar}>Blog</Link>
+                        </li>
                         <li className="nav-item  nav-item__highlight nav-item__highlight-dark" onClick={() => {
                             localStorage.removeItem('token');
                             window.location.reload();

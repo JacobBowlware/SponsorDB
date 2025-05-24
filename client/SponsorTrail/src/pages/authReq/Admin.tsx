@@ -4,7 +4,7 @@ import axios from "axios";
 
 // Font Awesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronUp, faTrash, faEdit, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
 interface Sponsor {
     newsletterSponsored: string;
@@ -15,6 +15,16 @@ interface Sponsor {
     businessContact?: string;
     confidence: number
     _id: string;
+}
+
+interface BlogPost {
+    _id: string;
+    title: string;
+    summary: string;
+    content: string;
+    slug: string;
+    createdAt: string;
+    published: boolean;
 }
 
 const Admin = () => {
@@ -32,6 +42,16 @@ const Admin = () => {
             businessContact: "",
             _id: "",
         }]);
+
+    const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [newPost, setNewPost] = useState({
+        title: '',
+        content: '',
+        summary: '',
+        published: false
+    });
+    const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
 
     // Submit a sponsor to the database
     const handleSubmit = async (sponsor: any) => {
@@ -119,6 +139,76 @@ const Admin = () => {
             fetchData();
         }
     }, [getSponsorData, setPotentialSponsorData]);
+
+    useEffect(() => {
+        fetchBlogPosts();
+    }, []);
+
+    const fetchBlogPosts = async () => {
+        try {
+            const response = await axios.get(`${config.backendUrl}blog/admin/all`, {
+                headers: { 'x-auth-token': localStorage.getItem('token') }
+            });
+            setBlogPosts(response.data);
+        } catch (error) {
+            console.error('Error fetching blog posts:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreatePost = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await axios.post(`${config.backendUrl}blog`, newPost, {
+                headers: { 'x-auth-token': localStorage.getItem('token') }
+            });
+            setNewPost({ title: '', content: '', summary: '', published: false });
+            fetchBlogPosts();
+        } catch (error) {
+            console.error('Error creating blog post:', error);
+        }
+    };
+
+    const handleUpdatePost = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingPost) return;
+
+        try {
+            await axios.put(`${config.backendUrl}blog/${editingPost._id}`, editingPost, {
+                headers: { 'x-auth-token': localStorage.getItem('token') }
+            });
+            setEditingPost(null);
+            fetchBlogPosts();
+        } catch (error) {
+            console.error('Error updating blog post:', error);
+        }
+    };
+
+    const handleDeletePost = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this post?')) return;
+
+        try {
+            await axios.delete(`${config.backendUrl}blog/${id}`, {
+                headers: { 'x-auth-token': localStorage.getItem('token') }
+            });
+            fetchBlogPosts();
+        } catch (error) {
+            console.error('Error deleting blog post:', error);
+        }
+    };
+
+    const handleTogglePublish = async (post: BlogPost) => {
+        try {
+            await axios.put(`${config.backendUrl}blog/${post._id}`, 
+                { ...post, published: !post.published },
+                { headers: { 'x-auth-token': localStorage.getItem('token') } }
+            );
+            fetchBlogPosts();
+        } catch (error) {
+            console.error('Error toggling post publish status:', error);
+        }
+    };
 
     return (
         <div className="web-page">
@@ -252,6 +342,148 @@ const Admin = () => {
                             </>}
                     </div>
                 </div>
+            </div>
+
+            <div className="admin-container">
+                <h1 className="admin-header">Admin Dashboard</h1>
+                
+                <div className="admin-section">
+                    <h2 className="admin-section__header">Create New Blog Post</h2>
+                    <form onSubmit={handleCreatePost} className="admin-form">
+                        <input
+                            type="text"
+                            placeholder="Title"
+                            value={newPost.title}
+                            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                            className="admin-input"
+                            required
+                        />
+                        <textarea
+                            placeholder="Summary"
+                            value={newPost.summary}
+                            onChange={(e) => setNewPost({ ...newPost, summary: e.target.value })}
+                            className="admin-textarea"
+                            required
+                        />
+                        <textarea
+                            placeholder="Content"
+                            value={newPost.content}
+                            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                            className="admin-textarea admin-textarea--large"
+                            required
+                        />
+                        <div className="admin-form__footer">
+                            <label className="admin-checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={newPost.published}
+                                    onChange={(e) => setNewPost({ ...newPost, published: e.target.checked })}
+                                />
+                                Publish immediately
+                            </label>
+                            <button type="submit" className="admin-btn">Create Post</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div className="admin-section">
+                    <h2 className="admin-section__header">Manage Blog Posts</h2>
+                    {loading ? (
+                        <div className="admin-loading">Loading...</div>
+                    ) : (
+                        <div className="admin-posts">
+                            {blogPosts.map((post) => (
+                                <div key={post._id} className="admin-post">
+                                    <div className="admin-post__content">
+                                        <h3 className="admin-post__title">{post.title}</h3>
+                                        <p className="admin-post__summary">{post.summary}</p>
+                                        <div className="admin-post__meta">
+                                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                                            <span className={`admin-post__status ${post.published ? 'published' : 'draft'}`}>
+                                                {post.published ? 'Published' : 'Draft'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="admin-post__actions">
+                                        <button
+                                            onClick={() => handleTogglePublish(post)}
+                                            className="admin-btn admin-btn--icon"
+                                            title={post.published ? 'Unpublish' : 'Publish'}
+                                        >
+                                            <FontAwesomeIcon icon={post.published ? faEyeSlash : faEye} />
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingPost(post)}
+                                            className="admin-btn admin-btn--icon"
+                                            title="Edit"
+                                        >
+                                            <FontAwesomeIcon icon={faEdit} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeletePost(post._id)}
+                                            className="admin-btn admin-btn--icon admin-btn--danger"
+                                            title="Delete"
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {editingPost && (
+                    <div className="admin-modal">
+                        <div className="admin-modal__content">
+                            <h2 className="admin-modal__header">Edit Post</h2>
+                            <form onSubmit={handleUpdatePost} className="admin-form">
+                                <input
+                                    type="text"
+                                    placeholder="Title"
+                                    value={editingPost.title}
+                                    onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                                    className="admin-input"
+                                    required
+                                />
+                                <textarea
+                                    placeholder="Summary"
+                                    value={editingPost.summary}
+                                    onChange={(e) => setEditingPost({ ...editingPost, summary: e.target.value })}
+                                    className="admin-textarea"
+                                    required
+                                />
+                                <textarea
+                                    placeholder="Content"
+                                    value={editingPost.content}
+                                    onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                                    className="admin-textarea admin-textarea--large"
+                                    required
+                                />
+                                <div className="admin-form__footer">
+                                    <label className="admin-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingPost.published}
+                                            onChange={(e) => setEditingPost({ ...editingPost, published: e.target.checked })}
+                                        />
+                                        Published
+                                    </label>
+                                    <div className="admin-form__actions">
+                                        <button type="submit" className="admin-btn">Save Changes</button>
+                                        <button
+                                            type="button"
+                                            className="admin-btn admin-btn--secondary"
+                                            onClick={() => setEditingPost(null)}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
