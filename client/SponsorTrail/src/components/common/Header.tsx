@@ -43,7 +43,7 @@ const Header = () => {
                             <Link className="nav-link" to="/blog" onClick={closeNavBar}>Blog</Link>
                         </li>
                         <li className="nav-item  nav-item__highlight">
-                            <Link className="nav-link nav-link__highlight " to="/login" onClick={closeNavBar}>Login</Link>
+                            <Link className="nav-link nav-link__highlight " to="/signup" onClick={closeNavBar}>Get Started</Link>
                         </li>
                     </ul>
                 </div>

@@ -1,0 +1,307 @@
+.sponsor-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    table-layout: fixed;
+}
+
+.sponsor-table__row--applied {
+    background-color: #f5f5f5;
+    opacity: 0.8;
+}
+
+.sponsor-table__applied-icon {
+    color: #4CAF50;
+    margin-right: 0.5rem;
+}
+
+.sponsor-table__actions {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-start;
+    gap: 1rem;
+}
+
+.sponsor-table__action-button {
+    padding: 0.6rem 1.2rem;
+    background-color: #1a1a1a;
+    color: white;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sponsor-table__action-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+}
+
+.sponsor-table__action-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #1a1a1a;
+}
+
+.sponsor-table__action-icon {
+    font-size: 1rem;
+    color: #4a9eff;
+}
+
+.sponsor-table__action-button--delete {
+    background-color: #1a1a1a;
+    border-color: #dc3545;
+}
+
+.sponsor-table__action-button--delete:hover {
+    background-color: #2a2a2a;
+    border-color: #e74c3c;
+}
+
+.sponsor-table__action-button--delete:active {
+    background-color: #1a1a1a;
+}
+
+.sponsor-table__admin-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.sponsor-table__admin-button {
+    padding: 0.25rem 0.5rem;
+    background-color: transparent;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #6c757d;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sponsor-table__admin-button:hover {
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+.sponsor-table__admin-button:first-child:hover {
+    color: #007bff;
+}
+
+.sponsor-table__admin-button:last-child:hover {
+    color: #dc3545;
+}
+
+.sponsor-table__column-header {
+    padding: 0.75rem;
+    text-align: left;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    width: auto;
+}
+
+.sponsor-table__column-header--checkbox {
+    width: 10px !important;
+    min-width: 10px !important;
+    max-width: 10px !important;
+    padding: 0.75rem 0 0.75rem 1rem !important;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sponsor-table__row {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.sponsor-table__row--checkbox {
+    width: 10px !important;
+    min-width: 10px !important;
+    max-width: 10px !important;
+    padding: 0.75rem 0 0.75rem 0.5rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sponsor-table__row--checkbox input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+    padding-left: 0.5rem;
+}
+
+.sponsor-table__row--sponsor {
+    padding-left: 0;
+    width: auto;
+}
+
+.sponsor-table__link {
+    color: var(--var-color-accent);
+    text-decoration: none;
+}
+
+.sponsor-table__link:hover {
+    text-decoration: underline;
+    color: var(--var-color-accent);
+}
+
+.sponsor-table__link-icon {
+    margin-left: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.sponsor-table__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sponsor-table__tag {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #333;
+}
+
+/* Technology tags */
+.sponsor-table__tag--technology,
+.sponsor-table__tag--software,
+.sponsor-table__tag--ai,
+.sponsor-table__tag--productivity,
+.sponsor-table__tag--crypto {
+    background-color: #e9ecef;
+}
+
+/* Finance tags */
+.sponsor-table__tag--finance,
+.sponsor-table__tag--investing,
+.sponsor-table__tag--business,
+.sponsor-table__tag--retail,
+.sponsor-table__tag--ecommerce {
+    background-color: #dee2e6;
+}
+
+/* Health tags */
+.sponsor-table__tag--health,
+.sponsor-table__tag--mental-health,
+.sponsor-table__tag--beauty,
+.sponsor-table__tag--fashion {
+    background-color: #ced4da;
+}
+
+/* Lifestyle tags */
+.sponsor-table__tag--lifestyle,
+.sponsor-table__tag--food,
+.sponsor-table__tag--travel,
+.sponsor-table__tag--sports,
+.sponsor-table__tag--entertainment,
+.sponsor-table__tag--music,
+.sponsor-table__tag--art {
+    background-color: #adb5bd;
+}
+
+/* Marketing tags */
+.sponsor-table__tag--marketing,
+.sponsor-table__tag--social,
+.sponsor-table__tag--affiliate {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Education tags */
+.sponsor-table__tag--education,
+.sponsor-table__tag--science,
+.sponsor-table__tag--politics {
+    background-color: #495057;
+    color: white;
+}
+
+/* Business tags */
+.sponsor-table__tag--business,
+.sponsor-table__tag--startups {
+    background-color: #343a40;
+    color: white;
+}
+
+.sponsor-table__loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.sponsor-table__loading-icon {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.sponsor-table__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #dc3545;
+}
+
+.sponsor-table__error-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.sponsor-table__error-subtext {
+    color: #6c757d;
+    margin: 0.5rem 0;
+}
+
+.sponsor-table__error-retry {
+    padding: 0.5rem 1rem;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.sponsor-table__error-retry:hover {
+    background-color: #c82333;
+}
+
+.sponsor-table__loading {
+    padding: 1rem;
+    text-align: center;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.sponsor-table__load-more-btn {
+    padding: 0.5rem 1rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.sponsor-table__load-more-btn:hover {
+    background-color: #5a6268;
+} 

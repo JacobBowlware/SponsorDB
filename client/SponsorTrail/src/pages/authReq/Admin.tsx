@@ -55,9 +55,18 @@ const Admin = () => {
 
     // Submit a sponsor to the database
     const handleSubmit = async (sponsor: any) => {
-
         try {
-            await axios.post(`${config.backendUrl}sponsors/`, sponsor,
+            // Create a new object with only the allowed fields
+            const sponsorData = {
+                sponsorName: sponsor.sponsorName,
+                sponsorLink: sponsor.sponsorLink,
+                tags: sponsor.tags,
+                newsletterSponsored: sponsor.newsletterSponsored,
+                subscriberCount: sponsor.subscriberCount,
+                businessContact: sponsor.businessContact
+            };
+            
+            await axios.post(`${config.backendUrl}sponsors/`, sponsorData,
                 {
                     headers: {
                         'x-auth-token': localStorage.getItem('token')
