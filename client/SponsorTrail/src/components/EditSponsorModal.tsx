@@ -12,6 +12,7 @@ interface Sponsor {
     subscriberCount: number;
     businessContact: string;
     dateAdded: string;
+    rootDomain?: string;
 }
 
 interface EditSponsorModalProps {

@@ -1,80 +1,144 @@
 .footer {
     width: 100%;
-    min-height: none;
-    margin: 0;
-    background: var(--var-color-text);
-    color: var(--var-color-primary);
-    position: static;
-    padding: 2rem 1rem;
+    background: var(--var-color-primary);
+    color: var(--var-color-text);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    margin-top: 4rem;
 }
 
 .footer-container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    padding: 3rem 1rem 2rem 1rem;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 2rem;
 }
 
-.footer-copy {
-    font-size: .9rem;
-}
-
-.footer-item {
-    color: var(--var-color-primary);
-    font-size: .85rem;
-    margin: 0;
-    transition: opacity 0.2s ease;
-    display: block;
-    padding: 0.4rem 0;
-}
-
-.footer-item__cont {
+.footer-section {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
 }
 
-.footer-item:hover {
-    opacity: 0.8;
-    text-decoration: none;
-    color: var(--var-color-primary) !important;
+.footer-brand-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--var-color-text);
+    margin: 0 0 0.75rem 0;
+    letter-spacing: -0.025em;
 }
 
-.footer-item__highlight {
-    background: var(--var-color-primary);
-    width: 100%;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.footer-brand-description {
+    font-size: 0.95rem;
+    color: var(--var-color-text-light);
+    line-height: 1.5;
+    margin: 0;
+    max-width: 300px;
+}
+
+.footer-section-title {
+    font-size: 1rem;
     font-weight: 600;
+    color: var(--var-color-text);
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.footer-item__highlight-arrow-icon {
-    position: relative;
-    left: -2px;
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-@media screen and (min-width: 768px) {
-    .footer {
-        padding: 3rem 2rem;
-    }
+.footer-link {
+    color: var(--var-color-text-light);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    padding: 0.25rem 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
 
+.footer-link:hover {
+    color: var(--var-color-accent);
+    text-decoration: none;
+}
+
+.footer-link--button {
+    padding: 0;
+    margin: 0;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 1rem;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.footer-bottom-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer-copyright {
+    font-size: 0.85rem;
+    color: var(--var-color-text-light);
+    margin: 0;
+}
+
+.footer-contact-link {
+    color: var(--var-color-text-light);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-contact-link:hover {
+    color: var(--var-color-accent);
+    text-decoration: none;
+}
+
+@media screen and (max-width: 768px) {
     .footer-container {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 2rem 1rem 1.5rem 1rem;
+    }
+    
+    .footer-brand-description {
+        max-width: none;
+    }
+    
+    .footer-bottom-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .footer-copyright,
+    .footer-contact-link {
+        font-size: 0.8rem;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    .footer-container {
+        grid-template-columns: 1fr 1fr;
         gap: 2rem;
     }
-
-    .footer-item {
-        font-size: .9rem;
-    }
-}
-
-@media screen and (min-width: 1024px) {
-    .footer-item__highlight {
-        width: auto;
+    
+    .footer-section:first-child {
+        grid-column: 1 / -1;
     }
 }

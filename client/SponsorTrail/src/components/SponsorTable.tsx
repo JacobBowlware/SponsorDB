@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faExternalLink, faHandshake } from '@fortawesome/free-solid-svg-icons';
 
 interface Sponsor {
     sponsorName: string;
@@ -18,6 +18,85 @@ interface SponsorTableProps {
 }
 
 const SponsorTable: React.FC<SponsorTableProps> = ({ sponsors, isSample = false }) => {
+    // Check if we're on mobile
+    const [isMobile, setIsMobile] = useState(false);
+    
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Mobile view - Sponsor cards
+    if (isMobile) {
+        return (
+            <div className="mobile-sponsors-grid">
+                {sponsors.map((sponsor, index) => (
+                    <div key={index} className="sponsor-card">
+                        <div className="sponsor-card-header">
+                            <div>
+                                <h3 className="sponsor-name">{sponsor.sponsorName}</h3>
+                                <p className="sponsor-domain">{sponsor.sponsorLink.replace(/^https?:\/\//, '').replace(/\/$/, '')}</p>
+                            </div>
+                        </div>
+                        
+                        <div className="sponsor-tags">
+                            {sponsor.tags.map((tag, tagIndex) => (
+                                <span key={tagIndex} className="sponsor-tag">{tag}</span>
+                            ))}
+                        </div>
+                        
+                        <div className="sponsor-details">
+                            <div className="sponsor-detail">
+                                <span className="sponsor-detail-label">Newsletter</span>
+                                <span className="sponsor-detail-value">{sponsor.newsletterSponsored}</span>
+                            </div>
+                            <div className="sponsor-detail">
+                                <span className="sponsor-detail-label">Audience</span>
+                                <span className="sponsor-detail-value">{sponsor.subscriberCount.toLocaleString()}</span>
+                            </div>
+                            <div className="sponsor-detail">
+                                <span className="sponsor-detail-label">Contact</span>
+                                <span className="sponsor-detail-value">{sponsor.businessContact}</span>
+                            </div>
+                            <div className="sponsor-detail">
+                                <span className="sponsor-detail-label">Added</span>
+                                <span className="sponsor-detail-value">{sponsor.dateAdded}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="sponsor-actions">
+                            <button 
+                                className="sponsor-action-btn sponsor-view-btn"
+                                onClick={() => window.open(sponsor.sponsorLink, '_blank')}
+                            >
+                                <FontAwesomeIcon icon={faExternalLink} />
+                                View
+                            </button>
+                            <button 
+                                className="sponsor-action-btn sponsor-apply-btn"
+                                onClick={() => window.open(`mailto:${sponsor.businessContact}`)}
+                            >
+                                <FontAwesomeIcon icon={faHandshake} />
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                ))}
+                {isSample && (
+                    <div className="sponsor-table__sample-note">
+                        This is a sample of our database. Sign up to access the full list of 10,000+ sponsors.
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Desktop view - Table
     return (
         <div className="sponsor-table">
             <table>

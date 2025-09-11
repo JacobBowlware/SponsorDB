@@ -10,7 +10,7 @@ require('../middleware/corHeaders')(router);
 // Check if a sponsor already exists in either collection
 router.get('/checkDuplicate', async (req, res) => {
     try {
-        const { sponsorName, newsletterSponsored } = req.query;
+        const { sponsorName, newsletterSponsored, rootDomain } = req.query;
         
         if (!sponsorName || !newsletterSponsored) {
             return res.status(400).send('Missing required parameters');
@@ -18,14 +18,34 @@ router.get('/checkDuplicate', async (req, res) => {
         
         // Check if sponsor exists in PotentialSponsor collection
         const potentialSponsorExists = await PotentialSponsor.findOne({
-            sponsorName: sponsorName,
-            newsletterSponsored: newsletterSponsored
+            $or: [
+                // Check by name and newsletter
+                {
+                    sponsorName: sponsorName,
+                    newsletterSponsored: newsletterSponsored
+                },
+                // Check by root domain and newsletter if rootDomain is provided
+                ...(rootDomain ? [{
+                    rootDomain: rootDomain,
+                    newsletterSponsored: newsletterSponsored
+                }] : [])
+            ]
         });
         
         // Check if sponsor exists in Sponsor collection
         const sponsorExists = await Sponsor.findOne({
-            sponsorName: sponsorName,
-            newsletterSponsored: newsletterSponsored
+            $or: [
+                // Check by name and newsletter
+                {
+                    sponsorName: sponsorName,
+                    newsletterSponsored: newsletterSponsored
+                },
+                // Check by root domain and newsletter if rootDomain is provided
+                ...(rootDomain ? [{
+                    rootDomain: rootDomain,
+                    newsletterSponsored: newsletterSponsored
+                }] : [])
+            ]
         });
         
         // Return true if sponsor exists in either collection
@@ -66,15 +86,15 @@ router.post('/', async (req, res) => {
         sponsors = [sponsors];
     }
 
-    const newsletterExists = await Sponsor.findOne({
+    const seenNewsletter = await Sponsor.findOne({
         newsletterSponsored: sponsors[0].newsletterSponsored, subscriberCount: {
             $gt: 0
         }
     }); // Only get if subscriberCount > 0
-    if (newsletterExists) {
+    if (seenNewsletter) {
         // Add the newsletters subscriber count to the potential sponsors
         sponsors.forEach(sponsor => {
-            sponsor.subscriberCount = newsletterExists.subscriberCount;
+            sponsor.subscriberCount = seenNewsletter.subscriberCount;
         });
     }
 
@@ -90,7 +110,7 @@ router.post('/', async (req, res) => {
 
     // Save the potential sponsors to the database
     await PotentialSponsor.insertMany(sponsors).then((sponsors) => {
-        console.log("-----POTENTIAL SPONSORS SAVED TO DATBASE-----");
+        console.log("-----POTENTIAL SPONSORS SAVED TO DATBASE-----", sponsors);
         res.send(sponsors);
     }).catch((e) => {
         res.status(400).send("Error saving to database...");

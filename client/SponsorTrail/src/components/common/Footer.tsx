@@ -6,44 +6,89 @@ interface FooterProps {
 
 const Footer = ({ auth }: FooterProps) => {
     return (
-        <div className="footer">
+        <footer className="footer">
             <div className="footer-container">
-                <div className="footer-item__cont">
-                    <Link className="footer-item" to="/privacy-policy">
-                        Privacy Policy
-                    </Link>
-                    <Link className="footer-item" to="/terms-of-service">
-                        Terms of Service
-                    </Link>
+                <div className="footer-section">
+                    <div className="footer-brand">
+                        <h3 className="footer-brand-title">SponsorDB</h3>
+                        <p className="footer-brand-description">
+                            Find newsletter sponsors fast. Direct contacts, no middleman.
+                        </p>
+                    </div>
                 </div>
-                <div className="footer-item__cont">
-                    <a className="footer-item" href="mailto:info@sponsor-db.com">
-                        Contact Us
-                    </a>
-                    <Link className="footer-item" to="/feedback/">
-                        Leave Feedback
-                    </Link>
+                
+                <div className="footer-section">
+                    <h4 className="footer-section-title">Product</h4>
+                    <div className="footer-links">
+                        <Link className="footer-link" to="/sponsors/">
+                            Sponsor Database
+                        </Link>
+                        <Link className="footer-link" to="/blog/">
+                            Blog
+                        </Link>
+                        <Link className="footer-link" to="/feedback/">
+                            Feedback
+                        </Link>
+                    </div>
                 </div>
-                {auth ? <Link className="footer-item " to="/login" onClick={() => {
-                    localStorage.removeItem('token');
-                    window.location.reload();
-                }}>
-                    Logout
-                </Link> : <div className="footer-item__cont">
-                    <Link className="footer-item " to="/signup">
-                        Sign-up
-                    </Link>
-                    <Link className="footer-item " to="/login">
-                        Login
-                    </Link>
-                </div>}
-                {/* <div className="footer-item__cont">
-                    <Link className="footer-item" to="/newsletter">
-                        Subscribe to our Newsletter
-                    </Link>
-                </div> */}
+                
+                <div className="footer-section">
+                    <h4 className="footer-section-title">Legal</h4>
+                    <div className="footer-links">
+                        <Link className="footer-link" to="/privacy-policy">
+                            Privacy Policy
+                        </Link>
+                        <Link className="footer-link" to="/terms-of-service">
+                            Terms of Service
+                        </Link>
+                    </div>
+                </div>
+                
+                <div className="footer-section">
+                    <h4 className="footer-section-title">Account</h4>
+                    <div className="footer-links">
+                        {auth ? (
+                            <>
+                                <Link className="footer-link" to="/profile/">
+                                    Profile
+                                </Link>
+                                <button 
+                                    className="footer-link footer-link--button" 
+                                    onClick={() => {
+                                        localStorage.removeItem('token');
+                                        window.location.reload();
+                                    }}
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link className="footer-link" to="/signup">
+                                    Sign Up
+                                </Link>
+                                <Link className="footer-link" to="/login">
+                                    Login
+                                </Link>
+                            </>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+            
+            <div className="footer-bottom">
+                <div className="footer-bottom-content">
+                    <p className="footer-copyright">
+                        © 2025 SponsorDB. All rights reserved.
+                    </p>
+                    <div className="footer-contact">
+                        <a className="footer-contact-link" href="mailto:info@sponsor-db.com">
+                            info@sponsor-db.com
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
     );
 }
 

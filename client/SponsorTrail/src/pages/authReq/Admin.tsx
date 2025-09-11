@@ -4,496 +4,598 @@ import axios from "axios";
 
 // Font Awesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp, faTrash, faEdit, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { 
+    faChevronDown, 
+    faChevronUp, 
+    faTrash, 
+    faEdit, 
+    faEye, 
+    faEyeSlash, 
+    faRobot, 
+    faExclamationTriangle,
+    faCheck,
+    faTimes,
+    faChartLine,
+    faUsers,
+    faEnvelope,
+    faGlobe,
+    faCalendarAlt,
+    faFilter,
+    faSearch,
+    faSort,
+    faSortUp,
+    faSortDown
+} from "@fortawesome/free-solid-svg-icons";
 
 interface Sponsor {
     newsletterSponsored: string;
     sponsorName: string;
     sponsorLink: string;
+    rootDomain: string;
     tags: string[];
     subscriberCount: number;
     businessContact?: string;
-    confidence: number
+    confidence: number;
     _id: string;
+    // New enriched fields
+    contactMethod?: 'email' | 'partner-page' | 'media-kit' | 'none';
+    estimatedSubscribers?: number;
+    subscriberReasoning?: string;
+    enrichmentNotes?: string;
+    analysisStatus?: 'complete' | 'manual_review_required' | 'pending';
+    sponsorshipEvidence?: string;
+    dateAdded?: string;
+    lastAnalyzed?: string;
 }
 
-interface BlogPost {
-    _id: string;
-    title: string;
-    summary: string;
-    content: string;
-    slug: string;
-    createdAt: string;
-    published: boolean;
+interface Analytics {
+    totalPotentialSponsors: number;
+    totalApprovedSponsors: number;
+    totalDeniedSponsors: number;
+    averageConfidence: number;
+    sponsorsThisWeek: number;
+    sponsorsThisMonth: number;
+    topNewsletters: Array<{name: string, count: number}>;
+    contactMethodBreakdown: Array<{method: string, count: number}>;
+    weeklyGrowth: Array<{date: string, count: number}>;
 }
 
 const Admin = () => {
-    const [checked, setChecked] = useState(false);
-    const [potentialSponsorAccordionClosed, setPotentialSponsorAccordionClosed] = useState(true);
-
-    // Array of potential sponsors
-    const [potentialSponsorData, setPotentialSponsorData] = useState([
-        {
-            newsletterSponsored: "",
-            sponsorName: "",
-            sponsorLink: "",
-            tags: [""],
-            subscriberCount: 0,
-            businessContact: "",
-            _id: "",
-        }]);
-
-    const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+    const [potentialSponsors, setPotentialSponsors] = useState<Sponsor[]>([]);
+    const [analytics, setAnalytics] = useState<Analytics | null>(null);
     const [loading, setLoading] = useState(true);
-    const [newPost, setNewPost] = useState({
-        title: '',
-        content: '',
-        summary: '',
-        published: false
-    });
-    const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-
-    // Submit a sponsor to the database
-    const handleSubmit = async (sponsor: any) => {
-        try {
-            // Create a new object with only the allowed fields
-            const sponsorData = {
-                sponsorName: sponsor.sponsorName,
-                sponsorLink: sponsor.sponsorLink,
-                tags: sponsor.tags,
-                newsletterSponsored: sponsor.newsletterSponsored,
-                subscriberCount: sponsor.subscriberCount,
-                businessContact: sponsor.businessContact
-            };
-            
-            await axios.post(`${config.backendUrl}sponsors/`, sponsorData,
-                {
-                    headers: {
-                        'x-auth-token': localStorage.getItem('token')
-                    }
-                }).then(async (res) => {
-                    // Remove the potential sponsor from the list
-                    let tempSponsorData = [...potentialSponsorData];
-                    tempSponsorData = tempSponsorData.filter((s) => s._id !== sponsor._id);
-                    setPotentialSponsorData(tempSponsorData);
-                }).catch((err) => {
-                    console.log(err);
-                })
-        }
-        catch (err) {
-            console.log("Error Submitting Sponsor: ", err);
-        }
-    }
-
-    // Delete the potential sponsor from the database
-    const handleDeny = async (potentialSponsor: any) => {
-        try {
-            await axios.delete(`${config.backendUrl}potentialSponsors/${potentialSponsor._id}`,
-                {
-                    headers: {
-                        'x-auth-token': localStorage.getItem('token')
-                    }
-                }).then((res) => {
-                    console.log(res);
-                    let tempSponsorData = [...potentialSponsorData];
-                    tempSponsorData = tempSponsorData.filter((sponsor) => sponsor._id !== potentialSponsor._id);
-                    setPotentialSponsorData(tempSponsorData);
-                }).catch((err) => {
-                    console.log(err);
-                })
-        }
-        catch (err) {
-            console.log("Error Deleting Sponsor: ", err);
-        }
-
-    }
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [sortBy, setSortBy] = useState('confidence');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
+    const [showModal, setShowModal] = useState(false);
 
     // Get all potential sponsors from the database
     const getSponsorData = async () => {
-        if (checked) {
-            return;
-        }
-
-        await axios.get(`${config.backendUrl}potentialSponsors/`,
-            {
+        try {
+            const response = await axios.get(`${config.backendUrl}potentialSponsors/`, {
                 headers: {
                     'x-auth-token': localStorage.getItem('token')
                 }
-            }).then((res) => {
-                const potentialSponsorData = res.data;
-                console.log(res.data);
+            });
+            
+            const sponsors = response.data.sort((a: Sponsor, b: Sponsor) => b.confidence - a.confidence);
+            setPotentialSponsors(sponsors);
+        } catch (err) {
+            console.error('Error fetching sponsors:', err);
+        }
+    };
 
-                setPotentialSponsorData(potentialSponsorData);
-                setChecked(true);
+    // Get analytics data
+    const getAnalytics = async () => {
+        try {
+            const response = await axios.get(`${config.backendUrl}sponsors/analytics`, {
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
+            });
+            setAnalytics(response.data);
+        } catch (err) {
+            console.error('Error fetching analytics:', err);
+            // Create mock analytics for now
+            setAnalytics({
+                totalPotentialSponsors: potentialSponsors.length,
+                totalApprovedSponsors: 0,
+                totalDeniedSponsors: 0,
+                averageConfidence: potentialSponsors.length > 0 ? 
+                    potentialSponsors.reduce((sum, s) => sum + s.confidence, 0) / potentialSponsors.length : 0,
+                sponsorsThisWeek: 0,
+                sponsorsThisMonth: 0,
+                topNewsletters: [],
+                contactMethodBreakdown: [],
+                weeklyGrowth: []
+            });
+        }
+    };
 
-                // Sort by confidence score
-                const sortedData = potentialSponsorData.sort((a: Sponsor, b: Sponsor) => {
-                    return b.confidence - a.confidence;
+    // Submit a sponsor to the database
+    const handleApprove = async (sponsor: Sponsor) => {
+        try {
+            await axios.post(`${config.backendUrl}sponsors/`, sponsor, {
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
+            });
+            
+            // Remove from potential sponsors
+            setPotentialSponsors(prev => prev.filter(s => s._id !== sponsor._id));
+            setShowModal(false);
+            setSelectedSponsor(null);
+            
+            // Refresh analytics
+            await getAnalytics();
+        } catch (err) {
+            console.error('Error approving sponsor:', err);
+        }
+    };
+
+    // Delete the potential sponsor from the database
+    const handleDeny = async (sponsor: Sponsor) => {
+        try {
+            // Add domain to denied list if it exists
+            if (sponsor.rootDomain) {
+                await axios.post(`${config.backendUrl}deniedSponsorLinks/`, {
+                    rootDomain: sponsor.rootDomain,
+                    reason: "Manually denied by admin"
+                }, {
+                    headers: {
+                        'x-auth-token': localStorage.getItem('token')
+                    }
                 });
-                setPotentialSponsorData(sortedData);
+            }
 
-            }).catch((err) => {
-                console.log(err);
-                return [];
-            })
-    }
+            // Delete the potential sponsor
+            await axios.delete(`${config.backendUrl}potentialSponsors/${sponsor._id}`, {
+                headers: {
+                    'x-auth-token': localStorage.getItem('token')
+                }
+            });
+            
+            // Remove from list
+            setPotentialSponsors(prev => prev.filter(s => s._id !== sponsor._id));
+            setShowModal(false);
+            setSelectedSponsor(null);
+            
+            // Refresh analytics
+            await getAnalytics();
+        } catch (err) {
+            console.error('Error denying sponsor:', err);
+        }
+    };
+
+    // Filter and sort sponsors
+    const filteredAndSortedSponsors = potentialSponsors
+        .filter(sponsor => {
+            const matchesSearch = sponsor.sponsorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                sponsor.newsletterSponsored.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                sponsor.sponsorLink.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const matchesStatus = filterStatus === 'all' || 
+                                (filterStatus === 'has-contact' && sponsor.businessContact && sponsor.businessContact.trim() !== '') ||
+                                (filterStatus === 'high-confidence' && sponsor.confidence >= 85) ||
+                                (filterStatus === 'medium-confidence' && sponsor.confidence >= 70 && sponsor.confidence < 85) ||
+                                (filterStatus === 'low-confidence' && sponsor.confidence < 70);
+            
+            return matchesSearch && matchesStatus;
+        })
+        .sort((a, b) => {
+            let comparison = 0;
+            switch (sortBy) {
+                case 'confidence':
+                    comparison = a.confidence - b.confidence;
+                    break;
+                case 'name':
+                    comparison = a.sponsorName.localeCompare(b.sponsorName);
+                    break;
+                case 'newsletter':
+                    comparison = a.newsletterSponsored.localeCompare(b.newsletterSponsored);
+                    break;
+                case 'date':
+                    comparison = new Date(a.dateAdded || '').getTime() - new Date(b.dateAdded || '').getTime();
+                    break;
+                case 'subscribers':
+                    comparison = (a.estimatedSubscribers || 0) - (b.estimatedSubscribers || 0);
+                    break;
+                default:
+                    comparison = 0;
+            }
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
 
     useEffect(() => {
         const fetchData = async () => {
-            // call backend to get all potential sponsors
-            await getSponsorData();
-        }
-
-        if (potentialSponsorData.length === 1) {
-            fetchData();
-        }
-    }, [getSponsorData, setPotentialSponsorData]);
-
-    useEffect(() => {
-        fetchBlogPosts();
+            setLoading(true);
+            await Promise.all([getSponsorData(), getAnalytics()]);
+            setLoading(false);
+        };
+        fetchData();
     }, []);
 
-    const fetchBlogPosts = async () => {
-        try {
-            const response = await axios.get(`${config.backendUrl}blog/admin/all`, {
-                headers: { 'x-auth-token': localStorage.getItem('token') }
-            });
-            setBlogPosts(response.data);
-        } catch (error) {
-            console.error('Error fetching blog posts:', error);
-        } finally {
-            setLoading(false);
+    const getConfidenceColor = (confidence: number) => {
+        if (confidence >= 85) return '#28a745';
+        if (confidence >= 70) return '#ffc107';
+        return '#dc3545';
+    };
+
+    const getContactMethodIcon = (method: string) => {
+        switch (method) {
+            case 'email': return faEnvelope;
+            case 'partner-page': return faGlobe;
+            case 'media-kit': return faUsers;
+            default: return faTimes;
         }
     };
 
-    const handleCreatePost = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await axios.post(`${config.backendUrl}blog`, newPost, {
-                headers: { 'x-auth-token': localStorage.getItem('token') }
-            });
-            setNewPost({ title: '', content: '', summary: '', published: false });
-            fetchBlogPosts();
-        } catch (error) {
-            console.error('Error creating blog post:', error);
-        }
-    };
-
-    const handleUpdatePost = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingPost) return;
-
-        try {
-            await axios.put(`${config.backendUrl}blog/${editingPost._id}`, editingPost, {
-                headers: { 'x-auth-token': localStorage.getItem('token') }
-            });
-            setEditingPost(null);
-            fetchBlogPosts();
-        } catch (error) {
-            console.error('Error updating blog post:', error);
-        }
-    };
-
-    const handleDeletePost = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this post?')) return;
-
-        try {
-            await axios.delete(`${config.backendUrl}blog/${id}`, {
-                headers: { 'x-auth-token': localStorage.getItem('token') }
-            });
-            fetchBlogPosts();
-        } catch (error) {
-            console.error('Error deleting blog post:', error);
-        }
-    };
-
-    const handleTogglePublish = async (post: BlogPost) => {
-        try {
-            await axios.put(`${config.backendUrl}blog/${post._id}`, 
-                { ...post, published: !post.published },
-                { headers: { 'x-auth-token': localStorage.getItem('token') } }
-            );
-            fetchBlogPosts();
-        } catch (error) {
-            console.error('Error toggling post publish status:', error);
-        }
-    };
+    if (loading) {
+        return (
+            <div className="admin-loading">
+                <div className="admin-loading__spinner"></div>
+                <p>Loading SponsorDB Dashboard...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="web-page">
-            <div className="web-section admin" id="">
-                <div className="admin-header__cont web-section-content">
-                    <h1 className="admin-header">
-                        <strong>Admin Dashboard</strong>
-                    </h1>
-                </div>
-                <div className="admin-dash__cont web-section-content">
-                    <p className="admin-dash__text">
-                        View all <strong> Potential Sponsors</strong> currently in the database. ({potentialSponsorData.length})
-                    </p>
-                    <div className="admin-dash__form-accordian-container">
-                        <div className="admin-dash__form-accordian" onClick={() => {
-                            const element = document.querySelector(".admin-dash__form") as HTMLElement;
-                            element.classList.toggle("active");
-                            setPotentialSponsorAccordionClosed(!potentialSponsorAccordionClosed);
-                        }}>
-                            <h2 className="admin-dash__form-accordian-header-text">Potential Sponsors</h2>
-                            <FontAwesomeIcon icon={potentialSponsorAccordionClosed ? faChevronDown : faChevronUp} className="admin-dash__form-accordian-icon" />
-                        </div>
-                        {(potentialSponsorData.length === 0) ? <h2 className="admin-dash__form-header">No Potential Sponsors in Database.</h2> :
-                            <><form className="admin-dash__form">
-                                {potentialSponsorData.map((sponsorData, index) => {
-                                    return <div className="admin-dash__form-item">
-                                        <div className="admin-dash__form-input-container">
-                                            <input
-                                                placeholder="Newsletter"
-                                                className="admin-dash__form-input"
-                                                onChange={(e) => {
-                                                    let tempSponsorData = [...potentialSponsorData];
-                                                    tempSponsorData[index].newsletterSponsored = e.target.value;
-                                                    setPotentialSponsorData(tempSponsorData);
-                                                }}
-                                                value={sponsorData.newsletterSponsored}
-                                            />
-                                            <input
-                                                placeholder="Sponsor"
-                                                className="admin-dash__form-input"
-                                                onChange={(e) => {
-                                                    let tempSponsorData = [...potentialSponsorData];
-                                                    tempSponsorData[index].sponsorName = e.target.value;
-                                                    setPotentialSponsorData(tempSponsorData);
-                                                }}
-                                                value={sponsorData.sponsorName}
-                                            />
-                                        </div>
-                                        <div className="admin-dash__form-input-container">
-                                            <input
-                                                placeholder="Sponsor Link"
-                                                className="admin-dash__form-input"
-                                                onChange={(e) => {
-                                                    let tempSponsorData = [...potentialSponsorData];
-                                                    tempSponsorData[index].sponsorLink = e.target.value;
-                                                    setPotentialSponsorData(tempSponsorData);
-                                                }}
-                                                value={sponsorData.sponsorLink}
-                                            />
-                                            <input
-                                                placeholder="tag1, tag2"
-                                                className="admin-dash__form-input"
-                                                onKeyDown={(e) => {
-                                                    if (e.key === ' ' || e.key === 'Tab') {
-                                                        e.preventDefault(); // Prevent space or tab
-                                                    }
-                                                }}
-                                                onChange={(e) => {
-                                                    let tempSponsorData = [...potentialSponsorData];
-                                                    tempSponsorData[index].tags = e.target.value.split(",");
-                                                    setPotentialSponsorData(tempSponsorData);
-                                                }}
-                                                value={sponsorData.tags}
-                                            />
-                                        </div>
-                                        <div className="admin-dash__form-input-container">
-                                            <input
-                                                placeholder="Subscriber Count"
-                                                className="admin-dash__form-input"
-                                                onChange={(e) => {
-                                                    const updatedSubscriberCount = Number(e.target.value);
-                                                    // Copy subscriber count to all sponsors that have the same newsletterSponsored field
-                                                    if (updatedSubscriberCount > 0) {
-                                                        const tempSponsorData = potentialSponsorData.map((sponsor, idx) => {
-                                                            return sponsorData.newsletterSponsored === sponsor.newsletterSponsored
-                                                                ? { ...sponsor, subscriberCount: updatedSubscriberCount }
-                                                                : sponsor;
-                                                        });
-                                                        setPotentialSponsorData(tempSponsorData);
-                                                    }
-                                                }}
-                                                value={sponsorData.subscriberCount}
-                                            />
-                                            <input
-                                                placeholder="Apply for Sponsorship"
-                                                className="admin-dash__form-input"
-                                                onChange={(e) => {
-                                                    // Copy Apply for Sponsorship to all sponsors that have the same sponsorName field
-                                                    const tempSponsorData = potentialSponsorData.map((sponsor, idx) => {
-                                                        return sponsorData.sponsorName === sponsor.sponsorName
-                                                            ? { ...sponsor, businessContact: e.target.value }
-                                                            : sponsor;
-                                                    });
-                                                    setPotentialSponsorData(tempSponsorData);
-                                                }}
-                                                value={sponsorData.businessContact}
-                                            />
-                                        </div>
-                                        <div className="admin-dash__form-btn-container">
-                                            <button type="button" onClick={async () => {
-                                                // Submit the sponsor to DB
-                                                await handleSubmit(sponsorData);
-                                                // Remove the potential sponsor from the list
-                                                setPotentialSponsorData(potentialSponsorData.filter((_, i) => i !== index));
-                                                // Remove from DB
-                                                await handleDeny(sponsorData);
-                                            }}
-                                                className="btn admin-dash__form-btn">
-                                                APPROVE
-                                            </button>
-                                            <button type="button" onClick={async () => {
-                                                // Remove from DB
-                                                await handleDeny(sponsorData)
-                                            }} className="btn admin-dash__form-btn">
-                                                DENY
-                                            </button>
-                                        </div>
-                                    </div>
-                                })}
-                            </form>
-                            </>}
-                    </div>
+        <div className="admin-dashboard">
+            {/* Header */}
+            <div className="admin-header">
+                <div className="admin-header__content">
+                    <h1>SponsorDB Dashboard</h1>
+                    <p>Manage and approve potential sponsors</p>
                 </div>
             </div>
 
-            <div className="admin-container">
-                <h1 className="admin-header">Admin Dashboard</h1>
-                
-                <div className="admin-section">
-                    <h2 className="admin-section__header">Create New Blog Post</h2>
-                    <form onSubmit={handleCreatePost} className="admin-form">
-                        <input
-                            type="text"
-                            placeholder="Title"
-                            value={newPost.title}
-                            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                            className="admin-input"
-                            required
-                        />
-                        <textarea
-                            placeholder="Summary"
-                            value={newPost.summary}
-                            onChange={(e) => setNewPost({ ...newPost, summary: e.target.value })}
-                            className="admin-textarea"
-                            required
-                        />
-                        <textarea
-                            placeholder="Content"
-                            value={newPost.content}
-                            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                            className="admin-textarea admin-textarea--large"
-                            required
-                        />
-                        <div className="admin-form__footer">
-                            <label className="admin-checkbox">
-                                <input
-                                    type="checkbox"
-                                    checked={newPost.published}
-                                    onChange={(e) => setNewPost({ ...newPost, published: e.target.checked })}
-                                />
-                                Publish immediately
-                            </label>
-                            <button type="submit" className="admin-btn">Create Post</button>
+            {/* Analytics Cards */}
+            {analytics && (
+                <div className="analytics-grid">
+                    <div className="analytics-card">
+                        <div className="analytics-card__icon">
+                            <FontAwesomeIcon icon={faUsers} />
                         </div>
-                    </form>
-                </div>
-
-                <div className="admin-section">
-                    <h2 className="admin-section__header">Manage Blog Posts</h2>
-                    {loading ? (
-                        <div className="admin-loading">Loading...</div>
-                    ) : (
-                        <div className="admin-posts">
-                            {blogPosts.map((post) => (
-                                <div key={post._id} className="admin-post">
-                                    <div className="admin-post__content">
-                                        <h3 className="admin-post__title">{post.title}</h3>
-                                        <p className="admin-post__summary">{post.summary}</p>
-                                        <div className="admin-post__meta">
-                                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                                            <span className={`admin-post__status ${post.published ? 'published' : 'draft'}`}>
-                                                {post.published ? 'Published' : 'Draft'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="admin-post__actions">
-                                        <button
-                                            onClick={() => handleTogglePublish(post)}
-                                            className="admin-btn admin-btn--icon"
-                                            title={post.published ? 'Unpublish' : 'Publish'}
-                                        >
-                                            <FontAwesomeIcon icon={post.published ? faEyeSlash : faEye} />
-                                        </button>
-                                        <button
-                                            onClick={() => setEditingPost(post)}
-                                            className="admin-btn admin-btn--icon"
-                                            title="Edit"
-                                        >
-                                            <FontAwesomeIcon icon={faEdit} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeletePost(post._id)}
-                                            className="admin-btn admin-btn--icon admin-btn--danger"
-                                            title="Delete"
-                                        >
-                                            <FontAwesomeIcon icon={faTrash} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {editingPost && (
-                    <div className="admin-modal">
-                        <div className="admin-modal__content">
-                            <h2 className="admin-modal__header">Edit Post</h2>
-                            <form onSubmit={handleUpdatePost} className="admin-form">
-                                <input
-                                    type="text"
-                                    placeholder="Title"
-                                    value={editingPost.title}
-                                    onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
-                                    className="admin-input"
-                                    required
-                                />
-                                <textarea
-                                    placeholder="Summary"
-                                    value={editingPost.summary}
-                                    onChange={(e) => setEditingPost({ ...editingPost, summary: e.target.value })}
-                                    className="admin-textarea"
-                                    required
-                                />
-                                <textarea
-                                    placeholder="Content"
-                                    value={editingPost.content}
-                                    onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                                    className="admin-textarea admin-textarea--large"
-                                    required
-                                />
-                                <div className="admin-form__footer">
-                                    <label className="admin-checkbox">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPost.published}
-                                            onChange={(e) => setEditingPost({ ...editingPost, published: e.target.checked })}
-                                        />
-                                        Published
-                                    </label>
-                                    <div className="admin-form__actions">
-                                        <button type="submit" className="admin-btn">Save Changes</button>
-                                        <button
-                                            type="button"
-                                            className="admin-btn admin-btn--secondary"
-                                            onClick={() => setEditingPost(null)}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
+                        <div className="analytics-card__content">
+                            <h3>{analytics.totalPotentialSponsors}</h3>
+                            <p>Potential Sponsors</p>
                         </div>
                     </div>
+                    
+                    <div className="analytics-card">
+                        <div className="analytics-card__icon">
+                            <FontAwesomeIcon icon={faCheck} />
+                        </div>
+                        <div className="analytics-card__content">
+                            <h3>{analytics.totalApprovedSponsors}</h3>
+                            <p>Approved This Month</p>
+                        </div>
+                    </div>
+                    
+                    <div className="analytics-card">
+                        <div className="analytics-card__icon">
+                            <FontAwesomeIcon icon={faChartLine} />
+                        </div>
+                        <div className="analytics-card__content">
+                            <h3>{analytics.sponsorsThisWeek}</h3>
+                            <p>New This Week</p>
+                        </div>
+                    </div>
+                    
+                    <div className="analytics-card">
+                        <div className="analytics-card__icon">
+                            <FontAwesomeIcon icon={faRobot} />
+                        </div>
+                        <div className="analytics-card__content">
+                            <h3>{Math.round(analytics.averageConfidence)}%</h3>
+                            <p>Avg Confidence</p>
+                        </div>
+                    </div>
+                    
+                    <div className="analytics-card">
+                        <div className="analytics-card__icon">
+                            <FontAwesomeIcon icon={faEnvelope} />
+                        </div>
+                        <div className="analytics-card__content">
+                            <h3>{potentialSponsors.filter(s => s.businessContact && s.businessContact.trim() !== '').length}</h3>
+                            <p>With Contact Info</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Controls */}
+            <div className="admin-controls">
+                <div className="admin-controls__search">
+                    <FontAwesomeIcon icon={faSearch} />
+                    <input
+                        type="text"
+                        placeholder="Search sponsors, newsletters, or domains..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                
+                <div className="admin-controls__filters">
+                    <select 
+                        value={filterStatus} 
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="admin-controls__filter"
+                    >
+                        <option value="all">All Sponsors</option>
+                        <option value="has-contact">Has Contact Info</option>
+                        <option value="high-confidence">High Confidence (85%+)</option>
+                        <option value="medium-confidence">Medium Confidence (70-84%)</option>
+                        <option value="low-confidence">Low Confidence (&lt;70%)</option>
+                    </select>
+                    
+                    <select 
+                        value={sortBy} 
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="admin-controls__filter"
+                    >
+                        <option value="confidence">Sort by Confidence</option>
+                        <option value="name">Sort by Name</option>
+                        <option value="newsletter">Sort by Newsletter</option>
+                        <option value="date">Sort by Date</option>
+                        <option value="subscribers">Sort by Subscribers</option>
+                    </select>
+                    
+                    <button 
+                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                        className="admin-controls__sort-btn"
+                    >
+                        <FontAwesomeIcon icon={sortOrder === 'asc' ? faSortUp : faSortDown} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Sponsors Grid */}
+            <div className="sponsors-grid">
+                {filteredAndSortedSponsors.length === 0 ? (
+                    <div className="sponsors-empty">
+                        <FontAwesomeIcon icon={faUsers} />
+                        <h3>No sponsors found</h3>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                ) : (
+                    filteredAndSortedSponsors.map((sponsor) => (
+                        <div key={sponsor._id} className="sponsor-card">
+                            <div className="sponsor-card__header">
+                                <div className="sponsor-card__confidence" style={{backgroundColor: getConfidenceColor(sponsor.confidence)}}>
+                                    {sponsor.confidence}%
+                                </div>
+                                <div className="sponsor-card__status">
+                                    {sponsor.businessContact && sponsor.businessContact.trim() !== '' ? (
+                                        <FontAwesomeIcon 
+                                            icon={faEnvelope} 
+                                            className="sponsor-card__contact-icon"
+                                            style={{color: '#48bb78'}}
+                                            title="Has contact information"
+                                        />
+                                    ) : (
+                                        <FontAwesomeIcon 
+                                            icon={faTimes} 
+                                            className="sponsor-card__contact-icon"
+                                            style={{color: '#e53e3e'}}
+                                            title="No contact information"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="sponsor-card__content">
+                                <h3 className="sponsor-card__name">{sponsor.sponsorName}</h3>
+                                <p className="sponsor-card__newsletter">{sponsor.newsletterSponsored}</p>
+                                <a 
+                                    href={sponsor.sponsorLink} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="sponsor-card__link"
+                                >
+                                    {sponsor.rootDomain || 'View Website'}
+                                </a>
+                                
+                                {/* Business Contact - Prominent Display */}
+                                <div className="sponsor-card__business-contact">
+                                    <div className="sponsor-card__business-contact-label">
+                                        <FontAwesomeIcon icon={getContactMethodIcon(sponsor.contactMethod || 'none')} />
+                                        Business Contact
+                                    </div>
+                                    <div className="sponsor-card__business-contact-value">
+                                        {sponsor.businessContact ? (
+                                            sponsor.businessContact.includes('@') ? (
+                                                <a href={`mailto:${sponsor.businessContact}`}>
+                                                    {sponsor.businessContact}
+                                                </a>
+                                            ) : (
+                                                <a href={sponsor.businessContact} target="_blank" rel="noopener noreferrer">
+                                                    {sponsor.businessContact}
+                                                </a>
+                                            )
+                                        ) : (
+                                            <span style={{color: '#e53e3e', fontStyle: 'italic'}}>
+                                                No contact found
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className="sponsor-card__tags">
+                                    {sponsor.tags?.slice(0, 3).map((tag, index) => (
+                                        <span key={index} className="sponsor-card__tag">{tag}</span>
+                                    ))}
+                                    {sponsor.tags && sponsor.tags.length > 3 && (
+                                        <span className="sponsor-card__tag">+{sponsor.tags.length - 3}</span>
+                                    )}
+                                </div>
+                                
+                                <div className="sponsor-card__stats">
+                                    <div className="sponsor-card__stat">
+                                        <FontAwesomeIcon icon={faUsers} />
+                                        <span>{sponsor.estimatedSubscribers?.toLocaleString() || 'Unknown'}</span>
+                                    </div>
+                                    <div className="sponsor-card__stat">
+                                        <FontAwesomeIcon icon={faCalendarAlt} />
+                                        <span>{new Date(sponsor.dateAdded || '').toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="sponsor-card__actions">
+                                <button 
+                                    onClick={() => {
+                                        setSelectedSponsor(sponsor);
+                                        setShowModal(true);
+                                    }}
+                                    className="sponsor-card__btn sponsor-card__btn--view"
+                                >
+                                    <FontAwesomeIcon icon={faEye} />
+                                    View Details
+                                </button>
+                                <button 
+                                    onClick={() => handleApprove(sponsor)}
+                                    className="sponsor-card__btn sponsor-card__btn--approve"
+                                >
+                                    <FontAwesomeIcon icon={faCheck} />
+                                    Approve
+                                </button>
+                                <button 
+                                    onClick={() => handleDeny(sponsor)}
+                                    className="sponsor-card__btn sponsor-card__btn--deny"
+                                >
+                                    <FontAwesomeIcon icon={faTimes} />
+                                    Deny
+                                </button>
+                            </div>
+                        </div>
+                    ))
                 )}
             </div>
+
+            {/* Sponsor Detail Modal */}
+            {showModal && selectedSponsor && (
+                <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{selectedSponsor.sponsorName}</h2>
+                            <button onClick={() => setShowModal(false)} className="modal-close">
+                                <FontAwesomeIcon icon={faTimes} />
+                            </button>
+                        </div>
+                        
+                        <div className="modal-body">
+                            <div className="modal-section">
+                                <h3>Basic Information</h3>
+                                <div className="modal-grid">
+                                    <div className="modal-field">
+                                        <label>Newsletter</label>
+                                        <p>{selectedSponsor.newsletterSponsored}</p>
+                                    </div>
+                                    <div className="modal-field">
+                                        <label>Website</label>
+                                        <a href={selectedSponsor.sponsorLink} target="_blank" rel="noopener noreferrer">
+                                            {selectedSponsor.sponsorLink}
+                                        </a>
+                                    </div>
+                                    <div className="modal-field">
+                                        <label>Confidence Score</label>
+                                        <p style={{color: getConfidenceColor(selectedSponsor.confidence)}}>
+                                            {selectedSponsor.confidence}%
+                                        </p>
+                                    </div>
+                                    <div className="modal-field">
+                                        <label>Estimated Subscribers</label>
+                                        <p>{selectedSponsor.estimatedSubscribers?.toLocaleString() || 'Unknown'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="modal-section">
+                                <h3>Contact Information</h3>
+                                <div className="modal-grid">
+                                    <div className="modal-field" style={{gridColumn: '1 / -1'}}>
+                                        <label>Business Contact</label>
+                                        <p style={{
+                                            background: '#f0fff4',
+                                            border: '2px solid #48bb78',
+                                            fontWeight: '600',
+                                            fontSize: '1.1rem'
+                                        }}>
+                                            {selectedSponsor.businessContact ? (
+                                                selectedSponsor.businessContact.includes('@') ? (
+                                                    <a href={`mailto:${selectedSponsor.businessContact}`}>
+                                                        {selectedSponsor.businessContact}
+                                                    </a>
+                                                ) : (
+                                                    <a href={selectedSponsor.businessContact} target="_blank" rel="noopener noreferrer">
+                                                        {selectedSponsor.businessContact}
+                                                    </a>
+                                                )
+                                            ) : (
+                                                <span style={{color: '#e53e3e', fontStyle: 'italic'}}>
+                                                    No contact found
+                                                </span>
+                                            )}
+                                        </p>
+                                    </div>
+                                    <div className="modal-field">
+                                        <label>Contact Method</label>
+                                        <p>
+                                            <FontAwesomeIcon icon={getContactMethodIcon(selectedSponsor.contactMethod || 'none')} />
+                                            {selectedSponsor.contactMethod || 'None'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="modal-section">
+                                <h3>Analysis Details</h3>
+                                <div className="modal-field">
+                                    <label>Sponsorship Evidence</label>
+                                    <p>{selectedSponsor.sponsorshipEvidence || 'No evidence provided'}</p>
+                                </div>
+                                <div className="modal-field">
+                                    <label>Subscriber Reasoning</label>
+                                    <p>{selectedSponsor.subscriberReasoning || 'No reasoning provided'}</p>
+                                </div>
+                                <div className="modal-field">
+                                    <label>Enrichment Notes</label>
+                                    <p>{selectedSponsor.enrichmentNotes || 'No notes provided'}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="modal-section">
+                                <h3>Tags</h3>
+                                <div className="modal-tags">
+                                    {selectedSponsor.tags?.map((tag, index) => (
+                                        <span key={index} className="modal-tag">{tag}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button 
+                                onClick={() => handleApprove(selectedSponsor)}
+                                className="modal-btn modal-btn--approve"
+                            >
+                                <FontAwesomeIcon icon={faCheck} />
+                                Approve Sponsor
+                            </button>
+                            <button 
+                                onClick={() => handleDeny(selectedSponsor)}
+                                className="modal-btn modal-btn--deny"
+                            >
+                                <FontAwesomeIcon icon={faTimes} />
+                                Deny Sponsor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

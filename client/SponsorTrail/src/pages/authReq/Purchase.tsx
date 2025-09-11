@@ -7,8 +7,8 @@ import config from '../../config';
 import { loadStripe } from '@stripe/stripe-js';
 import { useState } from 'react';
 
-interface SubscribeProps {
-    purchased: boolean;
+interface PurchaseProps {
+    isSubscribed: boolean;
     sponsorCount: number;
 }
 
@@ -17,13 +17,13 @@ const stripeAPIKeyTest = "pk_test_51MpGntBKPgChhmNg63yLnqWVTfzn82jI0aEnzjwvRsTz1
 const stripePromise = loadStripe(stripeAPIKey);
 
 
-const handlePurchase = async (purchased: boolean) => {
+const handlePurchase = async (isSubscribed: boolean) => {
     try {
         const token = localStorage.getItem('token');
         if (!token) {
             return;
         }
-        const response = await axios.post(`${config.backendUrl}users/checkout`, { purchased: purchased },
+        const response = await axios.post(`${config.backendUrl}users/checkout`, { plan: 'pro' },
             {
                 headers: {
                     'x-auth-token': token
@@ -43,7 +43,7 @@ const handlePurchase = async (purchased: boolean) => {
     }
 }
 
-const Subscribe = ({ purchased, sponsorCount }: SubscribeProps) => {
+const Purchase = ({ isSubscribed, sponsorCount }: PurchaseProps) => {
     return <div className="web-page">
         <div className="web-section web-section-dark subscribe">
             <div className="web-section__container web-section-content">
@@ -51,30 +51,29 @@ const Subscribe = ({ purchased, sponsorCount }: SubscribeProps) => {
                     <div className="home__pricing-item">
                         <div className="home__pricing-card">
                             <div className="home__pricing-card__header">
-                                <h3 className="home__pricing-card__header-h3">
-                                    One Time Payment. Lifetime Access.
+                                <h3 className="home__pricing-card__header-h3">One Time Payment. Lifetime Access.
                                 </h3>
                                 <p className="home__pricing-card__header-p">
                                     {sponsorCount ? sponsorCount :
-                                        150}+ Sponsors
+                                        250}+ Sponsors
                                 </p>
                             </div>
-                            <p className="home__pricing-card__text">
-                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Access our growing database of high-quality newsletter sponsors
+                            <p className="home__pricing-card__text mt-2">
+                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>{sponsorCount}+ Sponsors:</strong> From companies like Eight Sleep, ExpressVPN, and EmailTree.
                             </p>
                             <p className="home__pricing-card__text">
-                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Sort sponsors by audience size, market type, or date added to find the perfect match for your newsletter
+                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Direct Contacts:</strong> No middleman, no hidden fees, no commissions.
                             </p>
                             <p className="home__pricing-card__text">
-                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Updated daily with new sponsorship opportunities
+                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Advanced Filters:</strong> Sort by market type or audience size to find the perfect sponsors.
                             </p>
                             <p className="home__pricing-card__text">
-                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; Easily download the database into a CSV file.
+                                <FontAwesomeIcon icon={faCheckCircle} />&nbsp; <strong>Regular Updates:</strong> New sponsors added every week – never miss an opportunity.
                             </p>
                             <button className="btn home__pricing-card__btn" onClick={() => {
-                                handlePurchase(purchased);
-                            }}>
-                                $64.99 -- Get Started
+                            handlePurchase(isSubscribed);
+                        }}>
+                            $64.99 -- Get Started
                             </button>
                         </div>
                     </div>
@@ -84,4 +83,4 @@ const Subscribe = ({ purchased, sponsorCount }: SubscribeProps) => {
     </div>
 }
 
-export default Subscribe;
+export default Purchase;

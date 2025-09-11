@@ -66,6 +66,21 @@ const mockPosts: BlogPost[] = [
         summary: 'Unlock the full revenue potential of your newsletter. Learn advanced strategies for optimizing your sponsorship opportunities and building long-term sponsor relationships.',
         date: 'March 11, 2024',
         tags: ['Growth', 'Strategy', 'Resources']
+    },
+    // Additional posts for variety
+    {
+        id: '6',
+        title: 'How to Pitch Your Newsletter to Sponsors',
+        summary: 'Craft the perfect pitch to land more sponsors. Learn what sponsors are looking for and how to present your newsletter effectively.',
+        date: 'March 10, 2024',
+        tags: ['Tips', 'Strategy']
+    },
+    {
+        id: '7',
+        title: 'Newsletter Growth Hacks for 2024',
+        summary: 'Boost your subscriber count with these proven growth hacks tailored for newsletter creators.',
+        date: 'March 9, 2024',
+        tags: ['Growth', 'Tips']
     }
 ];
 
@@ -73,12 +88,13 @@ const Blog = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="web-page blog">
-            <div className="blog-container">
-                <h1 className="blog-header">Blog</h1>
-                <p className="blog-subheader">
-                    Insights and tips for newsletter owners looking to grow their sponsorship revenue
-                </p>
+        <div className="blog-page">
+            <div className="blog-header">
+                <h1>SponsorDB Insights</h1>
+                <p>Tips for newsletter owners looking to grow their sponsorship revenue</p>
+            </div>
+
+            <div className="blog-content">
                 <div className="blog-grid">
                     {mockPosts.map((post) => (
                         <div 

@@ -52,25 +52,56 @@ const Review = ({ email }: ReviewProps) => {
     }
 
     return (
-        <div className="web-page review">
-            <div className="web-section all-blogs web-section-content" id="review">
-                <div className="review-container">
-                    <h1 className="review-header">
-                        SponsorDB Feedback
-                    </h1>
-                    <p className="review-text">
-                        We'd love to hear your feedback! Please fill out the form below to submit a review.
-                    </p>
+        <div className="review-page">
+            <div className="review-header">
+                <h1>User Feedback</h1>
+                <p>Have feedback, suggestions, or questions? We'd love to hear from you! Please fill out the form below and we'll get back to you as soon as possible.</p>
+            </div>
+
+            <div className="review-content">
+                <div className="review-section">
                     <form className="review-form" onSubmit={(e) => handleSubmit(e)}>
-                        <h2 className="review-form-label">Name</h2>
-                        <input id='name-input' className="home__container-item__input review-input" type="text" placeholder="Enter your full name" onChange={(e) => setName(e.target.value)} />
-                        <h2 className="review-form-label">Email *</h2>
-                        <input value={typedEmail} required={true} id='name-input' className="home__container-item__input review-input" type="email" placeholder="Enter your email address" onChange={(e) => setTypedEmail(e.target.value)} />
-                        <h2 className="review-form-label">Message *</h2>
-                        <textarea required={true} id='review-input' className="home__container-item__input review-input" rows={5} placeholder="Write your message..." onChange={(e) => setReview(e.target.value)} />
-                        <LoadingBtn loading={loading} title="Submit Feedback" />
-                        {userReviewSubmitted && <p className="home__container-item__form-thanks">Thank you for your review!</p>}
-                        {userError && <p className="home__container-item__form-thanks">There was an error submitting your review. Please try again later.</p>}
+                        <div className="form-field">
+                            <label className="form-label">Name</label>
+                            <input 
+                                id='name-input' 
+                                className="form-input" 
+                                type="text" 
+                                placeholder="Enter your name" 
+                                onChange={(e) => setName(e.target.value)} 
+                            />
+                        </div>
+                        
+                        <div className="form-field">
+                            <label className="form-label">Email *</label>
+                            <input 
+                                value={typedEmail} 
+                                required={true} 
+                                id='email-input' 
+                                className="form-input" 
+                                type="email" 
+                                placeholder="Enter your email address" 
+                                onChange={(e) => setTypedEmail(e.target.value)} 
+                            />
+                        </div>
+                        
+                        <div className="form-field">
+                            <label className="form-label">Message *</label>
+                            <textarea 
+                                required={true} 
+                                id='review-input' 
+                                className="form-input form-textarea" 
+                                rows={5} 
+                                placeholder="Write your message..." 
+                                onChange={(e) => setReview(e.target.value)} 
+                            />
+                        </div>
+                        
+                        <div className="form-actions">
+                            <LoadingBtn loading={loading} title="Submit Feedback" />
+                            {userReviewSubmitted && <p className="form-message form-message--success">Thank you for your feedback!</p>}
+                            {userError && <p className="form-message form-message--error">There was an error submitting your feedback. Please try again later.</p>}
+                        </div>
                     </form>
                 </div>
             </div>

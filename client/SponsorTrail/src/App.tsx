@@ -4,7 +4,7 @@ import {
   RouterProvider, Route, Outlet
 } from 'react-router-dom';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 // CSS
 import './css/App.css';
@@ -22,8 +22,11 @@ import './css/pages/authReq/Sponsors.css';
 import './css/pages/authReq/Profile.css';
 import './css/pages/authReq/Admin.css';
 import './css/pages/authReq/NavMenu.css'
+import './css/pages/authReq/PaymentSuccess.css'
+import './css/pages/authReq/AuthedLayout.css'
 import './css/pages/Blog.css'
 import './css/pages/BlogPost.css'
+import './css/Analytics.css'
 
 
 //Pages
@@ -32,8 +35,9 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TOS from './pages/TOS';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Subscribe from './pages/Subscribe';
+import SignupFlow from './components/SignupFlow';
 import ChangePassword from './pages/ChangePassword';
-import Newsletter from './pages/Newsletter';
 import AuthCallback from './pages/AuthCallback';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -45,6 +49,7 @@ import Profile from './pages/authReq/Profile';
 import Admin from './pages/authReq/Admin';
 import PaymentSuccess from './pages/authReq/PaymentSuccess';
 import Purchase from './pages/authReq/Purchase';
+import Analytics from './components/Analytics';
 
 // Components
 import Header from './components/common/Header'
@@ -58,20 +63,71 @@ import config from './config';
 import ChangePasswordFinal from './pages/ChangePasswordFinal';
 import NavMenu from './components/common/NavMenu';
 
+// Custom hook for media queries
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [matches, query]);
+
+  return matches;
+};
+
 function App() {
-  const [userAuth, setUserAuth] = useState(false);
+  // Check if we're in local development
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  // Check if user has explicitly logged out in dev mode
+  const isDevLogout = localStorage.getItem('dev_logout') === 'true';
+  
+  // Log development mode status
+  useEffect(() => {
+    if (isLocalDev && !isDevLogout) {
+      console.log('🚀 Development Mode Active - You can now access all authenticated pages!');
+      console.log('📊 Mock data provided: 150 sponsors, 25 newsletters');
+      console.log('🔑 Auto-authenticated as admin with full access');
+      console.log('💡 To test signup flow, go to Profile and click "Sign Out"');
+      // Set a mock token for development mode
+      localStorage.setItem('token', 'dev_token_for_localhost');
+    }
+  }, [isLocalDev, isDevLogout]);
+  
+  const [userAuth, setUserAuth] = useState(isLocalDev && !isDevLogout); // Auto-authenticate in local dev unless logged out
   const [user, setUser] = useState({
-    email: "",
-    isAdmin: false,
-    purchased: false,
-    stripeCustomerId: "",
+    email: (isLocalDev && !isDevLogout) ? "dev@localhost.com" : "",
+    isAdmin: (isLocalDev && !isDevLogout) ? true : false,
+    subscription: (isLocalDev && !isDevLogout) ? "pro" : null,
+    stripeCustomerId: (isLocalDev && !isDevLogout) ? "dev_customer_id" : "",
+    billing: (isLocalDev && !isDevLogout) ? {
+      status: 'active',
+      monthlyCharge: 79,
+      currency: 'usd',
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    } : null,
+    newsletterInfo: (isLocalDev && !isDevLogout) ? (() => {
+      const stored = localStorage.getItem('dev_newsletter_info');
+      return stored ? JSON.parse(stored) : null;
+    })() : null,
   });
 
   const [dbInfo, setDbInfo] = useState({
-    sponsors: 0,
-    newsletters: 0,
-    lastUpdated: ""
+    sponsors: isLocalDev ? 150 : 0,
+    newsletters: isLocalDev ? 25 : 0,
+    lastUpdated: isLocalDev ? new Date().toISOString() : ""
   });
+
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  // Helper function to determine if user is subscribed
+  const isSubscribed = Boolean(user.subscription && user.subscription !== 'none');
 
   const getDbInfo = async () => {
     // Get database info
@@ -81,11 +137,20 @@ function App() {
       }
     });
 
-
     setDbInfo(dbInfo.data);
   }
 
-  const getUserInfo = async () => {
+  const getUserInfo = useCallback(async () => {
+    // In development mode, check for stored newsletter info
+    if (isLocalDev) {
+      const storedNewsletterInfo = localStorage.getItem('dev_newsletter_info');
+      setUser(prev => ({
+        ...prev,
+        newsletterInfo: storedNewsletterInfo ? JSON.parse(storedNewsletterInfo) : prev.newsletterInfo
+      }));
+      return;
+    }
+
     // Get user profile information
     await axios.get(`${config.backendUrl}users/me`, {
       headers: {
@@ -95,7 +160,7 @@ function App() {
       setUser(res.data);
     }).catch((err) => {
     })
-  }
+  }, [isLocalDev]);
 
   // Handle auth and data fetching
   useEffect(() => {
@@ -108,6 +173,11 @@ function App() {
       }
     }
 
+    // In local development, we don't need to fetch from backend
+    if (isLocalDev) {
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (token) {
       setUserAuth(true);
@@ -116,41 +186,73 @@ function App() {
         fetchData(1);
       }
     }
-    if (dbInfo.sponsors === 0 && !window.location.href.includes('localhost')) {
+    if (dbInfo.sponsors === 0) {
       fetchData(2);
     }
-  }, [user.email, dbInfo.sponsors]);
+  }, [user.email, dbInfo.sponsors, isLocalDev, getUserInfo]);
+
+  // Additional effect to handle authentication state changes
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && !userAuth) {
+      setUserAuth(true);
+      getUserInfo();
+    } else if (!token && userAuth) {
+      setUserAuth(false);
+      setUser({
+        email: "",
+        isAdmin: false,
+        subscription: null,
+        stripeCustomerId: "",
+        billing: null,
+        newsletterInfo: null,
+      });
+    }
+  }, [userAuth, getUserInfo]);
 
   const Root = () => {
-    //TODO: Change to !userAuth
     if (!userAuth) { // Default Navbar (should always be on home page)
       return <><Header />
         <ScrollToTop />
         <Outlet />
         <Footer auth={userAuth} />
       </>;
-
     }
-    else { // Authed NavMenu (aligns on left side of screen vertically)
-      return <div className="authed-app">
-        <NavMenu isAdmin={user.isAdmin} purchased={user.purchased} />
-        <ScrollToTop />
-        <div className="authed-app__content">
-          <Outlet />
-          <Footer auth={userAuth} />
-        </div>
-      </div>
+    else { // Authed Layout
+      if (isMobile) {
+        // Mobile layout with AuthHeader
+        return <>
+          <AuthHeader isAdmin={user.isAdmin} isSubscribed={user.subscription} isLocalDev={isLocalDev}  />
+          <ScrollToTop />
+          <div className="authed-app__content">
+            <Outlet />
+            <Footer auth={userAuth} />
+          </div>
+        </>;
+      } else {
+        // Desktop layout with NavMenu
+        return <div className="authed-app">
+          <NavMenu isAdmin={user.isAdmin} isSubscribed={isSubscribed} isLocalDev={isLocalDev} />
+          <ScrollToTop />
+          <div className="authed-app__content">
+            <Outlet />
+            <Footer auth={userAuth} />
+          </div>
+        </div>;
+      }
     }
   }
 
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
-        <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} purchased={user.purchased} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} isSubscribed={isSubscribed} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} isSubscribed={isSubscribed} email={user.email} sponsorCount={dbInfo.sponsors} />} />
         {/* <Route path="/newsletter/" element={<Newsletter />} /> */}
-        <Route path="/login/" element={<Login userAuth={userAuth} purchased={user.purchased} />} />
-        <Route path="/signup/" element={<Signup userAuth={userAuth} purchased={user.purchased} />} />
+        <Route path="/login/" element={<Login userAuth={userAuth} isSubscribed={isSubscribed} />} />
+        <Route path="/signup/" element={<Signup userAuth={userAuth} isSubscribed={isSubscribed} sponsorCount={dbInfo.sponsors} newsletterCount={dbInfo.newsletters} onAuthChange={setUserAuth} onUserUpdate={getUserInfo} />} />
+        <Route path="/subscribe/" element={<Subscribe userAuth={userAuth} isSubscribed={isSubscribed} subscription={user.subscription || undefined} />} />
+        <Route path="/signup-flow/" element={<SignupFlow userAuth={userAuth} isSubscribed={isSubscribed} subscription={user.subscription} sponsorCount={dbInfo.sponsors} newsletterCount={dbInfo.newsletters} onAuthChange={setUserAuth} onUserUpdate={getUserInfo} />} />
         <Route path="/change-password/" element={<ChangePassword />} />
         <Route path="/change-password-final" element={<ChangePasswordFinal />} />
         <Route path="/auth-callback" element={<AuthCallback />} />
@@ -160,17 +262,18 @@ function App() {
         <Route path="/blog/" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
         {/* Authed Routes */}
-        {userAuth && <Route path="/checkout/" element={<Purchase purchased={user.purchased} sponsorCount={dbInfo.sponsors} />} />}
+        {userAuth && <Route path="/checkout/" element={<Purchase isSubscribed={isSubscribed} sponsorCount={dbInfo.sponsors} />} />}
         {userAuth && <Route path="/profile/" element={<Profile
-          purchased={user.purchased}
+          isSubscribed={isSubscribed}
           userEmail={user.email}
+          user={user}
         />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
-        {/* Subscriber Routes userAuth && user.isSubscribed &&  */}
-        {user.purchased && <Route path="/sponsors/" element={<Sponsors sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} />} />}
-        {/* If users arnt subscribed, implement this route for sponsors */<Route path="/sponsors/" element={<Purchase purchased={user.purchased} sponsorCount={dbInfo.sponsors} />} />}
+        {/* Subscriber Routes - Protected by authentication */}
+        {userAuth && <Route path="/sponsors/" element={<Sponsors isSubscribed={user.subscription} sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} />} />}
+        {userAuth && <Route path="/analytics/" element={<Analytics />} />}
         {/* Admin Routes */}
-        {<Route path="/admin/" element={<Admin />} />}
+        {userAuth && user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>
     )
   )

@@ -7,17 +7,17 @@ import GoogleLoginButton from "../components/common/GoogleLoginButton";
 
 interface LoginProps {
     userAuth: boolean;
-    purchased: boolean;
+    isSubscribed: boolean;
 }
 
-const Login = ({ userAuth, purchased }: LoginProps) => {
+const Login = ({ userAuth, isSubscribed }: LoginProps) => {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (userAuth && purchased) {
+        if (userAuth && isSubscribed) {
             window.location.href = '/sponsors';
         }
         else if (userAuth) {
@@ -39,7 +39,7 @@ const Login = ({ userAuth, purchased }: LoginProps) => {
             password: password
         }).then((res) => {
             localStorage.setItem('token', res.headers['x-auth-token']);
-            if (res.data.purchased) {
+            if (res.data.subscription && res.data.subscription !== 'none') {
                 window.location.href = '/sponsors';
                 return;
             }

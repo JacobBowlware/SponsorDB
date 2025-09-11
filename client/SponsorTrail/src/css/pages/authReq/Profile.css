@@ -1,299 +1,375 @@
-.profile {
-    background: var(--var-color-primary);
-    min-height: 100vh;
-    padding: 2rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* Clean, full-width profile page matching existing design system */
 
-.profile-cont {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-}
-
-.profile-cont__card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    width: 100%;
-    max-width: 500px;
+.profile-page {
     background: var(--var-color-background);
-    padding: 2.5rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    min-height: 100vh;
+    padding: 2rem;
+    width: 100%;
 }
 
-.profile-cont__card-header {
-    font-size: 1.8rem;
-    font-weight: 800;
-    padding-bottom: 1rem;
+.profile-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    width: 100%;
-    color: var(--var-color-text);
-    margin-bottom: 1.5rem;
 }
 
-.profile-cont__card-info {
-    font-size: 1rem;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.profile-cont__card-info-item {
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.profile-cont__card-info-item__label {
-    font-weight: 600;
-    color: var(--var-color-text-light);
-    font-size: 0.9rem;
-}
-
-.profile-cont__card-info-item__value {
-    font-weight: 500;
-    font-size: 1.1rem;
-    color: var(--var-color-text);
-}
-
-.profile-cont__card-form__btn-cont {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    width: 100%;
-    margin-top: 2rem;
-}
-
-.profile-cont__card-form__btn {
-    width: 100%;
-    font-size: 1rem;
+.profile-header h1 {
+    font-size: 1.6rem;
     font-weight: 700;
-    color: white !important;
-    background: var(--var-color-accent) !important;
-    padding: 0.8rem;
+    color: var(--var-color-text);
+    margin: 0 0 0.5rem 0;
+}
+
+.profile-header p {
+    font-size: 0.9rem;
+    color: var(--var-color-text-light);
+    margin: 0;
+}
+
+.profile-content {
+    width: 100%;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.profile-section {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.profile-section h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--var-color-text);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.profile-field {
+    margin-bottom: 1rem;
+}
+
+.profile-field:last-child {
+    margin-bottom: 0;
+}
+
+.profile-field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--var-color-text);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0.4rem 0;
+    border-bottom: 2px solid var(--var-color-primary);
+    background: linear-gradient(90deg, var(--var-color-primary), transparent);
+    background-size: 100% 2px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+}
+
+.profile-value {
+    font-size: 0.9rem;
+    color: var(--var-color-text);
+    font-weight: 500;
+    padding: 0.5rem 0;
+}
+
+.status-active {
+    color: #10B981;
+    font-weight: 600;
+}
+
+.status-inactive {
+    color: #EF4444;
+    font-weight: 600;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.profile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
     border-radius: 6px;
     transition: all 0.2s ease;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.profile-cont__card-form__btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
-}
-
-.profile-note {
-    font-size: 0.9rem;
-    font-weight: 400;
-    color: var(--var-color-text-light);
-    margin-top: 1.5rem;
-    line-height: 1.4;
-    text-align: center;
-}
-
-.subscribe__header {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 2rem 0 0 0;
-    text-align: left;
-}
-
-.subscribe__header-note {
-    font-size: 1rem;
-    font-weight: 500;
-    margin: .3rem 0 0 0;
-}
-
-.subscribe__card-cont {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    padding: 1rem 0 1.4rem 0;
-    gap: .8rem;
-    height: 100%;
-}
-
-.subscribe__card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    background: var(--var-color-text);
-    color: var(--var-color-primary);
-    border-radius: 3px;
-    padding: 1rem;
-    height: 100% !important;
-    font-size: 1rem;
-    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
-}
-
-.subscribe__card:first-child {
-    background: var(--var-color-background);
-    color: var(--var-color-text);
-}
-
-.subscribe__card-header {
-    font-size: 1.3rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    font-weight: 700;
-    padding-bottom: .5rem;
-}
-
-.subscribed__card-header__note {
-    font-size: 1.3rem;
-    margin-top: .5rem;
-}
-
-.subscribe__card-body {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    margin-top: 1rem;
-}
-
-.subscribe__card-text-cont {
-    width: 100%;
-}
-
-.subscribe__card-price {
-    margin: 0 0 .5rem 0;
-    font-size: 1.3rem;
-}
-
-.subscribe__card-footer {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    margin-top: 3rem;
-    font-weight: 600;
-}
-
-.subscribe__btn {
-    width: 100%;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-align: center;
-    color: var(--var-color-text);
+    border: 1px solid var(--var-color-primary);
     background: var(--var-color-primary);
-    padding: .5rem 1rem;
-    margin: 0;
-    transition: all .3s;
-    border-radius: 3px;
-}
-
-.subscribe__btn:hover {
-    background: var(--var-color-primary);
-    color: var(--var-color-text);
-    opacity: .8;
+    color: white;
     cursor: pointer;
 }
 
-.subscribe__btn:focus {
-    outline: none;
-    border: 1px solid var(--var-color-primary);
+.profile-btn:hover {
+    background: var(--var-color-accent);
+    border-color: var(--var-color-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.profile-btn--primary {
+    background: #1f2937;
+    border-color: #1f2937;
+    color: white;
+}
 
-.subscribe__card-body p {
-    margin: 0 0 .2rem 0;
-    font-size: 1.1rem;
+.profile-btn--primary:hover {
+    background: #374151;
+    border-color: #374151;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(31, 41, 55, 0.3);
+}
+
+.profile-btn--warning {
+    background: #F59E0B;
+    border-color: #F59E0B;
+    color: white;
+}
+
+.profile-btn--warning:hover {
+    background: #D97706;
+    border-color: #D97706;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.profile-btn--danger {
+    background: #EF4444;
+    border-color: #EF4444;
+    color: white;
+}
+
+.profile-btn--danger:hover {
+    background: #DC2626;
+    border-color: #DC2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.profile-btn--outline {
+    background: transparent;
+    border-color: #6B7280;
+    color: #6B7280;
+}
+
+.profile-btn--outline:hover {
+    background: #F9FAFB;
+    border-color: #374151;
+    color: #374151;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Newsletter Setup Prompt Styles */
+.profile-section--highlight {
+    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+    border: 2px solid #0EA5E9;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+}
+
+.newsletter-setup-prompt {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 0;
+}
+
+.newsletter-setup-icon {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #0EA5E9, #0284C7);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 8px rgba(14, 165, 233, 0.3);
+}
+
+.newsletter-setup-content {
+    flex: 1;
+}
+
+.newsletter-setup-content h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 0.75rem 0;
+    border: none;
+    background: none;
+    padding: 0;
+}
+
+.newsletter-setup-content p {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0 0 1.25rem 0;
+}
+
+.newsletter-setup-benefits {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: #374151;
     font-weight: 500;
 }
 
-.cont__card-subscription-info {
-    margin: 1rem 0 0 0;
-    font-weight: 500;
-    font-size: 1.1rem;
+.benefit-item svg {
+    color: #10B981;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
-@media screen and (min-width: 768px) {
-    .profile {
-        padding: 3rem 2rem;
-    }
+.newsletter-setup-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
 
-    .profile-cont__card {
-        padding: 3rem;
-    }
+.newsletter-setup-btn {
+    background: linear-gradient(135deg, #0EA5E9, #0284C7);
+    border-color: #0EA5E9;
+    color: white;
+    font-weight: 600;
+    padding: 0.875rem 1.75rem;
+    font-size: 0.95rem;
+}
 
-    .profile-cont__card-header {
-        font-size: 2rem;
-    }
+.newsletter-setup-btn:hover {
+    background: linear-gradient(135deg, #0284C7, #0369A1);
+    border-color: #0284C7;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(14, 165, 233, 0.4);
+}
 
-    .profile-cont__card-info-item__value {
-        font-size: 1.2rem;
-    }
+.newsletter-skip-btn {
+    background: transparent;
+    border-color: #94A3B8;
+    color: #64748B;
+    font-weight: 500;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+}
 
-    .profile-cont__card-form__btn {
-        font-size: 1.1rem;
-    }
+.newsletter-skip-btn:hover {
+    background: #F8FAFC;
+    border-color: #64748B;
+    color: #475569;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
-    .profile-note {
-        font-size: 1rem;
-    }
+.profile-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
 
-    .subscribed__card-header__note {
-        font-size: 1.4rem;
-    }
+.profile-footer p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--var-color-text-light);
+    margin: 0;
+}
 
-    .subscribe {
-        margin: 3rem 0 0 0;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 1rem;
     }
-
-    .subscribe-note {
-        text-align: center;
+    
+    .profile-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
-
-    .subscribe__card-cont {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+    
+    .profile-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .profile-section {
+        padding: 1.25rem;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+    }
+    
+    .profile-btn {
+        justify-content: center;
         width: 100%;
-        max-width: 1000px;
     }
-
-    .cont__card-header {
-        font-size: 2rem;
-    }
-
-    .subscribe__card-header {
-        font-size: 1.4rem;
-    }
-
-    .subscribe__header {
-        font-size: 1.8rem;
+    
+    .newsletter-setup-prompt {
+        flex-direction: column;
         text-align: center;
+        gap: 1rem;
     }
-
-    .subscribe__header-note {
-        font-size: 1.2rem;
-        text-align: center;
+    
+    .newsletter-setup-icon {
+        align-self: center;
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
     }
+    
+    .newsletter-setup-actions {
+        flex-direction: column;
+    }
+    
+    .newsletter-setup-btn,
+    .newsletter-skip-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
 
-    .cont__card-info {
+@media (max-width: 480px) {
+    .profile-page {
+        padding: 0.5rem;
+    }
+    
+    .profile-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .profile-section {
+        padding: 1rem;
+    }
+    
+    .profile-section h2 {
         font-size: 1.1rem;
-    }
-
-    .cont__card-form__btn {
-        font-size: 1rem;
     }
 }

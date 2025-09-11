@@ -10,23 +10,57 @@ router.post('/', async (req, res) => {
     try {
         const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_KEY);
 
-        // Handle the checkout.session.completed event (for successful payments)
+        // Handle subscription events
         if (event.type === 'checkout.session.completed') {
-            const purchase = event.data.object;
-            const userId = purchase.metadata.userId;
+            const session = event.data.object;
+            const userId = session.metadata.userId;
+            const plan = session.metadata.plan;
 
             const user = await User.findById(userId);
-
             if (!user) {
-                console.error("User not found: ");
+                console.error("User not found:", userId);
                 return res.status(404).send("User not found");
             }
 
-            user.purchased = true;
-            user.stripeCustomerId = purchase.id;
+            // Update user subscription status
+            user.subscription = plan;
+            user.stripeCustomerId = session.customer;
+            user.purchased = true; // Keep for backward compatibility
 
             await user.save();
+            console.log(`User ${userId} subscribed to ${plan} plan`);
         }
+
+        // Handle subscription updates
+        if (event.type === 'customer.subscription.updated') {
+            const subscription = event.data.object;
+            const customerId = subscription.customer;
+
+            const user = await User.findOne({ stripeCustomerId: customerId });
+            if (user) {
+                // Update subscription status based on Stripe subscription status
+                if (subscription.status === 'active') {
+                    user.subscription = subscription.metadata.plan || 'basic';
+                } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
+                    user.subscription = 'none';
+                }
+                await user.save();
+            }
+        }
+
+        // Handle subscription cancellations
+        if (event.type === 'customer.subscription.deleted') {
+            const subscription = event.data.object;
+            const customerId = subscription.customer;
+
+            const user = await User.findOne({ stripeCustomerId: customerId });
+            if (user) {
+                user.subscription = 'none';
+                await user.save();
+                console.log(`User ${user._id} subscription canceled`);
+            }
+        }
+
     } catch (err) {
         console.error("Webhook Error", err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);

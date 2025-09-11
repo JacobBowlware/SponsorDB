@@ -1,14 +1,15 @@
-import { faArrowLeft, faArrowRight, faDatabase, faMagnifyingGlass, faMessage, faUser, faNewspaper } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faArrowRight, faDatabase, faMagnifyingGlass, faMessage, faUser, faNewspaper, faChartLine } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from 'react';
 
 interface NavMenuProps {
-    purchased: boolean;
+    isSubscribed: boolean;
     isAdmin: boolean;
+    isLocalDev?: boolean;
 }
 
-const NavMenu = ({ isAdmin, purchased }: NavMenuProps) => {
+const NavMenu = ({ isAdmin, isSubscribed, isLocalDev = false }: NavMenuProps) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [addClass, setAddClass] = useState("menu__link-text-hidden");
     const location = useLocation();
@@ -50,6 +51,7 @@ const NavMenu = ({ isAdmin, purchased }: NavMenuProps) => {
                         className="nav-menu__btn-icon" 
                         icon={menuOpen ? faArrowLeft : faArrowRight} 
                     />
+                    {isLocalDev && <span className="dev-badge-nav">DEV</span>}
                 </button>
             </div>
             <div className={`nav-menu__item ${location.pathname === '/sponsors' ? 'active' : ''}`}>
@@ -64,6 +66,20 @@ const NavMenu = ({ isAdmin, purchased }: NavMenuProps) => {
                     </span>
                 </Link>
             </div>
+            {isSubscribed && (
+                <div className={`nav-menu__item ${location.pathname === '/analytics' ? 'active' : ''}`}>
+                    <Link 
+                        to="/analytics" 
+                        className="nav-menu__link"
+                        data-tooltip="Analytics"
+                    >
+                        <FontAwesomeIcon className="nav-menu__link-icon" icon={faChartLine} />
+                        <span className={`nav-menu__link-text ${addClass}`}>
+                            Analytics
+                        </span>
+                    </Link>
+                </div>
+            )}
             <div className={`nav-menu__item ${location.pathname === '/feedback' ? 'active' : ''}`}>
                 <Link 
                     to="/feedback" 
