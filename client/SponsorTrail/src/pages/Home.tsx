@@ -141,34 +141,34 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                     <div className="hero-content">
                         <div className="hero-text">
                             <h1 className="web-section__container-header airtable-header text-center">
-                                Turn Your Newsletter Into a Revenue Machine
+                                Connect with {sponsorCount}+ Newsletter Sponsors Who Actually Pay
                             </h1>
                             <p className="hero-text-p">
-                                Access our database of {sponsorCount}+ verified newsletter sponsors with proven track records. 
-                                Find sponsors that actually respond and close deals faster with pre-filled contact information.
+                                Skip the research and cold outreach. Access verified sponsors with proven track records of paying newsletter creators like you.
                             </p>
                             <div className="hero-features mb-0">
                                 <div className="hero-feature-card" onClick={() => handleFeatureCardClick('verified_sponsors')}>
                                     <FontAwesomeIcon icon={faDatabase} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Verified Sponsors - </span>Access sponsors with proven track records of sponsoring newsletters.</p>
+                                    <p><span className="hero-feature-card__title">Skip the research - </span>every sponsor has paid other newsletters</p>
                                 </div>
                                 <div className="hero-feature-card" onClick={() => handleFeatureCardClick('direct_contact')}>
                                     <FontAwesomeIcon icon={faEnvelope} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Direct Contact Links - </span>One-click access to sponsor contact information and pre-filled email templates.</p>
+                                    <p><span className="hero-feature-card__title">Reach decision-makers directly - </span>with proven email templates</p>
                                 </div>
                                 <div className="hero-feature-card" onClick={() => handleFeatureCardClick('smart_matching')}>
                                     <FontAwesomeIcon icon={faRocket} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Smart Matching - </span>Get matched with sponsors based on your newsletter's audience and content.</p>
+                                    <p><span className="hero-feature-card__title">Get matched with sponsors - </span>that fit your audience</p>
                                 </div>
                                 <div className="hero-feature-card" onClick={() => handleFeatureCardClick('response_rates')}>
                                     <FontAwesomeIcon icon={faCheckCircle} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Response Rate Data - </span>See which sponsors respond best to newsletter creators like you.</p>
+                                    <p><span className="hero-feature-card__title">Track your outreach and revenue - </span>in one place</p>
                                 </div>
                             </div>
                             <div className="hero-buttons">
                                 <Link to="/signup" className="btn home__container-item__btn mb-3" onClick={() => handleSignupClick('hero')}>
                                     Start Making Money &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                                 </Link>
+                                <p className="hero-trust-text">Join newsletter creators already earning with SponsorDB</p>
                             </div>
                         </div>
                     </div>
@@ -214,14 +214,14 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
 
                         <div className="problems-solved-comparison">
                             <div className="problems-solved-column problems-solved-column--old">
-                                <h3 className="problems-solved-column-title">The Old Way</h3>
+                                <h3 className="problems-solved-column-title">Why Most Outreach Fails</h3>
                                 <div className="problems-solved-items">
                                     <div className="problems-solved-item">
                                         <div className="problems-solved-icon problems-solved-icon--old">
                                             <FontAwesomeIcon icon={faSearch} />
                                         </div>
                                         <div className="problems-solved-content">
-                                            <h4>Blind Outreach</h4>
+                                            <h4>Wasting time on sponsors who never respond</h4>
                                             <p>Pitching random sponsors without knowing their response rates or audience fit</p>
                                         </div>
                                     </div>
@@ -230,7 +230,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                             <FontAwesomeIcon icon={faTimes} />
                                         </div>
                                         <div className="problems-solved-content">
-                                            <h4>Low Response Rates</h4>
+                                            <h4>Generic emails that get ignored</h4>
                                             <p>Generic emails that get ignored, wasting hours of your time</p>
                                         </div>
                                     </div>
@@ -239,7 +239,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                             <FontAwesomeIcon icon={faExclamationTriangle} />
                                         </div>
                                         <div className="problems-solved-content">
-                                            <h4>No ROI Tracking</h4>
+                                            <h4>No idea what's actually working</h4>
                                             <p>No idea which sponsors convert or how much revenue you're actually generating</p>
                                         </div>
                                     </div>
@@ -256,14 +256,14 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                             </div>
 
                             <div className="problems-solved-column problems-solved-column--new">
-                                <h3 className="problems-solved-column-title">The SponsorTrail Way</h3>
+                                <h3 className="problems-solved-column-title">How We Fix It</h3>
                                 <div className="problems-solved-items">
                                     <div className="problems-solved-item">
                                         <div className="problems-solved-icon problems-solved-icon--new">
                                             <FontAwesomeIcon icon={faRocket} />
                                         </div>
                                         <div className="problems-solved-content">
-                                            <h4>AI-Powered Matching</h4>
+                                            <h4>Only pitch sponsors who want your audience</h4>
                                             <p>Get matched with sponsors that match your audience demographics and have proven response rates</p>
                                         </div>
                                     </div>
@@ -272,7 +272,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                             <FontAwesomeIcon icon={faEnvelope} />
                                         </div>
                                         <div className="problems-solved-content">
-                                            <h4>Proven Templates</h4>
+                                            <h4>Email templates that actually get responses</h4>
                                             <p>Email templates that actually get responses, tested by successful newsletter creators</p>
                                         </div>
                                     </div>
@@ -281,7 +281,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                             <FontAwesomeIcon icon={faChartLine} />
                                         </div>
                                         <div className="problems-solved-content">
-                                            <h4>ROI Tracking</h4>
+                                            <h4>Track what works and optimize your earnings</h4>
                                             <p>Track your revenue vs time spent to optimize your outreach strategy and maximize earnings</p>
                                         </div>
                                     </div>

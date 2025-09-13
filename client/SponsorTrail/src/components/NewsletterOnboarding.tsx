@@ -36,6 +36,21 @@ interface NewsletterInfo {
         follow_up_frequency: string;
         minimum_deal_size: number;
     };
+    
+    sponsor_match_profile: {
+        ideal_sponsor_categories: string[];
+        predicted_response_rate: number;
+        recommended_outreach_times: string[];
+        personalization_data_points: string[];
+    };
+    
+    outreach_stats: {
+        emails_sent: number;
+        responses_received: number;
+        deals_closed: number;
+        total_revenue: number;
+        average_response_rate: number;
+    };
 }
 
 
@@ -73,6 +88,19 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
             style: '',
             follow_up_frequency: '',
             minimum_deal_size: 0
+        },
+        sponsor_match_profile: {
+            ideal_sponsor_categories: [],
+            predicted_response_rate: 0,
+            recommended_outreach_times: [],
+            personalization_data_points: []
+        },
+        outreach_stats: {
+            emails_sent: 0,
+            responses_received: 0,
+            deals_closed: 0,
+            total_revenue: 0,
+            average_response_rate: 0
         }
     });
 
