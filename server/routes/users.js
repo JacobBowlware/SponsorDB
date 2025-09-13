@@ -65,10 +65,18 @@ router.put('/newsletter-info', auth, async (req, res) => {
             return res.status(404).send('User not found');
         }
 
+        // Clean the request body to remove undefined values
+        const cleanedBody = {};
+        for (const [key, value] of Object.entries(req.body)) {
+            if (value !== undefined) {
+                cleanedBody[key] = value;
+            }
+        }
+
         // Update newsletter info
         user.newsletterInfo = {
             ...user.newsletterInfo,
-            ...req.body
+            ...cleanedBody
         };
 
         await user.save();
