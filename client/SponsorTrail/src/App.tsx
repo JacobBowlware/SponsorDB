@@ -31,6 +31,17 @@ import './css/pages/Blog.css'
 import './css/pages/BlogPost.css'
 import './css/Analytics.css'
 
+// Components
+import Header from './components/common/Header'
+import Footer from './components/common/Footer';
+import ScrollToTop from './components/ScrollToTop';
+import AuthHeader from './components/common/AuthHeader';
+
+// Other
+import axios from 'axios';
+import config from './config';
+import ChangePasswordFinal from './pages/ChangePasswordFinal';
+import NavMenu from './components/common/NavMenu';
 
 //Pages
 import Home from './pages/Home';
@@ -54,18 +65,6 @@ import Admin from './pages/authReq/Admin';
 import PaymentSuccess from './pages/authReq/PaymentSuccess';
 import Purchase from './pages/authReq/Purchase';
 import Analytics from './components/Analytics';
-
-// Components
-import Header from './components/common/Header'
-import Footer from './components/common/Footer';
-import ScrollToTop from './components/ScrollToTop';
-import AuthHeader from './components/common/AuthHeader';
-
-// Other
-import axios from 'axios';
-import config from './config';
-import ChangePasswordFinal from './pages/ChangePasswordFinal';
-import NavMenu from './components/common/NavMenu';
 
 // Utility function to check if JWT token is expired
 const isTokenExpired = (token: string): boolean => {
@@ -370,7 +369,47 @@ function App() {
           } else { 
             window.location.href = '/sponsors'; 
           } 
-        }} onSkip={() => { if (!userAuth) { setUserAuth(true); } if (!isSubscribed) { window.location.href = '/subscribe'; } else { window.location.href = '/sponsors'; } }} /></div></div>} />
+        }} onSkip={() => { if (!userAuth) { setUserAuth(true); } if (!isSubscribed) { window.location.href = '/subscribe'; } else { window.location.href = '/sponsors'; } }} existingData={user.newsletterInfo ? {
+            ...user.newsletterInfo,
+            name: user.newsletterInfo.name || '',
+            topic: user.newsletterInfo.topic || '',
+            audience_size: user.newsletterInfo.audience_size || 0,
+            engagement_rate: user.newsletterInfo.engagement_rate || 0,
+            publishing_frequency: user.newsletterInfo.publishing_frequency || 'weekly',
+            audience_demographics: {
+                age_range: user.newsletterInfo.audience_demographics?.age_range || '26-35',
+                income_range: user.newsletterInfo.audience_demographics?.income_range || '50-100K',
+                location: user.newsletterInfo.audience_demographics?.location || 'US',
+                interests: user.newsletterInfo.audience_demographics?.interests || [],
+                job_titles: user.newsletterInfo.audience_demographics?.job_titles || []
+            },
+            sponsorship_history: {
+                previous_sponsors: user.newsletterInfo.sponsorship_history?.previous_sponsors || [],
+                typical_rates: {
+                    newsletter_mention: user.newsletterInfo.sponsorship_history?.typical_rates?.newsletter_mention || 0,
+                    dedicated_email: user.newsletterInfo.sponsorship_history?.typical_rates?.dedicated_email || 0,
+                    banner_ad: user.newsletterInfo.sponsorship_history?.typical_rates?.banner_ad || 0
+                }
+            },
+            outreach_preferences: {
+                style: user.newsletterInfo.outreach_preferences?.style || 'professional',
+                follow_up_frequency: user.newsletterInfo.outreach_preferences?.follow_up_frequency || 'once',
+                minimum_deal_size: user.newsletterInfo.outreach_preferences?.minimum_deal_size || 0
+            },
+            sponsor_match_profile: {
+                ideal_sponsor_categories: user.newsletterInfo.sponsor_match_profile?.ideal_sponsor_categories || [],
+                predicted_response_rate: user.newsletterInfo.sponsor_match_profile?.predicted_response_rate || 0,
+                recommended_outreach_times: user.newsletterInfo.sponsor_match_profile?.recommended_outreach_times || [],
+                personalization_data_points: user.newsletterInfo.sponsor_match_profile?.personalization_data_points || []
+            },
+            outreach_stats: {
+                emails_sent: user.newsletterInfo.outreach_stats?.emails_sent || 0,
+                responses_received: user.newsletterInfo.outreach_stats?.responses_received || 0,
+                deals_closed: user.newsletterInfo.outreach_stats?.deals_closed || 0,
+                total_revenue: user.newsletterInfo.outreach_stats?.total_revenue || 0,
+                average_response_rate: user.newsletterInfo.outreach_stats?.average_response_rate || 0
+            }
+        } : undefined} /></div></div>} />
         <Route path="/subscribe/" element={<Subscribe userAuth={userAuth} isSubscribed={isSubscribed} subscription={user.subscription || undefined} />} />
         <Route path="/signup-flow/" element={<SignupFlow userAuth={userAuth} isSubscribed={isSubscribed} subscription={user.subscription} sponsorCount={dbInfo.sponsors} newsletterCount={dbInfo.newsletters} onAuthChange={setUserAuth} onUserUpdate={getUserInfo} />} />
         <Route path="/change-password/" element={<ChangePassword />} />

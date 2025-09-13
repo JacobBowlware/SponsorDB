@@ -10,7 +10,8 @@ import {
     faCog,
     faShieldAlt,
     faEnvelope,
-    faCheckCircle
+    faCheckCircle,
+    faEdit
 } from "@fortawesome/free-solid-svg-icons";
 import { User } from '../../types/User';
 
@@ -134,13 +135,13 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                                     <div className="profile-value">{user.newsletterInfo.topic}</div>
                                 </div>
                             )}
-                            {user.newsletterInfo.audience_size && (
+                            {user.newsletterInfo.audience_size && user.newsletterInfo.audience_size > 0 && (
                                 <div className="profile-field">
                                     <label>Audience Size</label>
                                     <div className="profile-value">{user.newsletterInfo.audience_size.toLocaleString()} subscribers</div>
                                 </div>
                             )}
-                            {user.newsletterInfo.engagement_rate && (
+                            {user.newsletterInfo.engagement_rate && user.newsletterInfo.engagement_rate > 0 && (
                                 <div className="profile-field">
                                     <label>Engagement Rate</label>
                                     <div className="profile-value">{user.newsletterInfo.engagement_rate}%</div>
@@ -149,15 +150,29 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                             {user.newsletterInfo.publishing_frequency && (
                                 <div className="profile-field">
                                     <label>Publishing Frequency</label>
-                                    <div className="profile-value">{user.newsletterInfo.publishing_frequency}</div>
+                                    <div className="profile-value">
+                                        {user.newsletterInfo.publishing_frequency === 'daily' ? 'Daily' :
+                                         user.newsletterInfo.publishing_frequency === 'weekly' ? 'Weekly' :
+                                         user.newsletterInfo.publishing_frequency === 'bi-weekly' ? 'Bi-weekly' :
+                                         user.newsletterInfo.publishing_frequency === 'monthly' ? 'Monthly' :
+                                         user.newsletterInfo.publishing_frequency}
+                                    </div>
                                 </div>
                             )}
-                            {user.newsletterInfo.outreach_stats?.total_revenue && (
+                            {/* {(user.newsletterInfo.outreach_stats?.total_revenue && user.newsletterInfo.outreach_stats.total_revenue > 0) && (
                                 <div className="profile-field">
                                     <label>Total Revenue Generated</label>
                                     <div className="profile-value">${user.newsletterInfo.outreach_stats.total_revenue.toLocaleString()}</div>
                                 </div>
-                            )}
+                            )} */}
+                            
+                            {/* Update Newsletter Info Button */}
+                            <div className="profile-field">
+                                <Link to="/onboarding" className="btn profile-btn profile-btn--secondary">
+                                    <FontAwesomeIcon icon={faEdit} />
+                                    Update Newsletter Info
+                                </Link>
+                            </div>
                         </div>
                     )}
 

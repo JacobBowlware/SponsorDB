@@ -15,29 +15,96 @@
 
       gtag("config", "G-0FQTX0C0FT");
     </script>
+    
+    <!-- Basic Meta Tags -->
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+    
+    <!-- SEO Meta Tags -->
+    <title>SponsorDB - Find Newsletter Sponsors Fast | Proven Sponsorship Database</title>
     <meta
       name="description"
-      content="Proven newsletter sponsorship database. Find and connect with proven sponsors in your niche, filter by industry or audience size, and monetize your newsletter faster. Regularly updated and accessible with a one-time payment."
+      content="Find and connect with proven newsletter sponsors in your niche. Filter by industry, audience size, and budget. Monetize your newsletter faster with our comprehensive sponsorship database. One-time payment, lifetime access."
     />
+    <meta name="keywords" content="newsletter sponsors, sponsorship database, newsletter monetization, email marketing sponsors, content sponsors, newsletter advertising, sponsor finder, newsletter revenue" />
+    <meta name="author" content="SponsorDB" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SponsorDB - Find Newsletter Sponsors Fast" />
+    <meta property="og:description" content="Find and connect with proven newsletter sponsors in your niche. Filter by industry, audience size, and budget. Monetize your newsletter faster." />
+    <meta property="og:url" content="https://sponsortrail.com" />
+    <meta property="og:site_name" content="SponsorDB" />
+    <meta property="og:image" content="https://sponsortrail.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="SponsorDB - Newsletter Sponsorship Database" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SponsorDB - Find Newsletter Sponsors Fast" />
+    <meta name="twitter:description" content="Find and connect with proven newsletter sponsors in your niche. Filter by industry, audience size, and budget." />
+    <meta name="twitter:image" content="https://sponsortrail.com/og-image.jpg" />
+    <meta name="twitter:image:alt" content="SponsorDB - Newsletter Sponsorship Database" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://sponsortrail.com" />
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Preconnect to external domains for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+    <link rel="dns-prefetch" href="https://code.jquery.com" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" as="style" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" as="style" />
+    
+    <!-- Fonts with display=swap for better performance -->
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    
+    <!-- Bootstrap CSS with integrity check -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
       integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
       crossorigin="anonymous"
     />
-    <title>SponsorDB</title>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SponsorDB",
+      "description": "Find and connect with proven newsletter sponsors in your niche. Filter by industry, audience size, and budget.",
+      "url": "https://sponsortrail.com",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "79",
+        "priceCurrency": "USD",
+        "description": "One-time payment for lifetime access to the sponsorship database"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "SponsorDB"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
@@ -56,5 +123,20 @@
       integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
       crossorigin="anonymous"
     ></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

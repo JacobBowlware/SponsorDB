@@ -187,7 +187,7 @@
     background: var(--var-color-text);
     border-color: var(--var-color-text);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     color: var(--var-color-white);
 }
 

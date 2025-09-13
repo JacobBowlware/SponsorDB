@@ -3,76 +3,30 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faArrowLeft, faCheck, faRocket, faUsers, faDollarSign, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import config from '../config';
+import { NewsletterInfo } from '../types/User';
 
-interface NewsletterInfo {
-    // Basic Info
-    name: string;
-    topic: string;
-    audience_size: number;
-    engagement_rate: number;
-    publishing_frequency: string;
-    
-    // Demographics
-    audience_demographics: {
-        age_range: string;
-        income_range: string;
-        location: string;
-        interests: string[];
-        job_titles: string[];
-    };
-    
-    // Experience & Preferences  
-    sponsorship_history: {
-        previous_sponsors: string[];
-        typical_rates: {
-            newsletter_mention: number;
-            dedicated_email: number;
-            banner_ad: number;
-        };
-    };
-    
-    outreach_preferences: {
-        style: string;
-        follow_up_frequency: string;
-        minimum_deal_size: number;
-    };
-    
-    sponsor_match_profile: {
-        ideal_sponsor_categories: string[];
-        predicted_response_rate: number;
-        recommended_outreach_times: string[];
-        personalization_data_points: string[];
-    };
-    
-    outreach_stats: {
-        emails_sent: number;
-        responses_received: number;
-        deals_closed: number;
-        total_revenue: number;
-        average_response_rate: number;
-    };
-}
 
 
 interface NewsletterOnboardingProps {
     onComplete: (newsletterInfo: NewsletterInfo) => void;
     onSkip: () => void;
+    existingData?: NewsletterInfo;
 }
 
-const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete, onSkip }) => {
+const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete, onSkip, existingData }) => {
     const [currentStep, setCurrentStep] = useState(1);
     const [previousSponsorsText, setPreviousSponsorsText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [newsletterInfo, setNewsletterInfo] = useState<NewsletterInfo>({
+    const [newsletterInfo, setNewsletterInfo] = useState<NewsletterInfo>(existingData || {
         name: '',
         topic: '',
         audience_size: 0,
         engagement_rate: 0,
-        publishing_frequency: '',
+        publishing_frequency: 'weekly',
         audience_demographics: {
-            age_range: '',
-            income_range: '',
-            location: '',
+            age_range: '26-35',
+            income_range: '50-100K',
+            location: 'US',
             interests: [],
             job_titles: []
         },
@@ -85,8 +39,8 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
             }
         },
         outreach_preferences: {
-            style: '',
-            follow_up_frequency: '',
+            style: 'professional',
+            follow_up_frequency: 'once',
             minimum_deal_size: 0
         },
         sponsor_match_profile: {
@@ -110,8 +64,8 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
 
     // Sync textarea with newsletter info
     useEffect(() => {
-        setPreviousSponsorsText(newsletterInfo.sponsorship_history.previous_sponsors.join(', '));
-    }, [newsletterInfo.sponsorship_history.previous_sponsors]);
+        setPreviousSponsorsText((newsletterInfo.sponsorship_history?.previous_sponsors || []).join(', '));
+    }, [newsletterInfo.sponsorship_history?.previous_sponsors]);
 
     const handleInputChange = (field: string, value: any) => {
         setNewsletterInfo(prev => {
@@ -172,7 +126,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
             } else {
                 // Handle top-level array fields
                 if (field === 'previous_sponsors') {
-                    const currentArray = prev.sponsorship_history.previous_sponsors || [];
+                    const currentArray = prev.sponsorship_history?.previous_sponsors || [];
                     const newArray = currentArray.includes(value)
                         ? currentArray.filter(item => item !== value)
                         : [...currentArray, value];
@@ -330,7 +284,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                 <div className="form-group">
                     <label>Primary Age Range *</label>
                     <select
-                        value={newsletterInfo.audience_demographics.age_range}
+                        value={newsletterInfo.audience_demographics?.age_range || ''}
                         onChange={(e) => handleInputChange('audience_demographics.age_range', e.target.value)}
                         required
                     >
@@ -345,7 +299,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                 <div className="form-group">
                     <label>Income Range *</label>
                     <select
-                        value={newsletterInfo.audience_demographics.income_range}
+                        value={newsletterInfo.audience_demographics?.income_range || ''}
                         onChange={(e) => handleInputChange('audience_demographics.income_range', e.target.value)}
                         required
                     >
@@ -359,7 +313,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                 <div className="form-group">
                     <label>Primary Location *</label>
                     <select
-                        value={newsletterInfo.audience_demographics.location}
+                        value={newsletterInfo.audience_demographics?.location || ''}
                         onChange={(e) => handleInputChange('audience_demographics.location', e.target.value)}
                         required
                     >
@@ -377,7 +331,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                             <label key={interest} className="checkbox-item">
                                 <input
                                     type="checkbox"
-                                    checked={newsletterInfo.audience_demographics.interests.includes(interest)}
+                                    checked={newsletterInfo.audience_demographics?.interests?.includes(interest) || false}
                                     onChange={() => handleArrayToggle('audience_demographics.interests', interest)}
                                 />
                                 <span>{interest}</span>
@@ -393,7 +347,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                             <label key={title} className="checkbox-item">
                                 <input
                                     type="checkbox"
-                                    checked={newsletterInfo.audience_demographics.job_titles.includes(title)}
+                                    checked={newsletterInfo.audience_demographics?.job_titles?.includes(title) || false}
                                     onChange={() => handleArrayToggle('audience_demographics.job_titles', title)}
                                 />
                                 <span>{title}</span>
@@ -439,7 +393,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                             <input
                                 type="number"
                                 min="0"
-                                value={newsletterInfo.sponsorship_history.typical_rates.newsletter_mention || ''}
+                                value={newsletterInfo.sponsorship_history?.typical_rates?.newsletter_mention || ''}
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     const numValue = value === '' ? 0 : parseInt(value) || 0;
@@ -454,7 +408,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                             <input
                                 type="number"
                                 min="0"
-                                value={newsletterInfo.sponsorship_history.typical_rates.dedicated_email || ''}
+                                value={newsletterInfo.sponsorship_history?.typical_rates?.dedicated_email || ''}
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     const numValue = value === '' ? 0 : parseInt(value) || 0;
@@ -469,7 +423,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                             <input
                                 type="number"
                                 min="0"
-                                value={newsletterInfo.sponsorship_history.typical_rates.banner_ad || ''}
+                                value={newsletterInfo.sponsorship_history?.typical_rates?.banner_ad || ''}
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     const numValue = value === '' ? 0 : parseInt(value) || 0;
@@ -497,7 +451,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                 <div className="form-group">
                     <label>Email Style *</label>
                     <select
-                        value={newsletterInfo.outreach_preferences.style}
+                        value={newsletterInfo.outreach_preferences?.style || ''}
                         onChange={(e) => handleInputChange('outreach_preferences.style', e.target.value)}
                         required
                     >
@@ -511,7 +465,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                 <div className="form-group">
                     <label>Follow-up Frequency *</label>
                     <select
-                        value={newsletterInfo.outreach_preferences.follow_up_frequency}
+                        value={newsletterInfo.outreach_preferences?.follow_up_frequency || ''}
                         onChange={(e) => handleInputChange('outreach_preferences.follow_up_frequency', e.target.value)}
                         required
                     >
@@ -527,7 +481,7 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                     <input
                         type="number"
                         min="0"
-                        value={newsletterInfo.outreach_preferences.minimum_deal_size || ''}
+                        value={newsletterInfo.outreach_preferences?.minimum_deal_size || ''}
                         onChange={(e) => handleInputChange('outreach_preferences.minimum_deal_size', parseInt(e.target.value) || 0)}
                         placeholder="e.g., 500"
                     />

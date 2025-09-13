@@ -729,6 +729,19 @@ html {
   padding-left: 2.5rem;
 }
 
+/* Prevent horizontal scrolling globally */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Ensure footer takes full width on all screen sizes without horizontal scroll */
+.footer {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 /* Problems Solved Section */
 .problems-solved-container {
   max-width: 1200px;
@@ -1000,14 +1013,19 @@ html {
   }
 
   .problems-solved-divider {
-    padding: 1rem 0;
+    padding: 2rem 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 1rem 0;
   }
 
   .problems-solved-arrow {
-    transform: rotate(90deg);
     width: 45px;
     height: 45px;
     font-size: 1.1rem;
+    margin: 0;
   }
 
   .problems-solved-image-container {
@@ -1213,6 +1231,34 @@ html {
   .subscription-required {
     padding: 1rem;
     min-height: 50vh;
+  }
+  
+  /* Ensure footer takes full width on mobile without horizontal scroll */
+  .footer {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .footer-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .footer-bottom {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Remove padding from authed app content on mobile */
+  .authed-app__content {
+    padding-left: 0;
+  }
+  
+  .authed-app {
+    padding-left: 0;
   }
   
   .subscription-required h2 {

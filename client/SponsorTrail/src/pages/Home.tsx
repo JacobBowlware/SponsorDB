@@ -1,12 +1,12 @@
 // React
 import { Link } from "react-router-dom";
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, memo, useCallback } from 'react';
 
 // Components
 import FAQAccordian from "../components/FAQAccordian";
 
 // Font Awesome Icons
-import { faArrowRight, faCheckCircle, faDatabase, faEnvelope, faChartLine, faSearch, faTimes, faExclamationTriangle, faRocket, faLaptopCode } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowDown, faCheckCircle, faDatabase, faEnvelope, faChartLine, faSearch, faTimes, faExclamationTriangle, faRocket, faLaptopCode } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Analytics
@@ -30,6 +30,7 @@ interface HomeProps {
 
 const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated }: HomeProps) => {
     const [arrowPosition, setArrowPosition] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
     
     // Time tracking
     const pageLoadTime = useRef(Date.now());
@@ -107,27 +108,38 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
         };
     }, [sponsorCount, newsletterCount, isSubscribed, visibleSections]);
 
+    // Detect mobile screen size
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
-    const handleSignupClick = (location: string) => {
+    const handleSignupClick = useCallback((location: string) => {
         trackButtonClick('signup_cta', 'home', { 
             location, 
             time_on_page: timeOnPage,
             sponsor_count: sponsorCount 
         });
         trackUserJourney('signup_click', 2, { location, time_on_page: timeOnPage });
-    };
+    }, [timeOnPage, sponsorCount]);
 
-    const handlePricingClick = () => {
+    const handlePricingClick = useCallback(() => {
         trackButtonClick('pricing_cta', 'home', { 
             time_on_page: timeOnPage,
             sponsor_count: sponsorCount 
         });
         trackUserJourney('pricing_click', 3, { time_on_page: timeOnPage });
-    };
+    }, [timeOnPage, sponsorCount]);
 
-    const handleVideoInteraction = (action: string) => {
+    const handleVideoInteraction = useCallback((action: string) => {
         trackContentInteraction('demo_video', 'youtube_demo', action, 'home');
-    };
+    }, []);
 
     const handleFeatureCardClick = (feature: string) => {
         trackContentInteraction('feature_card', feature, 'click', 'home');
@@ -253,7 +265,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                     className="problems-solved-arrow problems-solved-arrow--animated"
                                     style={{ transform: `translateY(${arrowPosition}px)` }}
                                 >
-                                    <FontAwesomeIcon icon={faArrowRight} />
+                                    <FontAwesomeIcon icon={isMobile ? faArrowDown : faArrowRight} />
                                 </div>
                             </div>
 
@@ -550,4 +562,4 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
     );
 };
 
-export default Home;
+export default memo(Home);
