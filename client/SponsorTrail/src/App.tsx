@@ -145,20 +145,19 @@ function App() {
   const isSubscribed = Boolean(user.subscription && user.subscription !== 'none');
 
   const getDbInfo = async () => {
-    const token = localStorage.getItem('token');
-    if (!token || isTokenExpired(token)) {
-      console.log('Token expired or missing, skipping database info fetch');
-      return;
+    try {
+      // Get database info (public route, no auth required)
+      const dbInfo = await axios.get(`${config.backendUrl}sponsors/db-info`);
+      setDbInfo(dbInfo.data);
+    } catch (error) {
+      console.error('Error fetching database info:', error);
+      // Set fallback values if the request fails
+      setDbInfo({
+        sponsors: 0,
+        newsletters: 0,
+        lastUpdated: new Date().toISOString()
+      });
     }
-
-    // Get database info
-    const dbInfo = await axios.get(`${config.backendUrl}sponsors/db-info`, {
-      headers: {
-        'x-auth-token': token
-      }
-    });
-
-    setDbInfo(dbInfo.data);
   }
 
   const getUserInfo = useCallback(async () => {
@@ -229,6 +228,7 @@ function App() {
       return;
     }
 
+
     const token = localStorage.getItem('token');
     if (token) {
       // Check if token is expired
@@ -253,10 +253,14 @@ function App() {
         fetchData(1);
       }
     }
-    if (dbInfo.sponsors === 0) {
-      fetchData(2);
-    }
   }, [user.email, dbInfo.sponsors, isLocalDev, getUserInfo]);
+
+  // Fetch database info on initial load (public route, no auth required)
+  useEffect(() => {
+    if (!isLocalDev) {
+      getDbInfo();
+    }
+  }, [isLocalDev]);
 
   // Additional effect to handle authentication state changes
   useEffect(() => {
