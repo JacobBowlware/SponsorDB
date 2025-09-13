@@ -1,5 +1,5 @@
 import axios from "axios";
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import config from '../../config';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,11 +12,12 @@ import {
     faEnvelope,
     faCheckCircle
 } from "@fortawesome/free-solid-svg-icons";
+import { User } from '../../types/User';
 
 interface ProfileProps {
     userEmail: string,
     isSubscribed: boolean,
-    user: any,
+    user: User,
 }
 
 const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
@@ -35,6 +36,38 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
             console.log("Error getting subscription info", e);
         }
     }
+
+
+    useEffect(() => {
+        console.log("User", user);
+        console.log("Newsletter Info:", user.newsletterInfo);
+        console.log("Newsletter Info type:", typeof user.newsletterInfo);
+        console.log("Newsletter Info truthy:", !!user.newsletterInfo);
+        if (user.newsletterInfo) {
+            console.log("Newsletter Info keys:", Object.keys(user.newsletterInfo));
+            console.log("Newsletter Info name:", user.newsletterInfo.name);
+        }
+
+        // Migrate empty newsletter info objects to null
+        const migrateNewsletterInfo = async () => {
+            if (user.newsletterInfo && typeof user.newsletterInfo === 'object' && Object.keys(user.newsletterInfo).length === 0) {
+                try {
+                    await axios.post(`${config.backendUrl}users/migrate-newsletter-info`, {}, {
+                        headers: {
+                            'x-auth-token': localStorage.getItem('token')
+                        }
+                    });
+                    console.log("Newsletter info migrated successfully");
+                    // Reload the page to get updated user data
+                    window.location.reload();
+                } catch (error) {
+                    console.error("Error migrating newsletter info:", error);
+                }
+            }
+        };
+
+        migrateNewsletterInfo();
+    }, [user]);
 
     return (
         <div className="profile-page">
@@ -86,7 +119,7 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                     )}
 
                     {/* Newsletter Information */}
-                    {user.newsletterInfo && (
+                    {user.newsletterInfo && user.newsletterInfo.name && (
                         <div className="profile-section">
                             <h2>Newsletter Information</h2>
                             {user.newsletterInfo.name && (
@@ -129,7 +162,7 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                     )}
 
                     {/* Newsletter Setup Prompt */}
-                    {!user.newsletterInfo && (
+                    {(!user.newsletterInfo || !user.newsletterInfo.name) && (
                         <div className="profile-section profile-section--highlight">
                             <div className="newsletter-setup-prompt">
                                 <div className="newsletter-setup-icon">

@@ -28,10 +28,32 @@ router.get('/me', auth, async (req, res) => {
 router.get('/newsletter-info', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user._id).select('newsletterInfo');
-        res.json(user.newsletterInfo || {});
+        res.json(user.newsletterInfo);
     } catch (error) {
         console.error('Error fetching newsletter info:', error);
         res.status(400).send('Error fetching newsletter info');
+    }
+});
+
+// Migration route to fix existing users with empty newsletter info objects
+router.post('/migrate-newsletter-info', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Check if newsletterInfo is an empty object and convert to null
+        if (user.newsletterInfo && typeof user.newsletterInfo === 'object' && Object.keys(user.newsletterInfo).length === 0) {
+            user.newsletterInfo = null;
+            await user.save();
+            res.json({ message: 'Newsletter info migrated successfully', newsletterInfo: null });
+        } else {
+            res.json({ message: 'No migration needed', newsletterInfo: user.newsletterInfo });
+        }
+    } catch (error) {
+        console.error('Error migrating newsletter info:', error);
+        res.status(400).send('Error migrating newsletter info');
     }
 });
 
@@ -97,7 +119,7 @@ router.post('/', async (req, res) => {
         billing: {
             status: 'incomplete'
         },
-        newsletterInfo: req.body.newsletterInfo || {}
+        newsletterInfo: req.body.newsletterInfo || null
     });
 
     const salt = await bcrypt.genSalt(10);

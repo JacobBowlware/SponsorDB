@@ -6,6 +6,9 @@ import {
 
 import { useEffect, useState, useCallback } from 'react';
 
+// Types
+import { User } from './types/User';
+
 // CSS
 import './css/App.css';
 import './css/Header.css';
@@ -101,7 +104,7 @@ function App() {
   }, [isLocalDev, isDevLogout]);
   
   const [userAuth, setUserAuth] = useState(isLocalDev && !isDevLogout); // Auto-authenticate in local dev unless logged out
-  const [user, setUser] = useState({
+  const [user, setUser] = useState<User>({
     email: (isLocalDev && !isDevLogout) ? "dev@localhost.com" : "",
     isAdmin: (isLocalDev && !isDevLogout) ? true : false,
     subscription: (isLocalDev && !isDevLogout) ? "pro" : null,
@@ -252,7 +255,15 @@ function App() {
         {/* <Route path="/newsletter/" element={<Newsletter />} /> */}
         <Route path="/login/" element={<Login userAuth={userAuth} isSubscribed={isSubscribed} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} isSubscribed={isSubscribed} sponsorCount={dbInfo.sponsors} newsletterCount={dbInfo.newsletters} onAuthChange={setUserAuth} onUserUpdate={getUserInfo} />} />
-        <Route path="/onboarding" element={<div className="web-page"><div className="newsletter-onboarding-container"><NewsletterOnboarding onComplete={() => { if (userAuth && !isSubscribed) { window.location.href = '/subscribe'; } else { window.location.href = '/sponsors'; } }} onSkip={() => { if (!userAuth) { setUserAuth(true); } if (!isSubscribed) { window.location.href = '/subscribe'; } else { window.location.href = '/sponsors'; } }} /></div></div>} />
+        <Route path="/onboarding" element={<div className="web-page"><div className="newsletter-onboarding-container"><NewsletterOnboarding onComplete={async (newsletterInfo) => { 
+          // Refresh user data to get updated newsletter info
+          await getUserInfo();
+          if (userAuth && !isSubscribed) { 
+            window.location.href = '/subscribe'; 
+          } else { 
+            window.location.href = '/sponsors'; 
+          } 
+        }} onSkip={() => { if (!userAuth) { setUserAuth(true); } if (!isSubscribed) { window.location.href = '/subscribe'; } else { window.location.href = '/sponsors'; } }} /></div></div>} />
         <Route path="/subscribe/" element={<Subscribe userAuth={userAuth} isSubscribed={isSubscribed} subscription={user.subscription || undefined} />} />
         <Route path="/signup-flow/" element={<SignupFlow userAuth={userAuth} isSubscribed={isSubscribed} subscription={user.subscription} sponsorCount={dbInfo.sponsors} newsletterCount={dbInfo.newsletters} onAuthChange={setUserAuth} onUserUpdate={getUserInfo} />} />
         <Route path="/change-password/" element={<ChangePassword />} />

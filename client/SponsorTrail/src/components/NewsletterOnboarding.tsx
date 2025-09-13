@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faArrowLeft, faCheck, faRocket, faUsers, faDollarSign, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+import config from '../config';
 
 interface NewsletterInfo {
     // Basic Info
@@ -36,10 +38,6 @@ interface NewsletterInfo {
     };
 }
 
-// Helper type for nested object access
-type NestedKeyOf<T> = {
-    [K in keyof T]: T[K] extends object ? `${K & string}.${NestedKeyOf<T[K]> & string}` : K & string;
-}[keyof T];
 
 interface NewsletterOnboardingProps {
     onComplete: (newsletterInfo: NewsletterInfo) => void;
@@ -48,6 +46,8 @@ interface NewsletterOnboardingProps {
 
 const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete, onSkip }) => {
     const [currentStep, setCurrentStep] = useState(1);
+    const [previousSponsorsText, setPreviousSponsorsText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [newsletterInfo, setNewsletterInfo] = useState<NewsletterInfo>({
         name: '',
         topic: '',
@@ -80,24 +80,47 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
     const interests = ['SaaS', 'E-commerce', 'Crypto', 'AI/ML', 'Design', 'Development', 'Marketing', 'Sales', 'Productivity', 'Health', 'Fitness', 'Travel', 'Food', 'Fashion', 'Gaming'];
     const jobTitles = ['Developer', 'Marketer', 'Founder', 'Designer', 'Manager', 'Analyst', 'Consultant', 'Student', 'Freelancer', 'Other'];
 
+    // Sync textarea with newsletter info
+    useEffect(() => {
+        setPreviousSponsorsText(newsletterInfo.sponsorship_history.previous_sponsors.join(', '));
+    }, [newsletterInfo.sponsorship_history.previous_sponsors]);
+
     const handleInputChange = (field: string, value: any) => {
         setNewsletterInfo(prev => {
             if (field.includes('.')) {
-                const [parent, child] = field.split('.');
-                const parentValue = prev[parent as keyof NewsletterInfo] as any;
-                return {
-                    ...prev,
-                    [parent]: {
-                        ...parentValue,
-                        [child]: value
-                    }
-                };
-            } else {
-                return {
-                    ...prev,
-                    [field]: value
-                };
+                const parts = field.split('.');
+                if (parts.length === 2) {
+                    // Handle one level of nesting (e.g., "audience_demographics.age_range")
+                    const [parent, child] = parts;
+                    const parentValue = prev[parent as keyof NewsletterInfo] as any;
+                    return {
+                        ...prev,
+                        [parent]: {
+                            ...parentValue,
+                            [child]: value
+                        }
+                    };
+                } else if (parts.length === 3) {
+                    // Handle two levels of nesting (e.g., "sponsorship_history.typical_rates.newsletter_mention")
+                    const [parent, child, grandchild] = parts;
+                    const parentValue = prev[parent as keyof NewsletterInfo] as any;
+                    const childValue = parentValue[child] || {};
+                    return {
+                        ...prev,
+                        [parent]: {
+                            ...parentValue,
+                            [child]: {
+                                ...childValue,
+                                [grandchild]: value
+                            }
+                        }
+                    };
+                }
             }
+            return {
+                ...prev,
+                [field]: value
+            };
         });
     };
 
@@ -141,11 +164,43 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
         });
     };
 
-    const nextStep = () => {
+    const nextStep = async () => {
         if (currentStep < 4) {
             setCurrentStep(currentStep + 1);
         } else {
+            // This is the final step - submit the data
+            await handleSubmit();
+        }
+    };
+
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        try {
+            // Check if we're in development mode
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (!isLocalDev) {
+                // Save newsletter info to backend
+                await axios.put(`${config.backendUrl}users/newsletter-info`, newsletterInfo, {
+                    headers: {
+                        'x-auth-token': localStorage.getItem('token')
+                    }
+                });
+                console.log('✅ Newsletter info saved successfully');
+            } else {
+                // In dev mode, store in localStorage
+                console.log('📧 Newsletter info (dev mode):', newsletterInfo);
+                localStorage.setItem('dev_newsletter_info', JSON.stringify(newsletterInfo));
+            }
+            
+            // Call the onComplete callback
             onComplete(newsletterInfo);
+        } catch (error) {
+            console.error('❌ Error saving newsletter info:', error);
+            // Still call onComplete even if save fails
+            onComplete(newsletterInfo);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -334,45 +389,67 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                 <div className="form-group full-width">
                     <label>Previous Sponsors (optional)</label>
                     <textarea
-                        value={newsletterInfo.sponsorship_history.previous_sponsors.join(', ')}
-                        onChange={(e) => handleInputChange('sponsorship_history.previous_sponsors', e.target.value.split(',').map(s => s.trim()).filter(s => s))}
-                        placeholder="e.g., Stripe, Notion, Linear"
+                        value={previousSponsorsText}
+                        onChange={(e) => setPreviousSponsorsText(e.target.value)}
+                        onBlur={() => {
+                            // Only update the newsletter info when user finishes typing
+                            const sponsors = previousSponsorsText.split(',').map(s => s.trim()).filter(s => s);
+                            handleInputChange('sponsorship_history.previous_sponsors', sponsors);
+                        }}
+                        placeholder="e.g., Stripe, Notion, Linear, Acme Corp"
                         rows={3}
                     />
+                    <small className="form-help">Enter company names separated by commas. This helps us understand your sponsorship experience.</small>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group full-width">
                     <label>Typical Rates (optional)</label>
+                    <p className="form-description">What do you typically charge for different types of sponsorships? This helps us match you with sponsors in your price range.</p>
                     <div className="rate-inputs">
                         <div className="rate-input">
-                            <label>Newsletter Mention</label>
+                            <label>Newsletter Mention ($)</label>
                             <input
                                 type="number"
                                 min="0"
                                 value={newsletterInfo.sponsorship_history.typical_rates.newsletter_mention || ''}
-                                onChange={(e) => handleInputChange('sponsorship_history.typical_rates.newsletter_mention', parseInt(e.target.value) || 0)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const numValue = value === '' ? 0 : parseInt(value) || 0;
+                                    handleInputChange('sponsorship_history.typical_rates.newsletter_mention', numValue);
+                                }}
                                 placeholder="e.g., 500"
                             />
+                            <small className="rate-description">Brief mention in your newsletter</small>
                         </div>
                         <div className="rate-input">
-                            <label>Dedicated Email</label>
+                            <label>Dedicated Email ($)</label>
                             <input
                                 type="number"
                                 min="0"
                                 value={newsletterInfo.sponsorship_history.typical_rates.dedicated_email || ''}
-                                onChange={(e) => handleInputChange('sponsorship_history.typical_rates.dedicated_email', parseInt(e.target.value) || 0)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const numValue = value === '' ? 0 : parseInt(value) || 0;
+                                    handleInputChange('sponsorship_history.typical_rates.dedicated_email', numValue);
+                                }}
                                 placeholder="e.g., 1000"
                             />
+                            <small className="rate-description">Full email dedicated to sponsor</small>
                         </div>
                         <div className="rate-input">
-                            <label>Banner Ad</label>
+                            <label>Banner Ad ($)</label>
                             <input
                                 type="number"
                                 min="0"
                                 value={newsletterInfo.sponsorship_history.typical_rates.banner_ad || ''}
-                                onChange={(e) => handleInputChange('sponsorship_history.typical_rates.banner_ad', parseInt(e.target.value) || 0)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const numValue = value === '' ? 0 : parseInt(value) || 0;
+                                    handleInputChange('sponsorship_history.typical_rates.banner_ad', numValue);
+                                }}
                                 placeholder="e.g., 200"
                             />
+                            <small className="rate-description">Banner ad in newsletter</small>
                         </div>
                     </div>
                 </div>
@@ -473,10 +550,11 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                     <button 
                         className="btn btn-primary" 
                         onClick={nextStep}
+                        disabled={isSubmitting}
                     >
-                        {currentStep === 4 ? 'Complete Setup' : 'Next'}
-                        {currentStep < 4 && <FontAwesomeIcon icon={faArrowRight} />}
-                        {currentStep === 4 && <FontAwesomeIcon icon={faCheck} />}
+                        {isSubmitting ? 'Saving...' : (currentStep === 4 ? 'Complete Setup' : 'Next')}
+                        {currentStep < 4 && !isSubmitting && <FontAwesomeIcon icon={faArrowRight} />}
+                        {currentStep === 4 && !isSubmitting && <FontAwesomeIcon icon={faCheck} />}
                     </button>
                 </div>
             </div>
