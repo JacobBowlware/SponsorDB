@@ -27,7 +27,7 @@ const PricingCard = ({ header, icon, price, text, year, handlePurchase }: Pricin
                 < p className="home__pricing-card__price" >
                     {price} {year && <span className="home__pricing-card__price__time">/year</span>} {!year && <span className="home__pricing-card__price__time">/month</span>}
                 </p>
-                <button onClick={handlePurchase} className="btn home__pricing-card__btn bg-dark">
+                <button onClick={handlePurchase} className="home__pricing-card__cta-button">
                     Get Started
                 </button>
             </div>

@@ -155,7 +155,7 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                                     <div className="newsletter-setup-actions">
                                         <Link 
                                             className="btn profile-btn profile-btn--primary newsletter-setup-btn" 
-                                            to="/profile?tab=newsletter"
+                                            to="/onboarding"
                                         >
                                             <FontAwesomeIcon icon={faEnvelope} />
                                             Complete Newsletter Setup
@@ -175,23 +175,44 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                         </div>
                     )}
 
+                    {/* Billing & Payment Management */}
+                    {isSubscribed && (
+                        <div className="profile-section">
+                            <h2>Billing & Payment Management</h2>
+                            <div className="billing-info">
+                                <div className="billing-info-item">
+                                    <div className="billing-info-label">
+                                        <FontAwesomeIcon icon={faShieldAlt} />
+                                        <span>Payment Security</span>
+                                    </div>
+                                    <div className="billing-info-description">
+                                        Your payment information is securely stored and managed by Stripe, a PCI-compliant payment processor. We never store your payment details on our servers.
+                                    </div>
+                                </div>
+                                <div className="billing-actions">
+                                    <button 
+                                        className="btn profile-btn profile-btn--primary" 
+                                        onClick={handleBillingPortal}
+                                    >
+                                        <FontAwesomeIcon icon={faCreditCard} />
+                                        Manage Billing & Payment
+                                    </button>
+                                    <p className="billing-note">
+                                        Click to access your Stripe customer portal where you can update payment methods, view invoices, and manage your subscription.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Account Actions */}
                     <div className="profile-section">
                         <h2>Account Actions</h2>
                         <div className="profile-actions">
-                            <Link className="btn profile-btn profile-btn--primary" to="/change-password">
+                            <Link className="btn profile-btn profile-btn--secondary" to="/change-password">
                                 <FontAwesomeIcon icon={faCog} />
                                 Change Password
                             </Link>
-                            {isSubscribed && (
-                                <button 
-                                    className="btn profile-btn profile-btn--warning" 
-                                    onClick={handleBillingPortal}
-                                >
-                                    <FontAwesomeIcon icon={faCreditCard} />
-                                    Manage Subscription
-                                </button>
-                            )}
                             <button 
                                 className="btn profile-btn profile-btn--danger" 
                                 onClick={() => {

@@ -5,7 +5,6 @@ import axios from 'axios';
 import config from '../config';
 import { trackPageView, trackFormSubmission, trackButtonClick, trackUserJourney, trackNavigation, trackConversion } from "../utils/analytics";
 import GoogleLoginButton from "../components/common/GoogleLoginButton";
-import SignupSlideshow from "../components/SignupSlideshow";
 import NewsletterOnboarding from "../components/NewsletterOnboarding";
 import '../css/NewsletterOnboarding.css';
 
@@ -124,8 +123,8 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
             trackUserJourney('signup_success', 2, { email: email ? 'provided' : 'empty' });
             trackConversion('signup', undefined, 'USD');
 
-            // Show newsletter onboarding instead of navigating directly
-            setShowNewsletterOnboarding(true);
+            // Redirect to dedicated onboarding page
+            navigate('/onboarding');
             return;
         }
 
@@ -147,8 +146,8 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
             trackUserJourney('signup_success', 2, { email: email ? 'provided' : 'empty' });
             trackConversion('signup', undefined, 'USD');
 
-            // Show newsletter onboarding instead of navigating directly
-            setShowNewsletterOnboarding(true);
+            // Redirect to dedicated onboarding page
+            navigate('/onboarding');
 
         }).catch((err) => {
             // Reset the signup flow flag on error
@@ -222,78 +221,61 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
         navigate('/sponsors');
     };
 
-    // Show newsletter onboarding if user just signed up
-    if (showNewsletterOnboarding) {
-        return (
-            <div className="web-page">
-                <div className="newsletter-onboarding-container">
-                    <NewsletterOnboarding 
-                        onComplete={handleNewsletterOnboardingComplete}
-                        onSkip={handleNewsletterOnboardingSkip}
-                    />
-                </div>
-            </div>
-        );
-    }
+    // Note: newsletter onboarding now lives at /onboarding
 
     return (
         <div className="web-page">
-            <div className="signup-page-container">
-                <div className="login-container">
-                    <form className="login-form" onSubmit={(e) => handleSubmit(e)}>
-                        <div className="login-form__header-cont">
-                            <h1 className="login-form__header">
-                                Signup for SponsorTrail
-                            </h1>
-                            {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
-                                <div style={{ 
-                                    background: '#e3f2fd', 
-                                    border: '1px solid #2196f3', 
-                                    borderRadius: '4px', 
-                                    padding: '8px 12px', 
-                                    margin: '10px 0',
-                                    fontSize: '14px',
-                                    color: '#1976d2'
-                                }}>
-                                    🚀 <strong>Development Mode:</strong> Signup will be mocked and you'll go through the full newsletter onboarding flow
-                                </div>
-                            )}
-                        </div>
-                        <GoogleLoginButton />
-                        <div className="login-form__divider">
-                            <span>or</span>
-                        </div>
-                        <input value={email} className="input login-form__input" type="email" placeholder="Email Address"
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                                handleChange('email', e);
-                            }}
-                        />
-                        {emailError && <div className="form-error">{emailError}</div>}
-                        <input value={password} className="input login-form__input" type="password" placeholder="Password"
-                            onChange={(e) => {
-                                setPassword(e.target.value)
-                                handleChange('password', e);
-                            }}
-                        />
-                        {passwordError && <div className="form-error">{passwordError}</div>}
-                        <input value={confirmPassword} className="input login-form__input" type="password" placeholder="Repeat Password"
-                            onChange={(e) => {
-                                setConfirmPassword(e.target.value)
-                                handleChange('confirmPassword', e);
-                            }}
-                        />
-                        {confirmPasswordError && !error && <div className="form-error">{confirmPasswordError}</div>}
-                        {error && <div className="form-error">{error}</div>}
-                        <div className="login-form__btn-container">
-                            <button disabled={!!emailError || !!passwordError || !!confirmPasswordError || !!error || !email || !password || !confirmPassword} className="btn login-form__btn" type="submit">Signup</button>
-                        </div>
-                        <Link to="/login" className="login-form__link" onClick={handleLoginLink}>Have an account?</Link>
-                    </form>
-                </div>
-                <div className="signup-slideshow-container">
-                    <SignupSlideshow sponsorCount={sponsorCount} newsletterCount={newsletterCount} />
-                </div>
+            <div className="login-container">
+                <form className="login-form" onSubmit={(e) => handleSubmit(e)}>
+                    <div className="login-form__header-cont">
+                        <h1 className="login-form__header">
+                            Signup for SponsorTrail
+                        </h1>
+                        {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                            <div style={{ 
+                                background: '#e3f2fd', 
+                                border: '1px solid #2196f3', 
+                                borderRadius: '4px', 
+                                padding: '8px 12px', 
+                                margin: '10px 0',
+                                fontSize: '14px',
+                                color: '#1976d2'
+                            }}>
+                                🚀 <strong>Development Mode:</strong> Signup will be mocked and you'll go through the full newsletter onboarding flow
+                            </div>
+                        )}
+                    </div>
+                    <GoogleLoginButton />
+                    <div className="login-form__divider">
+                        <span>or</span>
+                    </div>
+                    <input value={email} className="input login-form__input" type="email" placeholder="Email Address"
+                        onChange={(e) => {
+                            setEmail(e.target.value);
+                            handleChange('email', e);
+                        }}
+                    />
+                    {emailError && <div className="form-error">{emailError}</div>}
+                    <input value={password} className="input login-form__input" type="password" placeholder="Password"
+                        onChange={(e) => {
+                            setPassword(e.target.value)
+                            handleChange('password', e);
+                        }}
+                    />
+                    {passwordError && <div className="form-error">{passwordError}</div>}
+                    <input value={confirmPassword} className="input login-form__input" type="password" placeholder="Repeat Password"
+                        onChange={(e) => {
+                            setConfirmPassword(e.target.value)
+                            handleChange('confirmPassword', e);
+                        }}
+                    />
+                    {confirmPasswordError && !error && <div className="form-error">{confirmPasswordError}</div>}
+                    {error && <div className="form-error">{error}</div>}
+                    <div className="login-form__btn-container">
+                        <button disabled={!!emailError || !!passwordError || !!confirmPasswordError || !!error || !email || !password || !confirmPassword} className="btn login-form__btn" type="submit">Signup</button>
+                    </div>
+                    <Link to="/login" className="login-form__link" onClick={handleLoginLink}>Have an account?</Link>
+                </form>
             </div>
         </div>
     );

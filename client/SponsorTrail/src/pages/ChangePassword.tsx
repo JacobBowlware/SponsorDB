@@ -60,26 +60,68 @@ const ChangePassword = () => {
 
     return (
         <div className="web-page">
-            <div className="change-password-cont">
-                <form className="change-password-form" onSubmit={(e) => handleSubmit(e)}>
-                    <div className="change-password-form__header-cont">
-                        <h1 className="change-password-form__header">
+            <div className="forgot-password-page">
+                <div className="forgot-password-container">
+                    <div className="forgot-password-header">
+                        <h1 className="forgot-password-title">
                             Forgot Your Password?
                         </h1>
-                        <p className="change-password-form__p mb-3">
-                            Enter your email address below and we will send you a link to reset it.
+                        <p className="forgot-password-subtitle">
+                            No worries! Enter your email address below and we'll send you a secure link to reset your password.
                         </p>
                     </div>
-                    <input type="email" onChange={(e) => { setUser({ email: e.target.value }) }} value={user.email} className="input form-input change-password-form__input" placeholder="Email Address" />
-                    <button disabled={!user.email} id="submitBtn" className="btn form-btn change-password-form__btn" type="submit">{loading ? "..." : "Reset Password"}</button>
-                    {emailSent && <p className="change-password-form__sent">
-                        Email sent! Please check your inbox - if you don't see it, check your spam folder.
-                    </p>}
-                    {error && <p className="change-password-form__error">
-                        No account found with that email address. If this is a mistake, please <a href="mailto:info@sponsor-db.com">contact support.</a>
-                    </p>}
-                    <Link to="/login" className="login-form__link">Back to Login</Link>
-                </form>
+
+                    <div className="forgot-password-form-section">
+                        <form className="forgot-password-form" onSubmit={(e) => handleSubmit(e)}>
+                            <div className="form-field">
+                                <label className="form-label">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    onChange={(e) => { setUser({ email: e.target.value }) }} 
+                                    value={user.email} 
+                                    className="form-input" 
+                                    placeholder="Enter your email address"
+                                    required
+                                />
+                            </div>
+
+                            <button 
+                                disabled={!user.email || loading} 
+                                id="submitBtn" 
+                                className="form-submit-btn" 
+                                type="submit"
+                            >
+                                {loading ? "Sending..." : "Send Reset Link"}
+                            </button>
+
+                            {emailSent && (
+                                <div className="success-message">
+                                    <div className="success-icon">✓</div>
+                                    <div className="success-content">
+                                        <h4>Check Your Email</h4>
+                                        <p>We've sent a password reset link to your email address. Please check your inbox and spam folder.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {error && (
+                                <div className="error-message">
+                                    <div className="error-icon">⚠</div>
+                                    <div className="error-content">
+                                        <h4>Email Not Found</h4>
+                                        <p>No account found with that email address. If this is a mistake, please <a href="mailto:info@sponsor-db.com">contact support</a>.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="form-footer">
+                                <Link to="/login" className="back-to-login-link">
+                                    ← Back to Login
+                                </Link>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     );

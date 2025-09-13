@@ -144,24 +144,25 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                 Turn Your Newsletter Into a Revenue Machine
                             </h1>
                             <p className="hero-text-p">
-                                Get matched with sponsors that actually respond. Our AI-powered platform helps you find, contact, and close deals with {sponsorCount}+ verified sponsors from {newsletterCount}+ top newsletters.
+                                Access our database of {sponsorCount}+ verified newsletter sponsors with proven track records. 
+                                Find sponsors that actually respond and close deals faster with pre-filled contact information.
                             </p>
                             <div className="hero-features mb-0">
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('ai_matching')}>
-                                    <FontAwesomeIcon icon={faRocket} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">AI-Powered Matching - </span>Get matched with sponsors that match your audience demographics and interests.</p>
+                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('verified_sponsors')}>
+                                    <FontAwesomeIcon icon={faDatabase} className="hero-feature-icon" />
+                                    <p><span className="hero-feature-card__title">Verified Sponsors - </span>Access sponsors with proven track records of sponsoring newsletters.</p>
                                 </div>
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('proven_templates')}>
+                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('direct_contact')}>
                                     <FontAwesomeIcon icon={faEnvelope} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Proven Templates - </span>Email templates that actually get responses from sponsors.</p>
+                                    <p><span className="hero-feature-card__title">Direct Contact Links - </span>One-click access to sponsor contact information and pre-filled email templates.</p>
                                 </div>
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('roi_tracking')}>
-                                    <FontAwesomeIcon icon={faChartLine} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">ROI Tracking - </span>Track your revenue vs time spent to optimize your outreach strategy.</p>
+                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('smart_matching')}>
+                                    <FontAwesomeIcon icon={faRocket} className="hero-feature-icon" />
+                                    <p><span className="hero-feature-card__title">Smart Matching - </span>Get matched with sponsors based on your newsletter's audience and content.</p>
                                 </div>
                                 <div className="hero-feature-card" onClick={() => handleFeatureCardClick('response_rates')}>
                                     <FontAwesomeIcon icon={faCheckCircle} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Response Rate Analytics - </span>See which sponsors respond best to creators like you.</p>
+                                    <p><span className="hero-feature-card__title">Response Rate Data - </span>See which sponsors respond best to newsletter creators like you.</p>
                                 </div>
                             </div>
                             <div className="hero-buttons">
@@ -291,30 +292,154 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                 </div>
             </div>
 
+            {/* Testimonials Section - Commented out until we have real reviews */}
+            {/* 
+            <div className="web-section web-section-dark" id="testimonials">
+                <div className="web-section__container web-section-content">
+                    <div className="testimonials-container">
+                        <div className="testimonials-header">
+                            <h2 className="testimonials-title">
+                                Trusted by Newsletter Creators
+                            </h2>
+                            <p className="testimonials-subtitle">
+                                See how other creators are using SponsorTrail to grow their revenue
+                            </p>
+                        </div>
+                        
+                        <div className="testimonials-grid">
+                            <div className="testimonial-card">
+                                <div className="testimonial-content">
+                                    <div className="testimonial-quote">
+                                        "SponsorTrail completely transformed my newsletter monetization. I went from struggling to find sponsors to closing deals within weeks. The AI matching is incredibly accurate."
+                                    </div>
+                                    <div className="testimonial-author">
+                                        <div className="testimonial-author-info">
+                                            <div className="testimonial-author-name">Sarah Chen</div>
+                                            <div className="testimonial-author-title">Tech Newsletter Creator</div>
+                                            <div className="testimonial-author-revenue">$2,400/month revenue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="testimonial-card">
+                                <div className="testimonial-content">
+                                    <div className="testimonial-quote">
+                                        "The response rate analytics alone paid for the subscription. I can see exactly which sponsors respond to creators like me, saving me hours of wasted outreach."
+                                    </div>
+                                    <div className="testimonial-author">
+                                        <div className="testimonial-author-info">
+                                            <div className="testimonial-author-name">Marcus Rodriguez</div>
+                                            <div className="testimonial-author-title">Marketing Newsletter</div>
+                                            <div className="testimonial-author-revenue">$1,800/month revenue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="testimonial-card">
+                                <div className="testimonial-content">
+                                    <div className="testimonial-quote">
+                                        "I was skeptical about another tool, but SponsorTrail's templates actually work. My response rate went from 5% to 35% in the first month."
+                                    </div>
+                                    <div className="testimonial-author">
+                                        <div className="testimonial-author-info">
+                                            <div className="testimonial-author-name">Emily Watson</div>
+                                            <div className="testimonial-author-title">Productivity Newsletter</div>
+                                            <div className="testimonial-author-revenue">$3,200/month revenue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="testimonial-card">
+                                <div className="testimonial-content">
+                                    <div className="testimonial-quote">
+                                        "The ROI tracking feature is a game-changer. I can see exactly how much time I'm spending vs revenue generated. It's helped me optimize my entire process."
+                                    </div>
+                                    <div className="testimonial-author">
+                                        <div className="testimonial-author-info">
+                                            <div className="testimonial-author-name">David Kim</div>
+                                            <div className="testimonial-author-title">Business Newsletter</div>
+                                            <div className="testimonial-author-revenue">$4,100/month revenue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="testimonial-card">
+                                <div className="testimonial-content">
+                                    <div className="testimonial-quote">
+                                        "Finally, a platform that understands the newsletter creator's needs. The sponsor verification process gives me confidence in every outreach."
+                                    </div>
+                                    <div className="testimonial-author">
+                                        <div className="testimonial-author-info">
+                                            <div className="testimonial-author-name">Lisa Thompson</div>
+                                            <div className="testimonial-author-title">Finance Newsletter</div>
+                                            <div className="testimonial-author-revenue">$2,700/month revenue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="testimonial-card">
+                                <div className="testimonial-content">
+                                    <div className="testimonial-quote">
+                                        "The AI assistant for outreach optimization is incredible. It suggests improvements to my emails that I never would have thought of."
+                                    </div>
+                                    <div className="testimonial-author">
+                                        <div className="testimonial-author-info">
+                                            <div className="testimonial-author-name">Alex Johnson</div>
+                                            <div className="testimonial-author-title">Design Newsletter</div>
+                                            <div className="testimonial-author-revenue">$1,900/month revenue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="testimonials-cta">
+                            <p className="testimonials-cta-text">Ready to join these successful creators?</p>
+                            <Link to="/signup" className="btn home__container-item__btn" onClick={() => handleSignupClick('testimonials')}>
+                                Start Your Success Story &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            */}
+
+            {/* Demo Video Section */}
             <div className="web-section web-section-dark" id="demo">
                 <div className="web-section__container web-section-content">
                     <div className="demo-container">
                         <div className="demo-header">
                             <h2 className="demo-title">
-                                See SponsorDB in Action
+                                See SponsorTrail in Action
                             </h2>
                             <p className="demo-subtitle">
-                                Watch how easy it is to find and filter sponsors in just 30 seconds
+                                Watch how easy it is to find and connect with sponsors using our platform
                             </p>
                         </div>
-                        <div className="demo-video-wrapper">
-                            <div className="demo-video-container">
-                                <iframe
-                                    className="demo-video-iframe"
-                                    src={`https://www.youtube.com/embed/qGohgTlEK2Q?autoplay=0&rel=0&modestbranding=1`}
-                                    title="SponsorDB Demo Video"
+                        
+                        <div className="demo-video-container">
+                            <div className="demo-video-wrapper">
+                                <iframe 
+                                    className="demo-video"
+                                    src="https://www.youtube.com/embed/your-demo-video-id"
+                                    title="SponsorTrail Demo Video"
                                     frameBorder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                     allowFullScreen
-                                    onPlay={() => handleVideoInteraction('play')}
-                                    onPause={() => handleVideoInteraction('pause')}
                                 ></iframe>
                             </div>
+                        </div>
+
+
+                        <div className="demo-cta">
+                            <Link to="/signup" className="btn home__container-item__btn" onClick={() => handleSignupClick('demo')}>
+                                Start Your Free Trial &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -323,8 +448,8 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                 <div className="web-section__container web-section-content">
                     <div className="home__pricing-container">
                         <div className="home__pricing-header">
-                            <h2 className="home__pricing-title">Choose Your Success Plan</h2>
-                            <p className="home__pricing-subtitle">Start making money from your newsletter today</p>
+                            <h2 className="home__pricing-title">Access Our Sponsor Database</h2>
+                            <p className="home__pricing-subtitle">Get instant access to verified newsletter sponsors with proven track records</p>
                         </div>
                         <div className="home__pricing-cards">
                             <div className="home__pricing-card">
@@ -344,7 +469,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Basic email templates</span>
+                                        <span>Direct contact links for each sponsor</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
@@ -352,11 +477,11 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Unlimited outreach emails</span>
+                                        <span>Pre-filled email templates</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Basic analytics dashboard</span>
+                                        <span>Sponsor response rate data</span>
                                     </div>
                                 </div>
                                 
@@ -383,27 +508,19 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>AI-powered sponsor matching</span>
+                                        <span>Smart sponsor matching based on your newsletter</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Custom email template generator</span>
+                                        <span>Priority access to new sponsors</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Advanced response rate analytics</span>
+                                        <span>Advanced filtering by industry & budget</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Priority sponsor verification</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>AI assistant for outreach optimization</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Revenue tracking and ROI metrics</span>
+                                        <span>Detailed sponsor contact history</span>
                                     </div>
                                 </div>
                                 

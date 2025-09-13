@@ -108,11 +108,11 @@ const NavMenu = ({ isAdmin, isSubscribed, isLocalDev = false }: NavMenuProps) =>
                 <Link 
                     to="/profile" 
                     className="nav-menu__link"
-                    data-tooltip="Profile"
+                    data-tooltip="Account & Billing"
                 >
                     <FontAwesomeIcon className="nav-menu__link-icon" icon={faUser} />
                     <span className={`nav-menu__link-text ${addClass}`}>
-                        Profile
+                        Account & Billing
                     </span>
                 </Link>
             </div>

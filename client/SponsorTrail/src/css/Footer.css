@@ -1,8 +1,8 @@
 .footer {
     width: 100%;
     background: var(--var-color-primary);
-    color: var(--var-color-text);
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--var-color-white);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 4rem;
 }
 
@@ -24,14 +24,14 @@
 .footer-brand-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--var-color-text);
+    color: var(--var-color-white);
     margin: 0 0 0.75rem 0;
     letter-spacing: -0.025em;
 }
 
 .footer-brand-description {
     font-size: 0.95rem;
-    color: var(--var-color-text-light);
+    color: rgba(255, 255, 255, 0.8);
     line-height: 1.5;
     margin: 0;
     max-width: 300px;
@@ -40,7 +40,7 @@
 .footer-section-title {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--var-color-text);
+    color: var(--var-color-white);
     margin: 0 0 1rem 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -53,7 +53,7 @@
 }
 
 .footer-link {
-    color: var(--var-color-text-light);
+    color: rgba(255, 255, 255, 0.8);
     font-size: 0.9rem;
     text-decoration: none;
     transition: all 0.2s ease;
@@ -66,7 +66,7 @@
 }
 
 .footer-link:hover {
-    color: var(--var-color-accent);
+    color: var(--var-color-white);
     text-decoration: none;
 }
 
@@ -76,9 +76,9 @@
 }
 
 .footer-bottom {
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: 1.5rem 1rem;
-    background: rgba(0, 0, 0, 0.02);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .footer-bottom-content {
@@ -93,19 +93,19 @@
 
 .footer-copyright {
     font-size: 0.85rem;
-    color: var(--var-color-text-light);
+    color: rgba(255, 255, 255, 0.8);
     margin: 0;
 }
 
 .footer-contact-link {
-    color: var(--var-color-text-light);
+    color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
 .footer-contact-link:hover {
-    color: var(--var-color-accent);
+    color: var(--var-color-white);
     text-decoration: none;
 }
 

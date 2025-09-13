@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faCrown, faStar, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCrown, faStar } from '@fortawesome/free-solid-svg-icons';
 import { trackPageView, trackButtonClick, trackUserJourney } from '../utils/analytics';
 import config from '../config';
 import axios from 'axios';
@@ -74,10 +74,6 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
         }
     };
 
-    const handleSignupClick = () => {
-        trackButtonClick('signup_redirect', 'subscribe');
-        navigate('/signup');
-    };
 
     return (
         <div className="web-page">
@@ -86,49 +82,50 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                     <div className="subscribe-container">
                         <div className="subscribe-header">
                             <h1 className="subscribe-title">
-                                Choose Your Success Plan
+                                Access Our Sponsor Database
                             </h1>
                             <p className="subscribe-subtitle">
-                                Start making money from your newsletter today with our AI-powered sponsor matching
+                                Get instant access to verified newsletter sponsors with proven track records. 
+                                Find sponsors that actually respond and close deals faster.
                             </p>
                         </div>
 
                         <div className="subscribe-cards">
-                            <div className="subscribe-card">
-                                <div className="subscribe-card__header">
-                                    <h3 className="subscribe-card__title">Basic</h3>
-                                    <div className="subscribe-card__price">
-                                        <span className="subscribe-card__currency">$</span>
-                                        <span className="subscribe-card__amount">29</span>
-                                        <span className="subscribe-card__period">/month</span>
+                            <div className="home__pricing-card">
+                                <div className="home__pricing-card__header">
+                                    <h3 className="home__pricing-card__title">Basic</h3>
+                                    <div className="home__pricing-card__price">
+                                        <span className="home__pricing-card__currency">$</span>
+                                        <span className="home__pricing-card__amount">29</span>
+                                        <span className="home__pricing-card__period">/month</span>
                                     </div>
                                 </div>
                                 
-                                <div className="subscribe-card__benefits">
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
+                                <div className="home__pricing-card__benefits">
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
                                         <span>Access to 300+ verified sponsors</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>Basic email templates</span>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Direct contact links for each sponsor</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
                                         <span>Sponsor search and filtering</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>Unlimited outreach emails</span>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Pre-filled email templates</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>Basic analytics dashboard</span>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Sponsor response rate data</span>
                                     </div>
                                 </div>
                                 
                                 <button 
-                                    className="subscribe-card__cta-button" 
+                                    className="home__pricing-card__cta-button" 
                                     onClick={() => handlePlanSelect('basic')}
                                     disabled={loading}
                                 >
@@ -136,50 +133,42 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                 </button>
                             </div>
 
-                            <div className="subscribe-card subscribe-card--featured">
-                                <div className="subscribe-card__badge">Most Popular</div>
-                                <div className="subscribe-card__header">
-                                    <h3 className="subscribe-card__title">Pro</h3>
-                                    <div className="subscribe-card__price">
-                                        <span className="subscribe-card__currency">$</span>
-                                        <span className="subscribe-card__amount">79</span>
-                                        <span className="subscribe-card__period">/month</span>
+                            <div className="home__pricing-card home__pricing-card--featured">
+                                <div className="home__pricing-card__badge">Most Popular</div>
+                                <div className="home__pricing-card__header">
+                                    <h3 className="home__pricing-card__title">Pro</h3>
+                                    <div className="home__pricing-card__price">
+                                        <span className="home__pricing-card__currency">$</span>
+                                        <span className="home__pricing-card__amount">79</span>
+                                        <span className="home__pricing-card__period">/month</span>
                                     </div>
                                 </div>
                                 
-                                <div className="subscribe-card__benefits">
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
+                                <div className="home__pricing-card__benefits">
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
                                         <span>Everything in Basic</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>AI-powered sponsor matching</span>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Smart sponsor matching based on your newsletter</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>Custom email template generator</span>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Priority access to new sponsors</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>Advanced response rate analytics</span>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Advanced filtering by industry & budget</span>
                                     </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>Priority sponsor verification</span>
-                                    </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>AI assistant for outreach optimization</span>
-                                    </div>
-                                    <div className="subscribe-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="subscribe-card__benefit-icon" />
-                                        <span>Revenue tracking and ROI metrics</span>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Detailed sponsor contact history</span>
                                     </div>
                                 </div>
                                 
                                 <button 
-                                    className="subscribe-card__cta-button subscribe-card__cta-button--featured" 
+                                    className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" 
                                     onClick={() => handlePlanSelect('pro')}
                                     disabled={loading}
                                 >
@@ -194,18 +183,22 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                             </div>
                         )}
 
-                        <div className="subscribe-footer">
-                            <p className="subscribe-footer__text">
-                                Not ready to subscribe? 
-                                <button 
-                                    className="subscribe-footer__link" 
-                                    onClick={handleSignupClick}
-                                >
-                                    Create a free account
-                                </button>
-                                to explore our features
-                            </p>
+                        {/* Trust Indicators */}
+                        <div className="subscribe-trust">
+                            <div className="subscribe-trust__item">
+                                <FontAwesomeIcon icon={faCheckCircle} />
+                                <span>300+ verified sponsors</span>
+                            </div>
+                            <div className="subscribe-trust__item">
+                                <FontAwesomeIcon icon={faCheckCircle} />
+                                <span>Proven response rates</span>
+                            </div>
+                            <div className="subscribe-trust__item">
+                                <FontAwesomeIcon icon={faCheckCircle} />
+                                <span>Cancel anytime</span>
+                            </div>
                         </div>
+
                     </div>
                 </div>
             </div>

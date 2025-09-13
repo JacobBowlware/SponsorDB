@@ -7,7 +7,18 @@ import {
     faArrowLeft, 
     faDatabase, 
     faEnvelope, 
-    faCalendarAlt
+    faCalendarAlt,
+    faDollarSign,
+    faReply,
+    faComments,
+    faArrowTrendUp,
+    faClock,
+    faUser,
+    faPlus,
+    faEdit,
+    faTrash,
+    faCheck,
+    faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -29,6 +40,105 @@ interface Sponsor {
     dateApplied?: string;
     appliedBy?: string[];
 }
+
+interface SponsorApplication {
+    id: string;
+    sponsorName: string;
+    sponsorId: string;
+    contactEmail: string;
+    dateApplied: string;
+    status: 'pending' | 'responded' | 'follow_up_needed' | 'closed_won' | 'closed_lost';
+    responseDate?: string;
+    followUpDate?: string;
+    revenue?: number;
+    notes?: string;
+}
+
+interface Conversation {
+    id: string;
+    sponsorName: string;
+    sponsorId: string;
+    lastContactDate: string;
+    status: 'active' | 'pending_response' | 'follow_up_needed' | 'closed';
+    followUpNeeded: boolean;
+    followUpDate?: string;
+    revenue?: number;
+}
+
+// Mock data for the new analytics system
+const MOCK_APPLICATIONS: SponsorApplication[] = [
+    {
+        id: '1',
+        sponsorName: 'Eight Sleep',
+        sponsorId: '1',
+        contactEmail: 'partnerships@eightsleep.com',
+        dateApplied: '2024-03-16T14:20:00Z',
+        status: 'closed_won',
+        responseDate: '2024-03-18T10:30:00Z',
+        revenue: 2500,
+        notes: 'Great partnership, 3-month deal'
+    },
+    {
+        id: '2',
+        sponsorName: 'Notion',
+        sponsorId: '4',
+        contactEmail: 'partnerships@notion.so',
+        dateApplied: '2024-03-13T11:30:00Z',
+        status: 'responded',
+        responseDate: '2024-03-15T09:15:00Z',
+        notes: 'Interested, discussing terms'
+    },
+    {
+        id: '3',
+        sponsorName: 'Calm',
+        sponsorId: '6',
+        contactEmail: 'business@calm.com',
+        dateApplied: '2024-03-15T09:45:00Z',
+        status: 'follow_up_needed',
+        followUpDate: '2024-03-22T09:45:00Z',
+        notes: 'No response yet, follow up needed'
+    },
+    {
+        id: '4',
+        sponsorName: 'Spotify',
+        sponsorId: '8',
+        contactEmail: 'partnerships@spotify.com',
+        dateApplied: '2024-03-17T10:15:00Z',
+        status: 'pending',
+        notes: 'Just applied, waiting for response'
+    }
+];
+
+const MOCK_CONVERSATIONS: Conversation[] = [
+    {
+        id: '1',
+        sponsorName: 'Notion',
+        sponsorId: '4',
+        lastContactDate: '2024-03-15T09:15:00Z',
+        status: 'active',
+        followUpNeeded: false,
+        revenue: 0
+    },
+    {
+        id: '2',
+        sponsorName: 'Calm',
+        sponsorId: '6',
+        lastContactDate: '2024-03-15T09:45:00Z',
+        status: 'follow_up_needed',
+        followUpNeeded: true,
+        followUpDate: '2024-03-22T09:45:00Z',
+        revenue: 0
+    },
+    {
+        id: '3',
+        sponsorName: 'Spotify',
+        sponsorId: '8',
+        lastContactDate: '2024-03-17T10:15:00Z',
+        status: 'pending_response',
+        followUpNeeded: false,
+        revenue: 0
+    }
+];
 
 // Mock data for development mode
 const MOCK_SPONSORS: Sponsor[] = [
@@ -164,18 +274,15 @@ const MOCK_SPONSORS: Sponsor[] = [
 
 const Analytics: React.FC = () => {
     const navigate = useNavigate();
-    const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
-    const [userStats, setUserStats] = useState({
-        viewed: 0,
-        applied: 0,
-        total: 0
-    });
-    const [monthlyStats, setMonthlyStats] = useState({
-        viewedThisMonth: 0,
-        appliedThisMonth: 0
-    });
+    const [applications, setApplications] = useState<SponsorApplication[]>([]);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showAddApplication, setShowAddApplication] = useState(false);
+    const [editingApplication, setEditingApplication] = useState<SponsorApplication | null>(null);
+    const [showRevenueModal, setShowRevenueModal] = useState(false);
+    const [selectedApplication, setSelectedApplication] = useState<SponsorApplication | null>(null);
+    const [revenueAmount, setRevenueAmount] = useState('');
 
     useEffect(() => {
         fetchAnalyticsData();
@@ -190,35 +297,8 @@ const Analytics: React.FC = () => {
             
             if (isLocalDev) {
                 // Use mock data for development
-                setAllSponsors(MOCK_SPONSORS);
-                
-                // Calculate user stats from mock data
-                const viewed = MOCK_SPONSORS.filter((s: Sponsor) => s.isViewed).length;
-                const applied = MOCK_SPONSORS.filter((s: Sponsor) => s.isApplied).length;
-                setUserStats({ viewed, applied, total: MOCK_SPONSORS.length });
-
-                // Calculate monthly stats from mock data
-                const currentDate = new Date();
-                const currentMonth = currentDate.getMonth();
-                const currentYear = currentDate.getFullYear();
-                
-                const viewedThisMonth = MOCK_SPONSORS.filter((s: Sponsor) => {
-                    if (!s.isViewed || !s.dateViewed) return false;
-                    const viewDate = new Date(s.dateViewed);
-                    return viewDate.getMonth() === currentMonth && viewDate.getFullYear() === currentYear;
-                }).length;
-                
-                const appliedThisMonth = MOCK_SPONSORS.filter((s: Sponsor) => {
-                    if (!s.isApplied || !s.dateApplied) return false;
-                    const applyDate = new Date(s.dateApplied);
-                    return applyDate.getMonth() === currentMonth && applyDate.getFullYear() === currentYear;
-                }).length;
-                
-                setMonthlyStats({
-                    viewedThisMonth,
-                    appliedThisMonth
-                });
-                
+                setApplications(MOCK_APPLICATIONS);
+                setConversations(MOCK_CONVERSATIONS);
                 setLoading(false);
                 return;
             }
@@ -229,70 +309,161 @@ const Analytics: React.FC = () => {
                 return;
             }
 
-            const response = await axios.get(`${config.backendUrl}sponsors`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            // TODO: Replace with actual API calls
+            // const applicationsResponse = await axios.get(`${config.backendUrl}applications`, {
+            //     headers: { 'x-auth-token': token }
+            // });
+            // const conversationsResponse = await axios.get(`${config.backendUrl}conversations`, {
+            //     headers: { 'x-auth-token': token }
+            // });
             
-            const sponsors = response.data;
-            setAllSponsors(sponsors);
-            
-            // Calculate user stats
-            const viewed = sponsors.filter((s: Sponsor) => s.isViewed).length;
-            const applied = sponsors.filter((s: Sponsor) => s.isApplied).length;
-            setUserStats({ viewed, applied, total: sponsors.length });
-
-            // Calculate monthly stats (this month's activity)
-            const currentDate = new Date();
-            const currentMonth = currentDate.getMonth();
-            const currentYear = currentDate.getFullYear();
-            
-            console.log('Analytics Debug:', {
-                currentMonth,
-                currentYear,
-                totalSponsors: sponsors.length,
-                viewedSponsors: sponsors.filter((s: Sponsor) => s.isViewed).length,
-                appliedSponsors: sponsors.filter((s: Sponsor) => s.isApplied).length,
-                sponsorsWithViewDates: sponsors.filter((s: Sponsor) => s.isViewed && s.dateViewed).length,
-                sponsorsWithApplyDates: sponsors.filter((s: Sponsor) => s.isApplied && s.dateApplied).length
-            });
-            
-            // Count sponsors viewed this month
-            const viewedThisMonth = sponsors.filter((s: Sponsor) => {
-                if (!s.isViewed || !s.dateViewed) return false;
-                const viewDate = new Date(s.dateViewed);
-                const isThisMonth = viewDate.getMonth() === currentMonth && 
-                                   viewDate.getFullYear() === currentYear;
-                if (isThisMonth) {
-                    console.log('Sponsor viewed this month:', s.sponsorName, viewDate);
-                }
-                return isThisMonth;
-            }).length;
-            
-            // Count sponsors applied this month
-            const appliedThisMonth = sponsors.filter((s: Sponsor) => {
-                if (!s.isApplied || !s.dateApplied) return false;
-                const applyDate = new Date(s.dateApplied);
-                const isThisMonth = applyDate.getMonth() === currentMonth && 
-                                   applyDate.getFullYear() === currentYear;
-                if (isThisMonth) {
-                    console.log('Sponsor applied this month:', s.sponsorName, applyDate);
-                }
-                return isThisMonth;
-            }).length;
-            
-            setMonthlyStats({
-                viewedThisMonth,
-                appliedThisMonth
-            });
-
             setLoading(false);
         } catch (err) {
             setError('Failed to load analytics data');
             console.error('Error fetching analytics:', err);
             setLoading(false);
         }
+    };
+
+    // Helper functions for analytics calculations
+    const getTotalRevenue = () => {
+        return applications
+            .filter(app => app.revenue)
+            .reduce((sum, app) => sum + (app.revenue || 0), 0);
+    };
+
+    const getResponseRate = () => {
+        const totalApplications = applications.length;
+        const respondedApplications = applications.filter(app => 
+            app.status === 'responded' || app.status === 'closed_won' || app.status === 'closed_lost'
+        ).length;
+        return totalApplications > 0 ? Math.round((respondedApplications / totalApplications) * 100) : 0;
+    };
+
+    const getActiveConversations = () => {
+        return conversations.filter(conv => conv.status === 'active' || conv.status === 'pending_response').length;
+    };
+
+    const getPendingFollowUps = () => {
+        return conversations.filter(conv => conv.followUpNeeded).length;
+    };
+
+    const getROI = () => {
+        const totalRevenue = getTotalRevenue();
+        const subscriptionCost = 29; // Monthly subscription cost
+        return totalRevenue > 0 ? Math.round((totalRevenue / subscriptionCost) * 100) : 0;
+    };
+
+    const getRevenueThisMonth = () => {
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+        
+        return applications
+            .filter(app => {
+                if (!app.revenue) return false;
+                const appDate = new Date(app.dateApplied);
+                return appDate.getMonth() === currentMonth && appDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, app) => sum + (app.revenue || 0), 0);
+    };
+
+    const getRevenueLastMonth = () => {
+        const currentDate = new Date();
+        const lastMonth = currentDate.getMonth() === 0 ? 11 : currentDate.getMonth() - 1;
+        const lastMonthYear = currentDate.getMonth() === 0 ? currentDate.getFullYear() - 1 : currentDate.getFullYear();
+        
+        return applications
+            .filter(app => {
+                if (!app.revenue) return false;
+                const appDate = new Date(app.dateApplied);
+                return appDate.getMonth() === lastMonth && appDate.getFullYear() === lastMonthYear;
+            })
+            .reduce((sum, app) => sum + (app.revenue || 0), 0);
+    };
+
+    const getRevenueGrowth = () => {
+        const thisMonth = getRevenueThisMonth();
+        const lastMonth = getRevenueLastMonth();
+        if (lastMonth === 0) return thisMonth > 0 ? 100 : 0;
+        return Math.round(((thisMonth - lastMonth) / lastMonth) * 100);
+    };
+
+    const handleMarkResponse = (applicationId: string) => {
+        setApplications(prev => prev.map(app => 
+            app.id === applicationId 
+                ? { ...app, status: 'responded' as const, responseDate: new Date().toISOString() }
+                : app
+        ));
+    };
+
+    const handleMarkClosedWon = (application: SponsorApplication) => {
+        setSelectedApplication(application);
+        setRevenueAmount('');
+        setShowRevenueModal(true);
+    };
+
+    const handleConfirmRevenue = () => {
+        if (selectedApplication && revenueAmount) {
+            const revenue = parseInt(revenueAmount);
+            if (!isNaN(revenue) && revenue > 0) {
+                setApplications(prev => prev.map(app => 
+                    app.id === selectedApplication.id 
+                        ? { ...app, status: 'closed_won' as const, revenue }
+                        : app
+                ));
+                setShowRevenueModal(false);
+                setSelectedApplication(null);
+                setRevenueAmount('');
+            }
+        }
+    };
+
+    const handleMarkClosedLost = (applicationId: string) => {
+        setApplications(prev => prev.map(app => 
+            app.id === applicationId 
+                ? { ...app, status: 'closed_lost' as const }
+                : app
+        ));
+    };
+
+    const handleFollowUp = (conversation: Conversation) => {
+        // In dev mode, create a mailto link with pre-filled content
+        const newsletterInfo = {
+            name: "Tech Weekly",
+            topic: "Technology and Innovation",
+            audienceSize: "15,000",
+            engagementRate: "12%"
+        };
+        
+        const subject = `Follow-up: Newsletter Sponsorship Opportunity - ${conversation.sponsorName}`;
+        const body = `Hi there,
+
+I hope this email finds you well. I wanted to follow up on my previous outreach regarding a potential newsletter sponsorship opportunity.
+
+About Tech Weekly:
+- 15,000+ engaged subscribers
+- 12% average open rate
+- Focus: Technology and Innovation
+- Weekly publication every Tuesday
+
+I believe your brand would be a great fit for our audience. Would you be interested in discussing a potential partnership?
+
+I'd love to schedule a brief call to discuss how we can work together.
+
+Best regards,
+[Your Name]
+Tech Weekly Newsletter`;
+
+        const mailtoLink = `mailto:${conversation.sponsorName.toLowerCase().replace(/\s+/g, '')}@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(mailtoLink);
+        
+        // Mark follow-up as sent
+        setConversations(prev => prev.map(conv => 
+            conv.id === conversation.id 
+                ? { ...conv, followUpNeeded: false, lastContactDate: new Date().toISOString() }
+                : conv
+        ));
     };
 
     if (loading) {
@@ -313,69 +484,6 @@ const Analytics: React.FC = () => {
         );
     }
 
-    // Helper functions for the growth chart
-    const getNewSponsorsThisMonth = () => {
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth();
-        const currentYear = currentDate.getFullYear();
-        
-        return allSponsors.filter(sponsor => {
-            const sponsorDate = new Date(sponsor.dateAdded);
-            return sponsorDate.getMonth() === currentMonth && 
-                   sponsorDate.getFullYear() === currentYear;
-        }).length;
-    };
-
-    const getNewSponsorsLastMonth = () => {
-        const currentDate = new Date();
-        const lastMonth = currentDate.getMonth() === 0 ? 11 : currentDate.getMonth() - 1;
-        const lastMonthYear = currentDate.getMonth() === 0 ? currentDate.getFullYear() - 1 : currentDate.getFullYear();
-        
-        return allSponsors.filter(sponsor => {
-            const sponsorDate = new Date(sponsor.dateAdded);
-            return sponsorDate.getMonth() === lastMonth && 
-                   sponsorDate.getFullYear() === lastMonthYear;
-        }).length;
-    };
-
-    const getGrowthRate = () => {
-        const thisMonth = getNewSponsorsThisMonth();
-        const lastMonth = getNewSponsorsLastMonth();
-        
-        if (lastMonth === 0) return thisMonth > 0 ? 100 : 0;
-        return Math.round(((thisMonth - lastMonth) / lastMonth) * 100);
-    };
-
-    const getLast6MonthsData = () => {
-        const months = [];
-        const currentDate = new Date();
-        
-        for (let i = 5; i >= 0; i--) {
-            const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-            const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
-            
-            const sponsorCount = allSponsors.filter(sponsor => {
-                const sponsorDate = new Date(sponsor.dateAdded);
-                return sponsorDate.getMonth() === monthDate.getMonth() && 
-                       sponsorDate.getFullYear() === monthDate.getFullYear();
-            }).length;
-            
-            months.push({
-                month: monthName,
-                count: sponsorCount,
-                height: 0 // Will be calculated below
-            });
-        }
-        
-        // Calculate heights for the chart bars
-        const maxCount = Math.max(...months.map(m => m.count));
-        months.forEach(month => {
-            month.height = maxCount > 0 ? Math.round((month.count / maxCount) * 80) : 0;
-        });
-        
-        return months;
-    };
-
     return (
         <div className="analytics-page">
             <div className="analytics-header">
@@ -383,161 +491,223 @@ const Analytics: React.FC = () => {
                     <FontAwesomeIcon icon={faArrowLeft} />
                     Back to Sponsors
                 </button>
-                <h1>Analytics Dashboard</h1>
+                <h1>Revenue Analytics</h1>
+                <p>Track your newsletter sponsorship performance and revenue</p>
             </div>
 
             <div className="analytics-content">
-                {/* Key Metrics Row */}
-                <div className="analytics-metrics-row">
-                    <div className="metric-card">
-                        <div className="metric-icon">
-                            <FontAwesomeIcon icon={faEye} />
+                {/* Overview Cards */}
+                <div className="analytics-overview">
+                    <div className="overview-card revenue-card">
+                        <div className="card-icon">
+                            <FontAwesomeIcon icon={faDollarSign} />
                         </div>
-                        <div className="metric-info">
-                            <div className="metric-value">{userStats.viewed}</div>
-                            <div className="metric-label">Viewed</div>
-                        </div>
-                    </div>
-                    <div className="metric-card">
-                        <div className="metric-icon">
-                            <FontAwesomeIcon icon={faCheckCircle} />
-                        </div>
-                        <div className="metric-info">
-                            <div className="metric-value">{userStats.applied}</div>
-                            <div className="metric-label">Applied</div>
+                        <div className="card-content">
+                            <div className="card-title">This Month's Revenue</div>
+                            <div className="card-value">${getRevenueThisMonth().toLocaleString()}</div>
+                            <div className="card-change positive">
+                                +{getRevenueGrowth()}% vs last month
+                            </div>
                         </div>
                     </div>
-                    <div className="metric-card">
-                        <div className="metric-icon">
-                            <FontAwesomeIcon icon={faDatabase} />
+
+                    <div className="overview-card response-card">
+                        <div className="card-icon">
+                            <FontAwesomeIcon icon={faReply} />
                         </div>
-                        <div className="metric-info">
-                            <div className="metric-value">{userStats.total}</div>
-                            <div className="metric-label">Available</div>
+                        <div className="card-content">
+                            <div className="card-title">Outreach Response Rate</div>
+                            <div className="card-value">{getResponseRate()}%</div>
+                            <div className="card-benchmark">vs 8% industry avg</div>
                         </div>
                     </div>
-                    <div className="metric-card">
-                        <div className="metric-icon">
-                            <FontAwesomeIcon icon={faCalendarAlt} />
+
+                    <div className="overview-card conversations-card">
+                        <div className="card-icon">
+                            <FontAwesomeIcon icon={faComments} />
                         </div>
-                        <div className="metric-info">
-                            <div className="metric-value">{monthlyStats.viewedThisMonth}</div>
-                            <div className="metric-label">This Month</div>
+                        <div className="card-content">
+                            <div className="card-title">Active Conversations</div>
+                            <div className="card-value">{getActiveConversations()}</div>
+                            <div className="card-subtitle">{getPendingFollowUps()} pending follow-ups</div>
+                        </div>
+                    </div>
+
+                    <div className="overview-card roi-card">
+                        <div className="card-icon">
+                            <FontAwesomeIcon icon={faArrowTrendUp} />
+                        </div>
+                        <div className="card-content">
+                            <div className="card-title">ROI on SponsorDB</div>
+                            <div className="card-value">{getROI()}%</div>
+                            <div className="card-calculation">Revenue generated / subscription cost</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Growth Chart */}
+                {/* Revenue Tracking Section */}
                 <div className="analytics-section">
-                    <h3>New Sponsors Over Time</h3>
-                    <div className="growth-chart">
-                        <div className="chart-stats">
-                            <div className="chart-stat">
-                                <span className="stat-label">This Month</span>
-                                <span className="stat-value">{getNewSponsorsThisMonth()}</span>
-                            </div>
-                            <div className="chart-stat">
-                                <span className="stat-label">Last Month</span>
-                                <span className="stat-value">{getNewSponsorsLastMonth()}</span>
-                            </div>
-                            <div className="chart-stat">
-                                <span className="stat-label">Growth Rate</span>
-                                <span className="stat-value">{getGrowthRate()}%</span>
-                            </div>
-                        </div>
-                        <div className="chart-bars">
-                            {getLast6MonthsData().map((monthData, index) => (
-                                <div key={monthData.month} className="chart-bar-group">
-                                    <div className="chart-bar" style={{ height: `${monthData.height}%` }}>
-                                        <span className="bar-value">{monthData.count}</span>
-                                    </div>
-                                    <span className="bar-label">{monthData.month}</span>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="section-header">
+                        <h3>Revenue Tracking</h3>
+                        <button 
+                            className="add-application-btn"
+                            onClick={() => setShowAddApplication(true)}
+                        >
+                            <FontAwesomeIcon icon={faPlus} />
+                            Add Application
+                        </button>
                     </div>
-                </div>
-
-                {/* Top Sponsors Table */}
-                <div className="analytics-section">
-                    <h3>Most Applied Sponsors</h3>
-                    <div className="sponsors-table">
+                    
+                    <div className="applications-table">
                         <div className="table-header">
-                            <div className="table-col">Rank</div>
                             <div className="table-col">Sponsor</div>
-                            <div className="table-col">Newsletter</div>
-                            <div className="table-col">Applications</div>
-                            <div className="table-col">Subscribers</div>
+                            <div className="table-col">Applied Date</div>
+                            <div className="table-col">Status</div>
+                            <div className="table-col">Revenue</div>
+                            <div className="table-col">Actions</div>
                         </div>
-                        {allSponsors
-                            .sort((a, b) => (b.appliedBy?.length || 0) - (a.appliedBy?.length || 0))
-                            .slice(0, 10)
-                            .map((sponsor, index) => (
-                                <div 
-                                    key={sponsor._id} 
-                                    className="table-row"
-                                    onClick={() => {
-                                        const url = sponsor.rootDomain || sponsor.sponsorLink;
-                                        if (url) {
-                                            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                                            window.open(fullUrl, '_blank', 'noopener,noreferrer');
-                                        }
-                                    }}
-                                >
-                                    <div className="table-col rank-col">
-                                        <span className="rank-badge">{index + 1}</span>
-                                    </div>
-                                    <div className="table-col sponsor-col">
-                                        <div className="sponsor-name">{sponsor.sponsorName}</div>
-                                        <div className="sponsor-tags">
-                                            {sponsor.tags.slice(0, 2).map((tag, i) => (
-                                                <span key={i} className="tag">{tag}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="table-col newsletter-col">{sponsor.newsletterSponsored}</div>
-                                    <div className="table-col applications-col">{sponsor.appliedBy?.length || 0}</div>
-                                    <div className="table-col subscribers-col">{sponsor.subscriberCount?.toLocaleString()}</div>
+                        {applications.map((app) => (
+                            <div key={app.id} className="table-row">
+                                <div className="table-col">
+                                    <div className="sponsor-name">{app.sponsorName}</div>
+                                    <div className="sponsor-email">{app.contactEmail}</div>
                                 </div>
-                            ))}
+                                <div className="table-col">
+                                    {new Date(app.dateApplied).toLocaleDateString()}
+                                </div>
+                                <div className="table-col">
+                                    <span className={`status-badge ${app.status}`}>
+                                        {app.status.replace('_', ' ').toUpperCase()}
+                                    </span>
+                                </div>
+                                <div className="table-col">
+                                    {app.revenue ? `$${app.revenue.toLocaleString()}` : '-'}
+                                </div>
+                                <div className="table-col actions-col">
+                                    {app.status === 'pending' && (
+                                        <button 
+                                            className="action-btn response-btn"
+                                            onClick={() => handleMarkResponse(app.id)}
+                                        >
+                                            <FontAwesomeIcon icon={faReply} />
+                                            Mark Responded
+                                        </button>
+                                    )}
+                                    {app.status === 'responded' && (
+                                        <div className="action-buttons">
+                                            <button 
+                                                className="action-btn success-btn"
+                                                onClick={() => handleMarkClosedWon(app)}
+                                            >
+                                                <FontAwesomeIcon icon={faCheck} />
+                                                Won
+                                            </button>
+                                            <button 
+                                                className="action-btn danger-btn"
+                                                onClick={() => handleMarkClosedLost(app.id)}
+                                            >
+                                                <FontAwesomeIcon icon={faTimes} />
+                                                Lost
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* Your Applied Sponsors */}
-                {userStats.applied > 0 && (
-                    <div className="analytics-section">
-                        <h3>Your Applied Sponsors</h3>
-                        <div className="applied-sponsors-list">
-                            {allSponsors.filter(s => s.isApplied).map((sponsor) => (
-                                <div 
-                                    key={sponsor._id} 
-                                    className="applied-sponsor-item"
-                                    onClick={() => {
-                                        const url = sponsor.rootDomain || sponsor.sponsorLink;
-                                        if (url) {
-                                            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                                            window.open(fullUrl, '_blank', 'noopener,noreferrer');
-                                        }
-                                    }}
-                                >
-                                    <div className="sponsor-info">
-                                        <div className="sponsor-name">{sponsor.sponsorName}</div>
-                                        <div className="sponsor-newsletter">{sponsor.newsletterSponsored}</div>
-                                    </div>
-                                    <div className="sponsor-meta">
-                                        <div className="applied-date">
-                                            Applied {sponsor.dateApplied ? new Date(sponsor.dateApplied).toLocaleDateString() : new Date(sponsor.dateAdded).toLocaleDateString()}
-                                        </div>
-                                        <div className="subscriber-count">
-                                            {sponsor.subscriberCount.toLocaleString()} subscribers
-                                        </div>
+                {/* Active Conversations */}
+                <div className="analytics-section">
+                    <h3>Active Conversations</h3>
+                    <div className="conversations-list">
+                        {conversations.map((conv) => (
+                            <div key={conv.id} className="conversation-item">
+                                <div className="conversation-info">
+                                    <div className="conversation-name">{conv.sponsorName}</div>
+                                    <div className="conversation-date">
+                                        Last contact: {new Date(conv.lastContactDate).toLocaleDateString()}
                                     </div>
                                 </div>
-                            ))}
+                                <div className="conversation-status">
+                                    <span className={`status-badge ${conv.status}`}>
+                                        {conv.status.replace('_', ' ').toUpperCase()}
+                                    </span>
+                                </div>
+                                <div className="conversation-actions">
+                                    {conv.followUpNeeded && (
+                                        <button 
+                                            className="follow-up-btn"
+                                            onClick={() => handleFollowUp(conv)}
+                                        >
+                                            <FontAwesomeIcon icon={faEnvelope} />
+                                            Send Follow-up
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Revenue Chart Placeholder */}
+                <div className="analytics-section">
+                    <h3>Monthly Revenue Trend</h3>
+                    <div className="revenue-chart">
+                        <div className="chart-placeholder">
+                            <FontAwesomeIcon icon={faChartLine} />
+                            <p>Revenue trend chart coming soon</p>
                         </div>
                     </div>
-                )}
+                </div>
             </div>
+
+            {/* Revenue Modal */}
+            {showRevenueModal && selectedApplication && (
+                <div className="modal-overlay">
+                    <div className="revenue-modal">
+                        <div className="modal-header">
+                            <h3>Record Revenue</h3>
+                            <button 
+                                className="modal-close"
+                                onClick={() => setShowRevenueModal(false)}
+                            >
+                                <FontAwesomeIcon icon={faTimes} />
+                            </button>
+                        </div>
+                        <div className="modal-content">
+                            <p>How much revenue did you generate from <strong>{selectedApplication.sponsorName}</strong>?</p>
+                            <div className="revenue-input-group">
+                                <span className="currency-symbol">$</span>
+                                <input
+                                    type="number"
+                                    value={revenueAmount}
+                                    onChange={(e) => setRevenueAmount(e.target.value)}
+                                    placeholder="0"
+                                    className="revenue-input"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="modal-actions">
+                                <button 
+                                    className="btn-cancel"
+                                    onClick={() => setShowRevenueModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    className="btn-confirm"
+                                    onClick={handleConfirmRevenue}
+                                    disabled={!revenueAmount || parseInt(revenueAmount) <= 0}
+                                >
+                                    <FontAwesomeIcon icon={faCheck} />
+                                    Record Revenue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
