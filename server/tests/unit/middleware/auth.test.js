@@ -35,19 +35,36 @@ describe('auth middleware', () => {
         expect(req.user).toMatchObject(userData);
     });
 
-    it('should return 400 if the JWT is invalid', () => {
+    it('should return 401 if the JWT is invalid', () => {
         req = {
             header: jest.fn().mockReturnValue('InvalidToken')
         };
 
         auth(req, res, next);
 
-        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.status).toHaveBeenCalledWith(401);
     });
 
     it('should return 401 if no token is provided', () => {
         req = {
             header: jest.fn().mockReturnValue(null)
+        };
+
+        auth(req, res, next);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    it('should return 401 if the JWT is expired', () => {
+        // Create an expired token
+        const expiredToken = jwt.sign({
+            _id: user._id,
+            'email': user.email,
+            'password': user.password
+        }, config.get('JWT_PRIVATE_KEY'), { expiresIn: '-1h' }); // Expired 1 hour ago
+
+        req = {
+            header: jest.fn().mockReturnValue(expiredToken)
         };
 
         auth(req, res, next);

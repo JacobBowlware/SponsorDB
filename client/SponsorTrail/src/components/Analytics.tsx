@@ -272,7 +272,11 @@ const MOCK_SPONSORS: Sponsor[] = [
     }
 ];
 
-const Analytics: React.FC = () => {
+interface AnalyticsProps {
+    isSubscribed: boolean;
+}
+
+const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed }) => {
     const navigate = useNavigate();
     const [applications, setApplications] = useState<SponsorApplication[]>([]);
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -287,6 +291,27 @@ const Analytics: React.FC = () => {
     useEffect(() => {
         fetchAnalyticsData();
     }, []);
+
+    // Show subscription prompt for unsubscribed users
+    if (!isSubscribed) {
+        return (
+            <div className="analytics-page">
+                <div className="analytics-subscription-prompt">
+                    <div className="subscription-prompt-content">
+                        <FontAwesomeIcon icon={faChartLine} className="subscription-prompt-icon" />
+                        <h2>Access Your Sponsor Analytics</h2>
+                        <p>Subscribe to track your outreach performance, revenue, and optimize your sponsor strategy.</p>
+                        <button 
+                            className="btn btn-primary"
+                            onClick={() => navigate('/subscribe')}
+                        >
+                            Subscribe Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const fetchAnalyticsData = async () => {
         try {

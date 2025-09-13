@@ -92,6 +92,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
 
                         <div className="subscribe-cards">
                             <div className="home__pricing-card">
+                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
                                 <div className="home__pricing-card__header">
                                     <h3 className="home__pricing-card__title">Basic</h3>
                                     <div className="home__pricing-card__price">
@@ -129,12 +130,13 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                     onClick={() => handlePlanSelect('basic')}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Processing...' : 'Start Basic Plan'}
+                                    {loading ? 'Processing...' : 'Start 2-Week Free Trial'}
                                 </button>
                             </div>
 
                             <div className="home__pricing-card home__pricing-card--featured">
                                 <div className="home__pricing-card__badge">Most Popular</div>
+                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
                                 <div className="home__pricing-card__header">
                                     <h3 className="home__pricing-card__title">Pro</h3>
                                     <div className="home__pricing-card__price">
@@ -172,7 +174,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                     onClick={() => handlePlanSelect('pro')}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Processing...' : 'Start Pro Plan'}
+                                    {loading ? 'Processing...' : 'Start 2-Week Free Trial'}
                                 </button>
                             </div>
                         </div>

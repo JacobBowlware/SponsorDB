@@ -1,7 +1,7 @@
 // React
 import {
   createBrowserRouter, createRoutesFromElements,
-  RouterProvider, Route, Outlet
+  RouterProvider, Route, Outlet, Link
 } from 'react-router-dom';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -66,6 +66,17 @@ import axios from 'axios';
 import config from './config';
 import ChangePasswordFinal from './pages/ChangePasswordFinal';
 import NavMenu from './components/common/NavMenu';
+
+// Utility function to check if JWT token is expired
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    return payload.exp < currentTime;
+  } catch (error) {
+    return true; // If we can't parse the token, consider it expired
+  }
+};
 
 // Custom hook for media queries
 const useMediaQuery = (query: string) => {
@@ -134,10 +145,16 @@ function App() {
   const isSubscribed = Boolean(user.subscription && user.subscription !== 'none');
 
   const getDbInfo = async () => {
+    const token = localStorage.getItem('token');
+    if (!token || isTokenExpired(token)) {
+      console.log('Token expired or missing, skipping database info fetch');
+      return;
+    }
+
     // Get database info
     const dbInfo = await axios.get(`${config.backendUrl}sponsors/db-info`, {
       headers: {
-        'x-auth-token': localStorage.getItem('token')
+        'x-auth-token': token
       }
     });
 
@@ -156,13 +173,43 @@ function App() {
     }
 
     // Get user profile information
+    const token = localStorage.getItem('token');
+    if (!token || isTokenExpired(token)) {
+      console.log('Token expired or missing, clearing authentication');
+      localStorage.removeItem('token');
+      setUserAuth(false);
+      setUser({
+        email: "",
+        isAdmin: false,
+        subscription: null,
+        stripeCustomerId: "",
+        billing: null,
+        newsletterInfo: null,
+      });
+      return;
+    }
+
     await axios.get(`${config.backendUrl}users/me`, {
       headers: {
-        'x-auth-token': localStorage.getItem('token')
+        'x-auth-token': token
       }
     }).then((res) => {
       setUser(res.data);
     }).catch((err) => {
+      // If we get a 401/403, the token might be invalid
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        console.log('Token invalid, clearing authentication');
+        localStorage.removeItem('token');
+        setUserAuth(false);
+        setUser({
+          email: "",
+          isAdmin: false,
+          subscription: null,
+          stripeCustomerId: "",
+          billing: null,
+          newsletterInfo: null,
+        });
+      }
     })
   }, [isLocalDev]);
 
@@ -184,6 +231,22 @@ function App() {
 
     const token = localStorage.getItem('token');
     if (token) {
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        console.log('Token expired, clearing authentication');
+        localStorage.removeItem('token');
+        setUserAuth(false);
+        setUser({
+          email: "",
+          isAdmin: false,
+          subscription: null,
+          stripeCustomerId: "",
+          billing: null,
+          newsletterInfo: null,
+        });
+        return;
+      }
+      
       setUserAuth(true);
 
       if (user.email === "") {
@@ -199,6 +262,22 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token && !userAuth) {
+      // Check if token is expired before setting auth
+      if (isTokenExpired(token)) {
+        console.log('Token expired, clearing authentication');
+        localStorage.removeItem('token');
+        setUserAuth(false);
+        setUser({
+          email: "",
+          isAdmin: false,
+          subscription: null,
+          stripeCustomerId: "",
+          billing: null,
+          newsletterInfo: null,
+        });
+        return;
+      }
+      
       setUserAuth(true);
       getUserInfo();
     } else if (!token && userAuth) {
@@ -213,6 +292,30 @@ function App() {
       });
     }
   }, [userAuth, getUserInfo]);
+
+  // Periodic token validation (every 5 minutes)
+  useEffect(() => {
+    if (!isLocalDev && userAuth) {
+      const interval = setInterval(() => {
+        const token = localStorage.getItem('token');
+        if (token && isTokenExpired(token)) {
+          console.log('Token expired during periodic check, clearing authentication');
+          localStorage.removeItem('token');
+          setUserAuth(false);
+          setUser({
+            email: "",
+            isAdmin: false,
+            subscription: null,
+            stripeCustomerId: "",
+            billing: null,
+            newsletterInfo: null,
+          });
+        }
+      }, 5 * 60 * 1000); // Check every 5 minutes
+
+      return () => clearInterval(interval);
+    }
+  }, [userAuth, isLocalDev]);
 
   const Root = () => {
     if (!userAuth) { // Default Navbar (should always be on home page)
@@ -282,9 +385,10 @@ function App() {
           user={user}
         />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
-        {/* Subscriber Routes - Protected by authentication */}
-        {userAuth && <Route path="/sponsors/" element={<Sponsors isSubscribed={user.subscription} sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} />} />}
-        {userAuth && <Route path="/analytics/" element={<Analytics />} />}
+        {/* Subscriber Routes - Protected by authentication AND subscription */}
+        {userAuth && isSubscribed && <Route path="/sponsors/" element={<Sponsors isSubscribed={user.subscription} sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} />} />}
+        {userAuth && !isSubscribed && <Route path="/sponsors/" element={<div className="web-page"><div className="subscription-required"><h2>Subscription Required</h2><p>Please subscribe to access our sponsor database.</p><Link to="/subscribe" className="btn btn-primary">Subscribe Now</Link></div></div>} />}
+        {userAuth && <Route path="/analytics/" element={<Analytics isSubscribed={isSubscribed} />} />}
         {/* Admin Routes */}
         {userAuth && user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

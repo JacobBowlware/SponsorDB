@@ -1176,3 +1176,50 @@ html {
     border-radius: 8px;
   }
 }
+
+/* Subscription Required Page */
+.subscription-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.subscription-required h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.subscription-required p {
+  font-size: 1.2rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  max-width: 500px;
+}
+
+.subscription-required .btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .subscription-required {
+    padding: 1rem;
+    min-height: 50vh;
+  }
+  
+  .subscription-required h2 {
+    font-size: 2rem;
+  }
+  
+  .subscription-required p {
+    font-size: 1.1rem;
+  }
+}

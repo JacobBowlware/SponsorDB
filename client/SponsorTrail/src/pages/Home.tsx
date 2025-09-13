@@ -168,7 +168,9 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                 <Link to="/signup" className="btn home__container-item__btn mb-3" onClick={() => handleSignupClick('hero')}>
                                     Start Making Money &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                                 </Link>
-                                <p className="hero-trust-text">Join newsletter creators already earning with SponsorDB</p>
+                                <div className="hero-trust-container">
+                                    <p className="hero-trust-text">Join newsletter creators already earning with SponsorDB</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -453,6 +455,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                         </div>
                         <div className="home__pricing-cards">
                             <div className="home__pricing-card">
+                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
                                 <div className="home__pricing-card__header">
                                     <h3 className="home__pricing-card__title">Basic</h3>
                                     <div className="home__pricing-card__price">
@@ -486,12 +489,13 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                 </div>
                                 
                                 <Link className="home__pricing-card__cta-button" to="/signup" onClick={handlePricingClick}>
-                                    Start Basic Plan
+                                    Start 2-Week Free Trial
                                 </Link>
                             </div>
 
                             <div className="home__pricing-card home__pricing-card--featured">
                                 <div className="home__pricing-card__badge">Most Popular</div>
+                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
                                 <div className="home__pricing-card__header">
                                     <h3 className="home__pricing-card__title">Pro</h3>
                                     <div className="home__pricing-card__price">
@@ -525,7 +529,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                 </div>
                                 
                                 <Link className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" to="/signup" onClick={handlePricingClick}>
-                                    Start Pro Plan
+                                    Start 2-Week Free Trial
                                 </Link>
                             </div>
                         </div>

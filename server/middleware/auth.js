@@ -28,6 +28,13 @@ module.exports = async function (req, res, next) {
         next();
     }
     catch (ex) {
-        return res.status(400).send(ex, ex.message);
+        // Handle specific JWT errors
+        if (ex.name === 'TokenExpiredError') {
+            return res.status(401).send('Token expired. Please log in again.');
+        } else if (ex.name === 'JsonWebTokenError') {
+            return res.status(401).send('Invalid token. Please log in again.');
+        } else {
+            return res.status(400).send('Invalid token.');
+        }
     }
 };

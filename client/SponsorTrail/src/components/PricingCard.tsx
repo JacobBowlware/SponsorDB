@@ -14,6 +14,7 @@ interface PricingCardProps {
 const PricingCard = ({ header, icon, price, text, year, handlePurchase }: PricingCardProps) => {
     return (
         <div className="home__pricing-card">
+            <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
             <div className="home__pricing-card-section__cont">
                 <div className="home__pricing-card__header__cont">
                     <h3 className="home__pricing-card__header">{header}</h3>
@@ -28,7 +29,7 @@ const PricingCard = ({ header, icon, price, text, year, handlePurchase }: Pricin
                     {price} {year && <span className="home__pricing-card__price__time">/year</span>} {!year && <span className="home__pricing-card__price__time">/month</span>}
                 </p>
                 <button onClick={handlePurchase} className="home__pricing-card__cta-button">
-                    Get Started
+                    Start 2-Week Free Trial
                 </button>
             </div>
         </div>
