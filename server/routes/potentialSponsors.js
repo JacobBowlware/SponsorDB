@@ -59,7 +59,7 @@ router.get('/checkDuplicate', async (req, res) => {
 });
 
 
-// Route to run emailMonitor.js 
+// Route to run emailMonitor.js (Legacy - keeping for backup)
 router.get('/emailMonitor', async (req, res) => {
     try {
         emailMonitor();
@@ -69,6 +69,109 @@ router.get('/emailMonitor', async (req, res) => {
         return res.status(400).send(e);
     }
     res.status(200).send('Email Monitor is running...');
+});
+
+// Route to run Python Newsletter Scraper
+router.get('/pythonScraper', async (req, res) => {
+    const { spawn } = require('child_process');
+    const path = require('path');
+    
+    try {
+        console.log("Starting Python Newsletter Scraper...");
+        
+        // Path to the Python API wrapper
+        const pythonScriptPath = path.join(__dirname, '../../newsletter_scraper/api_wrapper.py');
+        
+        // Spawn Python process
+        const pythonProcess = spawn('python3', [pythonScriptPath], {
+            cwd: path.join(__dirname, '../../newsletter_scraper'),
+            env: {
+                ...process.env,
+                // Ensure Python can find the modules
+                PYTHONPATH: path.join(__dirname, '../../newsletter_scraper')
+            }
+        });
+        
+        let output = '';
+        let errorOutput = '';
+        
+        // Capture stdout
+        pythonProcess.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+        
+        // Capture stderr
+        pythonProcess.stderr.on('data', (data) => {
+            errorOutput += data.toString();
+        });
+        
+        // Handle process completion
+        pythonProcess.on('close', (code) => {
+            console.log(`Python scraper process exited with code ${code}`);
+            
+            if (code === 0) {
+                try {
+                    // Parse JSON output from Python
+                    const result = JSON.parse(output);
+                    console.log("Python scraper completed successfully:", result);
+                    res.status(200).json({
+                        success: true,
+                        message: 'Python Newsletter Scraper completed successfully',
+                        pythonResult: result
+                    });
+                } catch (parseError) {
+                    console.error("Error parsing Python output:", parseError);
+                    res.status(200).json({
+                        success: true,
+                        message: 'Python Newsletter Scraper completed (output parsing failed)',
+                        rawOutput: output,
+                        errorOutput: errorOutput
+                    });
+                }
+            } else {
+                console.error("Python scraper failed with code:", code);
+                console.error("Error output:", errorOutput);
+                res.status(400).json({
+                    success: false,
+                    message: 'Python Newsletter Scraper failed',
+                    exitCode: code,
+                    errorOutput: errorOutput,
+                    output: output
+                });
+            }
+        });
+        
+        // Handle process errors
+        pythonProcess.on('error', (error) => {
+            console.error("Failed to start Python scraper:", error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to start Python Newsletter Scraper',
+                error: error.message
+            });
+        });
+        
+        // Set timeout (5 minutes)
+        setTimeout(() => {
+            if (!pythonProcess.killed) {
+                console.log("Python scraper timeout - killing process");
+                pythonProcess.kill();
+                res.status(408).json({
+                    success: false,
+                    message: 'Python Newsletter Scraper timeout',
+                    timeout: true
+                });
+            }
+        }, 300000); // 5 minutes
+        
+    } catch (error) {
+        console.error("Error running Python scraper:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Error running Python Newsletter Scraper',
+            error: error.message
+        });
+    }
 });
 
 // Get all potential sponsors
