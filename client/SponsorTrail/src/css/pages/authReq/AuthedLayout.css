@@ -3,6 +3,7 @@
   flex-direction: row;
   width: 100%;
   min-height: 100vh !important;
+  overflow-x: hidden;
 }
 
 .authed-app__content {
@@ -11,12 +12,24 @@
   min-height: 100vh;
   flex: 1;
   background: var(--var-color-background);
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .authed-app__content > *:not(.footer) {
   padding-left: 4rem;
   padding-right: 3rem;
   padding-top: 2rem;
+}
+
+/* Ensure footer takes full width without causing horizontal scroll */
+.footer {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  position: relative;
+  left: 0;
+  right: 0;
 }
 
 /* Mobile styles */
@@ -29,5 +42,24 @@
     padding-left: 2rem;
     padding-right: 2rem;
     padding-top: 1.5rem;
+  }
+  
+  /* Ensure footer takes full width on mobile without horizontal scroll */
+  .footer {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .footer-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .footer-bottom {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 } 
