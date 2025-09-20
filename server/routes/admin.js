@@ -35,17 +35,170 @@ router.get('/stats', [auth, admin], async (req, res) => {
         const totalDenied = await DeniedSponsorLink.countDocuments();
         const successRate = totalProcessed > 0 ? Math.round((totalApproved / (totalApproved + totalDenied)) * 100) : 0;
         
+        // Get additional stats
+        const approvedSponsors = await Sponsor.countDocuments();
+        const rejectedSponsors = await DeniedSponsorLink.countDocuments();
+        const reviewedSponsors = await Sponsor.countDocuments({
+            viewedBy: { $exists: true, $ne: [] }
+        });
+        
+        // Get total views and applications
+        const sponsorsWithViews = await Sponsor.find({ viewedBy: { $exists: true, $ne: [] } });
+        const totalViews = sponsorsWithViews.reduce((sum, sponsor) => sum + sponsor.viewedBy.length, 0);
+        
+        const sponsorsWithApplications = await Sponsor.find({ appliedBy: { $exists: true, $ne: [] } });
+        const totalApplications = sponsorsWithApplications.reduce((sum, sponsor) => sum + sponsor.appliedBy.length, 0);
+
         const stats = {
             totalSponsors,
             scrapedThisWeek,
             pendingReview,
-            successRate
+            successRate,
+            approvedSponsors,
+            rejectedSponsors,
+            reviewedSponsors,
+            totalViews,
+            totalApplications
         };
         
         res.status(200).json(stats);
     } catch (error) {
         console.error('Error getting admin stats:', error);
         res.status(500).json({ error: 'Error getting admin stats' });
+    }
+});
+
+// Get all sponsors for admin (both pending and approved)
+router.get('/sponsors/all', [auth, admin], async (req, res) => {
+    try {
+        const { page = 1, limit = 50, sortBy = 'dateAdded', sortOrder = 'desc', search = '', filter = 'all', status = 'all' } = req.query;
+        
+        const skip = (page - 1) * limit;
+        
+        // Build query for potential sponsors
+        let potentialQuery = {};
+        let sponsorQuery = {};
+        
+        // Apply search filter
+        if (search) {
+            const searchRegex = { $regex: search, $options: 'i' };
+            potentialQuery.$or = [
+                { sponsorName: searchRegex },
+                { newsletterSponsored: searchRegex },
+                { rootDomain: searchRegex }
+            ];
+            sponsorQuery.$or = [
+                { sponsorName: searchRegex },
+                { newsletterSponsored: searchRegex },
+                { rootDomain: searchRegex }
+            ];
+        }
+        
+        // Apply confidence filter
+        if (filter !== 'all') {
+            switch (filter) {
+                case 'high':
+                    potentialQuery.confidence = { $gte: 85 };
+                    break;
+                case 'medium':
+                    potentialQuery.confidence = { $gte: 70, $lt: 85 };
+                    break;
+                case 'low':
+                    potentialQuery.confidence = { $lt: 70 };
+                    break;
+                case 'has-contact':
+                    potentialQuery.businessContact = { $exists: true, $ne: '' };
+                    sponsorQuery.businessContact = { $exists: true, $ne: '' };
+                    break;
+            }
+        }
+        
+        // Apply status filter
+        if (status !== 'all') {
+            switch (status) {
+                case 'pending':
+                    // Only get potential sponsors
+                    break;
+                case 'approved':
+                    // Only get approved sponsors
+                    break;
+                case 'rejected':
+                    // Get denied sponsors
+                    break;
+                case 'reviewed':
+                    // Get sponsors that have been viewed
+                    break;
+            }
+        }
+        
+        // Build sort object
+        const sort = {};
+        sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+        
+        let sponsors = [];
+        let total = 0;
+        
+        if (status === 'all' || status === 'pending') {
+            // Get potential sponsors
+            const potentialSponsors = await PotentialSponsor.find(potentialQuery)
+                .sort(sort)
+                .skip(skip)
+                .limit(parseInt(limit));
+            
+            sponsors = potentialSponsors.map(sponsor => ({
+                ...sponsor.toObject(),
+                status: 'pending',
+                analysisStatus: sponsor.analysisStatus || 'pending'
+            }));
+            
+            total += await PotentialSponsor.countDocuments(potentialQuery);
+        }
+        
+        if (status === 'all' || status === 'approved') {
+            // Get approved sponsors
+            const approvedSponsors = await Sponsor.find(sponsorQuery)
+                .sort(sort)
+                .skip(skip)
+                .limit(parseInt(limit));
+            
+            const approvedWithStatus = approvedSponsors.map(sponsor => ({
+                ...sponsor.toObject(),
+                status: 'approved',
+                analysisStatus: 'complete'
+            }));
+            
+            if (status === 'all') {
+                sponsors = [...sponsors, ...approvedWithStatus];
+            } else {
+                sponsors = approvedWithStatus;
+            }
+            
+            total += await Sponsor.countDocuments(sponsorQuery);
+        }
+        
+        // Sort combined results
+        sponsors.sort((a, b) => {
+            const aVal = a[sortBy];
+            const bVal = b[sortBy];
+            if (sortOrder === 'asc') {
+                return aVal > bVal ? 1 : -1;
+            } else {
+                return aVal < bVal ? 1 : -1;
+            }
+        });
+        
+        res.status(200).json({
+            sponsors,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error getting all sponsors:', error);
+        res.status(500).json({ error: 'Error getting all sponsors' });
     }
 });
 

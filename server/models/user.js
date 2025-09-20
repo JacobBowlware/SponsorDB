@@ -40,6 +40,11 @@ const userSchema = new mongoose.Schema({
         enum: ['basic', 'pro', 'none'],
         default: 'none'
     },
+    trialStatus: {
+        type: String,
+        enum: ['active', 'expired', 'none'],
+        default: 'none'
+    },
     // Billing information from Stripe
     billing: {
         stripeSubscriptionId: {
@@ -269,6 +274,7 @@ const validateUser = (user) => {
         picture: Joi.string(),
         stripeCustomerId: Joi.string(),
         subscription: Joi.string().valid('basic', 'pro', 'none'),
+        trialStatus: Joi.string().valid('active', 'expired', 'none'),
         billing: Joi.object({
             stripeSubscriptionId: Joi.string(),
             stripePriceId: Joi.string(),

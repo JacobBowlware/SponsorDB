@@ -26,9 +26,17 @@ router.post('/', async (req, res) => {
             user.subscription = plan;
             user.stripeCustomerId = session.customer;
             user.purchased = true; // Keep for backward compatibility
+            
+            // Check if this is a trial subscription
+            if (session.subscription && session.subscription.trial_end) {
+                user.trialStatus = 'active';
+                console.log(`User ${userId} started ${plan} plan trial`);
+            } else {
+                user.trialStatus = 'none';
+                console.log(`User ${userId} subscribed to ${plan} plan`);
+            }
 
             await user.save();
-            console.log(`User ${userId} subscribed to ${plan} plan`);
         }
 
         // Handle subscription updates
@@ -41,8 +49,13 @@ router.post('/', async (req, res) => {
                 // Update subscription status based on Stripe subscription status
                 if (subscription.status === 'active') {
                     user.subscription = subscription.metadata.plan || 'basic';
+                } else if (subscription.status === 'trialing') {
+                    // User is in trial period
+                    user.subscription = subscription.metadata.plan || 'basic';
+                    user.trialStatus = 'active';
                 } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
                     user.subscription = 'none';
+                    user.trialStatus = 'expired';
                 }
                 await user.save();
             }

@@ -163,8 +163,8 @@ router.post('/checkout', auth, async (req, res) => {
     try {
         // Define price IDs for different plans
         const priceIds = {
-            basic: "price_1RS2RRBKPgChhmNgHhLwtLzP", // Basic plan price ID
-            pro: "price_1RS2RRBKPgChhmNgHhLwtLzP"    // Pro plan price ID (you need to create separate products in Stripe)
+            basic: "price_1S9SrBBKPgChhmNgfcwDLsFP", // Basic plan price ID
+            pro: "price_1S9SwKBKPgChhmNgOZeG1SwC"    // Pro plan price ID
         };
 
         const priceId = priceIds[plan];
@@ -210,7 +210,9 @@ router.post('/checkout', auth, async (req, res) => {
                 metadata: {
                     userId: userId.toString(),
                     plan: plan
-                }
+                },
+                // Add 14-day free trial
+                trial_period_days: 14
             }
         });
 
