@@ -459,29 +459,35 @@ router.post('/scraper/run', [auth, admin], async (req, res) => {
                 try {
                     const result = JSON.parse(output);
                     console.log("Python scraper completed successfully:", result);
-                    res.status(200).json({
-                        success: true,
-                        message: 'Scraper completed successfully',
-                        result: result
-                    });
+                    if (!res.headersSent) {
+                        res.status(200).json({
+                            success: true,
+                            message: 'Scraper completed successfully',
+                            result: result
+                        });
+                    }
                 } catch (parseError) {
                     console.error("Error parsing Python output:", parseError);
-                    res.status(200).json({
-                        success: true,
-                        message: 'Scraper completed (output parsing failed)',
-                        rawOutput: output,
-                        errorOutput: errorOutput
-                    });
+                    if (!res.headersSent) {
+                        res.status(200).json({
+                            success: true,
+                            message: 'Scraper completed (output parsing failed)',
+                            rawOutput: output,
+                            errorOutput: errorOutput
+                        });
+                    }
                 }
             } else {
                 console.error("Python scraper failed with code:", code);
-                res.status(400).json({
-                    success: false,
-                    message: 'Scraper failed',
-                    exitCode: code,
-                    errorOutput: errorOutput,
-                    output: output
-                });
+                if (!res.headersSent) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Scraper failed',
+                        exitCode: code,
+                        errorOutput: errorOutput,
+                        output: output
+                    });
+                }
             }
         });
         
