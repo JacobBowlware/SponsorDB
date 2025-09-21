@@ -4,7 +4,6 @@ const { PotentialSponsor, validatePotentialSponsor } = require('../models/potent
 const { Sponsor } = require('../models/sponsor');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
-const emailMonitor = require('../scraper/emailMonitor');
 require('../middleware/corHeaders')(router);
 
 // Check if a sponsor already exists in either collection
@@ -59,17 +58,7 @@ router.get('/checkDuplicate', async (req, res) => {
 });
 
 
-// Route to run emailMonitor.js (Legacy - keeping for backup)
-router.get('/emailMonitor', async (req, res) => {
-    try {
-        emailMonitor();
-    }
-    catch (e) {
-        console.log("Error running email monitor...", e);
-        return res.status(400).send(e);
-    }
-    res.status(200).send('Email Monitor is running...');
-});
+// Legacy emailMonitor route removed - module no longer exists
 
 // Route to run Python Newsletter Scraper
 router.get('/pythonScraper', async (req, res) => {

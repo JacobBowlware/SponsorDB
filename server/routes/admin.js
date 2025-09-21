@@ -141,25 +141,22 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
         if (status === 'all' || status === 'pending') {
             // Get potential sponsors
             const potentialSponsors = await PotentialSponsor.find(potentialQuery)
-                .sort(sort)
-                .skip(skip)
-                .limit(parseInt(limit));
+                .sort(sort);
             
-            sponsors = potentialSponsors.map(sponsor => ({
+            const potentialWithStatus = potentialSponsors.map(sponsor => ({
                 ...sponsor.toObject(),
                 status: 'pending',
                 analysisStatus: sponsor.analysisStatus || 'pending'
             }));
             
+            sponsors = [...sponsors, ...potentialWithStatus];
             total += await PotentialSponsor.countDocuments(potentialQuery);
         }
         
         if (status === 'all' || status === 'approved') {
             // Get approved sponsors
             const approvedSponsors = await Sponsor.find(sponsorQuery)
-                .sort(sort)
-                .skip(skip)
-                .limit(parseInt(limit));
+                .sort(sort);
             
             const approvedWithStatus = approvedSponsors.map(sponsor => ({
                 ...sponsor.toObject(),
@@ -167,25 +164,41 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
                 analysisStatus: 'complete'
             }));
             
-            if (status === 'all') {
-                sponsors = [...sponsors, ...approvedWithStatus];
-            } else {
-                sponsors = approvedWithStatus;
-            }
-            
+            sponsors = [...sponsors, ...approvedWithStatus];
             total += await Sponsor.countDocuments(sponsorQuery);
         }
         
-        // Sort combined results
+        // Sort combined results properly
         sponsors.sort((a, b) => {
-            const aVal = a[sortBy];
-            const bVal = b[sortBy];
+            let aVal = a[sortBy];
+            let bVal = b[sortBy];
+            
+            // Handle different data types
+            if (sortBy === 'dateAdded') {
+                aVal = new Date(aVal);
+                bVal = new Date(bVal);
+            } else if (sortBy === 'subscriberCount') {
+                aVal = aVal || 0;
+                bVal = bVal || 0;
+            } else if (typeof aVal === 'string' && typeof bVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+            }
+            
+            if (aVal === null || aVal === undefined) return 1;
+            if (bVal === null || bVal === undefined) return -1;
+            
             if (sortOrder === 'asc') {
-                return aVal > bVal ? 1 : -1;
+                return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
             } else {
-                return aVal < bVal ? 1 : -1;
+                return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
             }
         });
+        
+        // Apply pagination after sorting
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + parseInt(limit);
+        sponsors = sponsors.slice(startIndex, endIndex);
         
         res.status(200).json({
             sponsors,
@@ -395,14 +408,35 @@ router.post('/scraper/run', [auth, admin], async (req, res) => {
         // Path to the Python API wrapper
         const pythonScriptPath = path.join(__dirname, '../../newsletter_scraper/api_wrapper.py');
         
-        // Spawn Python process
-        const pythonProcess = spawn('python3', [pythonScriptPath], {
-            cwd: path.join(__dirname, '../../newsletter_scraper'),
-            env: {
-                ...process.env,
-                PYTHONPATH: path.join(__dirname, '../../newsletter_scraper')
+        // Spawn Python process - try python3 first, then python
+        const pythonCommands = ['python3', 'python'];
+        let pythonProcess;
+        let pythonCommand;
+        
+        for (const cmd of pythonCommands) {
+            try {
+                pythonProcess = spawn(cmd, [pythonScriptPath], {
+                    cwd: path.join(__dirname, '../../newsletter_scraper'),
+                    env: {
+                        ...process.env,
+                        PYTHONPATH: path.join(__dirname, '../../newsletter_scraper')
+                    }
+                });
+                pythonCommand = cmd;
+                break; // Success, exit the loop
+            } catch (error) {
+                console.log(`Failed to spawn ${cmd}, trying next...`);
+                continue;
             }
-        });
+        }
+        
+        if (!pythonProcess) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to start Python process - no Python interpreter found',
+                error: 'No Python interpreter available'
+            });
+        }
         
         let output = '';
         let errorOutput = '';
@@ -454,11 +488,13 @@ router.post('/scraper/run', [auth, admin], async (req, res) => {
         // Handle process errors
         pythonProcess.on('error', (error) => {
             console.error("Failed to start Python scraper:", error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to start scraper',
-                error: error.message
-            });
+            if (!res.headersSent) {
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to start scraper',
+                    error: error.message
+                });
+            }
         });
         
         // Set timeout (10 minutes for admin)
@@ -466,11 +502,13 @@ router.post('/scraper/run', [auth, admin], async (req, res) => {
             if (!pythonProcess.killed) {
                 console.log("Python scraper timeout - killing process");
                 pythonProcess.kill();
-                res.status(408).json({
-                    success: false,
-                    message: 'Scraper timeout',
-                    timeout: true
-                });
+                if (!res.headersSent) {
+                    res.status(408).json({
+                        success: false,
+                        message: 'Scraper timeout',
+                        timeout: true
+                    });
+                }
             }
         }, 600000); // 10 minutes
         
@@ -525,6 +563,159 @@ router.get('/export/csv', [auth, admin], async (req, res) => {
     } catch (error) {
         console.error('Error exporting CSV:', error);
         res.status(500).json({ error: 'Error exporting CSV' });
+    }
+});
+
+// Migration route to split businessContact into sponsorEmail and sponsorApplication
+router.post('/migrate-contacts', [auth, admin], async (req, res) => {
+    try {
+        console.log('Starting contact migration...');
+        
+        const migrationResults = {
+            potentialSponsors: { processed: 0, errors: 0, details: [] },
+            sponsors: { processed: 0, errors: 0, details: [] },
+            totalProcessed: 0,
+            totalErrors: 0
+        };
+
+        // Migrate PotentialSponsors
+        const potentialSponsors = await PotentialSponsor.find({ 
+            businessContact: { $exists: true, $ne: null, $ne: '' } 
+        });
+        
+        console.log(`Found ${potentialSponsors.length} potential sponsors to migrate`);
+        
+        for (const sponsor of potentialSponsors) {
+            try {
+                const { businessContact } = sponsor;
+                let sponsorEmail = null;
+                let sponsorApplication = null;
+                let contactMethod = 'none';
+
+                if (businessContact && businessContact.trim()) {
+                    if (businessContact.includes('@')) {
+                        sponsorEmail = businessContact.trim();
+                        contactMethod = 'email';
+                    } else if (businessContact.startsWith('http')) {
+                        sponsorApplication = businessContact.trim();
+                        contactMethod = 'application';
+                    } else {
+                        // If it doesn't match either pattern, assume it's an email
+                        sponsorEmail = businessContact.trim();
+                        contactMethod = 'email';
+                    }
+                }
+
+                await PotentialSponsor.findByIdAndUpdate(sponsor._id, {
+                    $set: {
+                        sponsorEmail,
+                        sponsorApplication,
+                        contactMethod
+                    },
+                    $unset: {
+                        businessContact: 1
+                    }
+                });
+
+                migrationResults.potentialSponsors.processed++;
+                migrationResults.potentialSponsors.details.push({
+                    id: sponsor._id,
+                    sponsorName: sponsor.sponsorName,
+                    originalContact: businessContact,
+                    newEmail: sponsorEmail,
+                    newApplication: sponsorApplication,
+                    contactMethod
+                });
+
+            } catch (error) {
+                console.error(`Error migrating potential sponsor ${sponsor._id}:`, error);
+                migrationResults.potentialSponsors.errors++;
+                migrationResults.potentialSponsors.details.push({
+                    id: sponsor._id,
+                    sponsorName: sponsor.sponsorName,
+                    error: error.message
+                });
+            }
+        }
+
+        // Migrate Sponsors
+        const sponsors = await Sponsor.find({ 
+            businessContact: { $exists: true, $ne: null, $ne: '' } 
+        });
+        
+        console.log(`Found ${sponsors.length} sponsors to migrate`);
+        
+        for (const sponsor of sponsors) {
+            try {
+                const { businessContact } = sponsor;
+                let sponsorEmail = null;
+                let sponsorApplication = null;
+                let contactMethod = 'none';
+
+                if (businessContact && businessContact.trim()) {
+                    if (businessContact.includes('@')) {
+                        sponsorEmail = businessContact.trim();
+                        contactMethod = 'email';
+                    } else if (businessContact.startsWith('http')) {
+                        sponsorApplication = businessContact.trim();
+                        contactMethod = 'application';
+                    } else {
+                        // If it doesn't match either pattern, assume it's an email
+                        sponsorEmail = businessContact.trim();
+                        contactMethod = 'email';
+                    }
+                }
+
+                await Sponsor.findByIdAndUpdate(sponsor._id, {
+                    $set: {
+                        sponsorEmail,
+                        sponsorApplication,
+                        contactMethod
+                    },
+                    $unset: {
+                        businessContact: 1
+                    }
+                });
+
+                migrationResults.sponsors.processed++;
+                migrationResults.sponsors.details.push({
+                    id: sponsor._id,
+                    sponsorName: sponsor.sponsorName,
+                    originalContact: businessContact,
+                    newEmail: sponsorEmail,
+                    newApplication: sponsorApplication,
+                    contactMethod
+                });
+
+            } catch (error) {
+                console.error(`Error migrating sponsor ${sponsor._id}:`, error);
+                migrationResults.sponsors.errors++;
+                migrationResults.sponsors.details.push({
+                    id: sponsor._id,
+                    sponsorName: sponsor.sponsorName,
+                    error: error.message
+                });
+            }
+        }
+
+        migrationResults.totalProcessed = migrationResults.potentialSponsors.processed + migrationResults.sponsors.processed;
+        migrationResults.totalErrors = migrationResults.potentialSponsors.errors + migrationResults.sponsors.errors;
+
+        console.log('Migration completed:', migrationResults);
+        
+        res.status(200).json({
+            success: true,
+            message: 'Contact migration completed successfully',
+            results: migrationResults
+        });
+
+    } catch (error) {
+        console.error('Migration failed:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Migration failed',
+            error: error.message
+        });
     }
 });
 
