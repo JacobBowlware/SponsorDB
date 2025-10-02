@@ -1,16 +1,8 @@
 # Dependencies
 node_modules/
 */node_modules/
-node_modules/
-client/SponsorTrail/node_modules/
-client/SponsorTrail/build/
 server/node_modules/
-server/build/
-server/dist/
-server/public/
-server/uploads/
-server/uploads/
-client/SponsorTrail/node_modules/.cache/default-development/7.pack
+client/SponsorTrail/node_modules/
 
 # Build outputs
 build/
