@@ -30,6 +30,12 @@ class NewsletterScraper:
         self.sponsor_analyzer = SponsorAnalyzer()
         self.scheduler = BlockingScheduler()
         
+        # Log OpenAI status
+        if self.sponsor_analyzer.openai_client:
+            logger.info("OpenAI client initialized - GPT analysis enabled")
+        else:
+            logger.warning("OpenAI client not available - GPT analysis disabled")
+        
     def run_scraping_cycle(self, max_emails=10):
         """Run a single scraping cycle with email limit to prevent timeouts"""
         logger.info("Starting newsletter scraping cycle")
@@ -52,17 +58,29 @@ class NewsletterScraper:
                     # Extract newsletter name
                     newsletter_name = self.email_processor.get_newsletter_name(email_data)
                     
-                    # Extract sponsor sections
-                    sponsor_sections = self.email_processor.extract_sponsor_sections(email_data)
+                    # Extract sponsor sections with confidence scoring
+                    sponsor_sections = self.email_processor.process_sponsor_sections_with_confidence(email_data)
                     
                     if not sponsor_sections:
                         continue
                     
-                    # Process each sponsor section
+                    # Process each sponsor section (filter by confidence and status)
                     for section in sponsor_sections:
+                        # Skip rejected sections
+                        if section.get('processing_status') == 'rejected':
+                            logger.debug(f"Skipping rejected section with confidence {section.get('confidence_score', 0):.2f}")
+                            continue
+                        
+                        # Log confidence and status
+                        confidence = section.get('confidence_score', 0)
+                        status = section.get('processing_status', 'unknown')
+                        logger.info(f"Processing section with confidence {confidence:.2f}, status: {status}")
+                        
                         sponsors = self.sponsor_analyzer.analyze_sponsor_section(
                             section, newsletter_name
                         )
+                        
+                        logger.info(f"Sponsor analyzer returned {len(sponsors)} sponsors for this section")
                         
                         for sponsor in sponsors:
                             # Check if sponsor already exists
@@ -71,14 +89,33 @@ class NewsletterScraper:
                                 logger.debug(f"Sponsor already exists: {sponsor['rootDomain']}")
                                 continue
                             
+                            # Add confidence and processing status from section
+                            sponsor['confidence'] = confidence
+                            sponsor['processing_status'] = status
+                            
+                            # Set analysis status based on confidence
+                            if status == 'complete':
+                                sponsor['analysisStatus'] = 'complete'
+                            elif status == 'needs_review':
+                                sponsor['analysisStatus'] = 'manual_review_required'
+                            else:
+                                sponsor['analysisStatus'] = 'pending'
+                            
                             # Optional: Use GPT for final analysis
                             if self.sponsor_analyzer.openai_client:
+                                logger.info(f"Running GPT analysis on sponsor: {sponsor.get('sponsorName', 'Unknown')}")
                                 sponsor = self.sponsor_analyzer.gpt_analyze_sponsor(sponsor)
+                            else:
+                                logger.info("OpenAI client not available - skipping GPT analysis")
                             
                             # Save to database
-                            sponsor_id = self.db.create_sponsor(sponsor)
-                            total_sponsors += 1
-                            logger.info(f"Saved sponsor: {sponsor['sponsorName']} (ID: {sponsor_id})")
+                            try:
+                                sponsor_id = self.db.create_sponsor(sponsor)
+                                total_sponsors += 1
+                                logger.info(f"✅ SUCCESSFULLY SAVED SPONSOR: {sponsor['sponsorName']} (ID: {sponsor_id}, confidence: {confidence:.2f}, status: {status})")
+                            except Exception as e:
+                                logger.error(f"❌ FAILED TO SAVE SPONSOR: {sponsor['sponsorName']} - Error: {e}")
+                                continue
                     
                     # Mark email as read
                     self.email_processor.mark_email_as_read(email_data['id'])

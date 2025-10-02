@@ -13,7 +13,7 @@ interface SubscribeProps {
 }
 
 const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState<{ basic: boolean; pro: boolean }>({ basic: false, pro: false });
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -35,7 +35,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
     }, [userAuth, isSubscribed, subscription, navigate]);
 
     const handlePlanSelect = async (plan: string) => {
-        setLoading(true);
+        setLoading(prev => ({ ...prev, [plan]: true }));
         setError('');
 
         try {
@@ -70,7 +70,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
             setError(error.response?.data || 'Error creating checkout session. Please try again.');
             trackUserJourney('checkout_error', 3, { plan, error: error.message });
         } finally {
-            setLoading(false);
+            setLoading(prev => ({ ...prev, [plan]: false }));
         }
     };
 
@@ -128,9 +128,9 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                 <button 
                                     className="home__pricing-card__cta-button" 
                                     onClick={() => handlePlanSelect('basic')}
-                                    disabled={loading}
+                                    disabled={loading.basic || loading.pro}
                                 >
-                                    {loading ? 'Processing...' : 'Start 2-Week Free Trial'}
+                                    {loading.basic ? 'Processing...' : 'Start 2-Week Free Trial'}
                                 </button>
                             </div>
 
@@ -172,9 +172,9 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                 <button 
                                     className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" 
                                     onClick={() => handlePlanSelect('pro')}
-                                    disabled={loading}
+                                    disabled={loading.basic || loading.pro}
                                 >
-                                    {loading ? 'Processing...' : 'Start 2-Week Free Trial'}
+                                    {loading.pro ? 'Processing...' : 'Start 2-Week Free Trial'}
                                 </button>
                             </div>
                         </div>

@@ -5,6 +5,44 @@
     padding: 0 1rem;
 }
 
+/* Contact Display Styles */
+.contact-both {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #495057;
+    font-size: 13px;
+}
+
+.contact-item svg {
+    color: #6c757d;
+    font-size: 12px;
+    width: 12px;
+}
+
+.contact-item a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.contact-item a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.no-contact {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 13px;
+}
+
 /* Header Section */
 .sponsors-page-header {
     text-align: center;

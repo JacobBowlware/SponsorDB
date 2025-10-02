@@ -58,7 +58,11 @@ router.get('/checkDuplicate', async (req, res) => {
 });
 
 
-// Legacy emailMonitor route removed - module no longer exists
+// Legacy emailMonitor route - now redirects to Python scraper
+router.get('/emailMonitor', async (req, res) => {
+    // Redirect to the new Python scraper endpoint
+    res.redirect('/api/potentialSponsors/pythonScraper');
+});
 
 // Route to run Python Newsletter Scraper
 router.get('/pythonScraper', async (req, res) => {
@@ -69,15 +73,16 @@ router.get('/pythonScraper', async (req, res) => {
         console.log("Starting Python Newsletter Scraper...");
         
         // Path to the Python API wrapper
-        const pythonScriptPath = path.join(__dirname, '../../newsletter_scraper/api_wrapper.py');
+        const pythonScriptPath = path.join(__dirname, '../newsletter_scraper/api_wrapper.py');
         
         // Spawn Python process
         const pythonProcess = spawn('python3', [pythonScriptPath], {
-            cwd: path.join(__dirname, '../../newsletter_scraper'),
+            cwd: path.join(__dirname, '../newsletter_scraper'),
             env: {
                 ...process.env,
                 // Ensure Python can find the modules
-                PYTHONPATH: path.join(__dirname, '../../newsletter_scraper')
+                PYTHONPATH: path.join(__dirname, '../newsletter_scraper'),
+                MAX_EMAILS_PER_RUN: '20'  // Process 20 emails per run
             }
         });
         

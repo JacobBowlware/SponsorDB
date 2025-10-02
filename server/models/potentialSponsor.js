@@ -41,13 +41,17 @@ const potentialSponsorSchema = new mongoose.Schema({
         default: 0
     },
     // Enriched fields from GPT analysis
-    businessContact: {
+    sponsorEmail: {
+        type: String,
+        required: false
+    },
+    sponsorApplication: {
         type: String,
         required: false
     },
     contactMethod: {
         type: String,
-        enum: ['email', 'partner-page', 'media-kit', 'none'],
+        enum: ['email', 'application', 'both', 'none'],
         default: 'none'
     },
     estimatedSubscribers: {
@@ -92,8 +96,9 @@ const validatePotentialSponsor = (sponsor) => {
         newsletterSponsored: Joi.string().min(0).max(100),
         subscriberCount: Joi.number(),
         confidence: Joi.number(),
-        businessContact: Joi.string(),
-        contactMethod: Joi.string().valid('email', 'partner-page', 'media-kit', 'none'),
+        sponsorEmail: Joi.string(),
+        sponsorApplication: Joi.string(),
+        contactMethod: Joi.string().valid('email', 'application', 'both', 'none'),
         estimatedSubscribers: Joi.number(),
         subscriberReasoning: Joi.string(),
         enrichmentNotes: Joi.string(),

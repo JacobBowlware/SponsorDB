@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLink, faHandshake } from '@fortawesome/free-solid-svg-icons';
+import { faExternalLink, faHandshake, faEnvelope, faLink } from '@fortawesome/free-solid-svg-icons';
 
 interface Sponsor {
     sponsorName: string;
@@ -8,7 +8,9 @@ interface Sponsor {
     tags: string[];
     newsletterSponsored: string;
     subscriberCount: number;
-    businessContact: string;
+    sponsorEmail?: string;
+    sponsorApplication?: string;
+    contactMethod: 'email' | 'application' | 'both' | 'none';
     dateAdded: string;
 }
 
@@ -30,6 +32,47 @@ const SponsorTable: React.FC<SponsorTableProps> = ({ sponsors, isSample = false 
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Helper function to display contact information
+    const getContactDisplay = (sponsor: Sponsor) => {
+        const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim();
+        const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim();
+        
+        if (hasEmail && hasApplication) {
+            return (
+                <div className="contact-both">
+                    <div className="contact-item">
+                        <FontAwesomeIcon icon={faEnvelope} />
+                        <span>{sponsor.sponsorEmail}</span>
+                    </div>
+                    <div className="contact-item">
+                        <FontAwesomeIcon icon={faLink} />
+                        <a href={sponsor.sponsorApplication} target="_blank" rel="noopener noreferrer">
+                            Application
+                        </a>
+                    </div>
+                </div>
+            );
+        } else if (hasEmail) {
+            return (
+                <div className="contact-item">
+                    <FontAwesomeIcon icon={faEnvelope} />
+                    <span>{sponsor.sponsorEmail}</span>
+                </div>
+            );
+        } else if (hasApplication) {
+            return (
+                <div className="contact-item">
+                    <FontAwesomeIcon icon={faLink} />
+                    <a href={sponsor.sponsorApplication} target="_blank" rel="noopener noreferrer">
+                        Application
+                    </a>
+                </div>
+            );
+        } else {
+            return <span className="no-contact">No contact</span>;
+        }
+    };
 
     // Mobile view - Sponsor cards
     if (isMobile) {
@@ -61,7 +104,9 @@ const SponsorTable: React.FC<SponsorTableProps> = ({ sponsors, isSample = false 
                             </div>
                             <div className="sponsor-detail">
                                 <span className="sponsor-detail-label">Contact</span>
-                                <span className="sponsor-detail-value">{sponsor.businessContact}</span>
+                                <div className="sponsor-detail-value">
+                                    {getContactDisplay(sponsor)}
+                                </div>
                             </div>
                             <div className="sponsor-detail">
                                 <span className="sponsor-detail-label">Added</span>
@@ -77,13 +122,15 @@ const SponsorTable: React.FC<SponsorTableProps> = ({ sponsors, isSample = false 
                                 <FontAwesomeIcon icon={faExternalLink} />
                                 View
                             </button>
-                            <button 
-                                className="sponsor-action-btn sponsor-apply-btn"
-                                onClick={() => window.open(`mailto:${sponsor.businessContact}`)}
-                            >
-                                <FontAwesomeIcon icon={faHandshake} />
-                                Apply
-                            </button>
+                            {sponsor.sponsorEmail && (
+                                <button 
+                                    className="sponsor-action-btn sponsor-apply-btn"
+                                    onClick={() => window.open(`mailto:${sponsor.sponsorEmail}`)}
+                                >
+                                    <FontAwesomeIcon icon={faHandshake} />
+                                    Apply
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -128,7 +175,7 @@ const SponsorTable: React.FC<SponsorTableProps> = ({ sponsors, isSample = false 
                                 </a>
                             </td>
                             <td>{sponsor.newsletterSponsored}</td>
-                            <td>{sponsor.businessContact}</td>
+                            <td>{getContactDisplay(sponsor)}</td>
                             <td>{sponsor.subscriberCount.toLocaleString()}</td>
                             <td>
                                 <div className="sponsor-table__tags">

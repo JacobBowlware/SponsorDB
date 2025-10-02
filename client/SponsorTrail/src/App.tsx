@@ -101,6 +101,9 @@ function App() {
   // Check if user has explicitly logged out in dev mode
   const isDevLogout = localStorage.getItem('dev_logout') === 'true';
   
+  // Initialize loading state
+  const [isInitializing, setIsInitializing] = useState(true);
+  
   // Log development mode status
   useEffect(() => {
     if (isLocalDev && !isDevLogout) {
@@ -211,90 +214,54 @@ function App() {
     })
   }, [isLocalDev]);
 
-  // Handle auth and data fetching
+  // Consolidated initialization effect
   useEffect(() => {
-    const fetchData = async (num: number) => {
-      if (num === 1) {
-        await getUserInfo();
-      }
-      else if (num === 2) {
+    const initializeApp = async () => {
+      try {
+        setIsInitializing(true);
+        
+        // In local development, we don't need to fetch from backend
+        if (isLocalDev) {
+          setIsInitializing(false);
+          return;
+        }
+
+        // Always fetch database info first (public route, no auth required)
         await getDbInfo();
-      }
-    }
 
-    // In local development, we don't need to fetch from backend
-    if (isLocalDev) {
-      return;
-    }
-
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Check if token is expired
-      if (isTokenExpired(token)) {
-        console.log('Token expired, clearing authentication');
-        localStorage.removeItem('token');
-        setUserAuth(false);
-        setUser({
-          email: "",
-          isAdmin: false,
-          subscription: null,
-          stripeCustomerId: "",
-          billing: null,
-          newsletterInfo: null,
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (token && !isTokenExpired(token)) {
+          setUserAuth(true);
+          await getUserInfo();
+        } else if (token && isTokenExpired(token)) {
+          console.log('Token expired, clearing authentication');
+          localStorage.removeItem('token');
+          setUserAuth(false);
+          setUser({
+            email: "",
+            isAdmin: false,
+            subscription: null,
+            stripeCustomerId: "",
+            billing: null,
+            newsletterInfo: null,
+          });
+        }
+      } catch (error) {
+        console.error('Error during app initialization:', error);
+        // Set fallback values if initialization fails
+        setDbInfo({
+          sponsors: 0,
+          newsletters: 0,
+          lastUpdated: new Date().toISOString()
         });
-        return;
+      } finally {
+        setIsInitializing(false);
       }
-      
-      setUserAuth(true);
+    };
 
-      if (user.email === "") {
-        fetchData(1);
-      }
-    }
-  }, [user.email, dbInfo.sponsors, isLocalDev, getUserInfo]);
-
-  // Fetch database info on initial load (public route, no auth required)
-  useEffect(() => {
-    if (!isLocalDev) {
-      getDbInfo();
-    }
-  }, [isLocalDev]);
-
-  // Additional effect to handle authentication state changes
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token && !userAuth) {
-      // Check if token is expired before setting auth
-      if (isTokenExpired(token)) {
-        console.log('Token expired, clearing authentication');
-        localStorage.removeItem('token');
-        setUserAuth(false);
-        setUser({
-          email: "",
-          isAdmin: false,
-          subscription: null,
-          stripeCustomerId: "",
-          billing: null,
-          newsletterInfo: null,
-        });
-        return;
-      }
-      
-      setUserAuth(true);
-      getUserInfo();
-    } else if (!token && userAuth) {
-      setUserAuth(false);
-      setUser({
-        email: "",
-        isAdmin: false,
-        subscription: null,
-        stripeCustomerId: "",
-        billing: null,
-        newsletterInfo: null,
-      });
-    }
-  }, [userAuth, getUserInfo]);
+    initializeApp();
+  }, [isLocalDev, getUserInfo]);
 
   // Periodic token validation (every 5 minutes)
   useEffect(() => {
@@ -321,6 +288,25 @@ function App() {
   }, [userAuth, isLocalDev]);
 
   const Root = () => {
+    // Show loading state during initialization
+    if (isInitializing) {
+      return (
+        <div className="web-page">
+          <div className="web-section web-section-dark mt-0">
+            <div className="web-section__container web-section-content">
+              <div className="text-center" style={{ padding: '100px 20px' }}>
+                <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                  <span className="sr-only">Loading...</span>
+                </div>
+                <h3 className="mt-3">Loading SponsorDB...</h3>
+                <p className="text-muted">Please wait while we load your data</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (!userAuth) { // Default Navbar (should always be on home page)
       return <><Header />
         <ScrollToTop />

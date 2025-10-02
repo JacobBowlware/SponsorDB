@@ -18,10 +18,77 @@ router.get('/test', (req, res) => {
 }
 );
 
-// Get current user
+// Get current user with complete billing information
 router.get('/me', auth, async (req, res) => {
-    const user = await User.findById(req.user._id).select('-password');
-    res.send(user);
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+        
+        // If user has a Stripe customer ID, fetch billing information
+        if (user.stripeCustomerId) {
+            try {
+                // Get customer from Stripe
+                const customer = await stripe.customers.retrieve(user.stripeCustomerId);
+                
+                // Get active subscriptions
+                const subscriptions = await stripe.subscriptions.list({
+                    customer: user.stripeCustomerId,
+                    status: 'all',
+                    limit: 1
+                });
+                
+                if (subscriptions.data.length > 0) {
+                    const subscription = subscriptions.data[0];
+                    const price = await stripe.prices.retrieve(subscription.items.data[0].price.id);
+                    
+                    // Update user billing information
+                    user.billing = {
+                        stripeSubscriptionId: subscription.id,
+                        stripePriceId: subscription.items.data[0].price.id,
+                        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+                        status: subscription.status,
+                        monthlyCharge: price.unit_amount / 100, // Convert from cents
+                        currency: price.currency,
+                        nextBillingDate: new Date(subscription.current_period_end * 1000),
+                        trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null
+                    };
+                    
+                    // Update subscription status based on Stripe
+                    if (subscription.status === 'active') {
+                        user.subscription = subscription.metadata.plan || 'basic';
+                        user.trialStatus = 'none';
+                    } else if (subscription.status === 'trialing') {
+                        user.subscription = subscription.metadata.plan || 'basic';
+                        user.trialStatus = 'active';
+                    } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
+                        user.subscription = 'none';
+                        user.trialStatus = 'expired';
+                    }
+                    
+                    // Save updated user
+                    await user.save();
+                } else {
+                    // No active subscription found
+                    user.subscription = 'none';
+                    user.trialStatus = 'none';
+                    if (user.billing) {
+                        user.billing.status = 'canceled';
+                    }
+                    await user.save();
+                }
+            } catch (stripeError) {
+                console.error('Error fetching Stripe data:', stripeError);
+                // Continue with existing user data if Stripe fails
+            }
+        }
+        
+        res.send(user);
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).send('Error fetching user data');
+    }
 });
 
 // Get newsletter info for current user
@@ -540,5 +607,78 @@ async function handlePaymentFailed(invoice) {
         await user.save();
     }
 }
+
+// Debug route to check subscription status
+router.get('/debug-subscription', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+        
+        if (!user.stripeCustomerId) {
+            return res.json({
+                error: 'No Stripe customer ID found',
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    subscription: user.subscription,
+                    trialStatus: user.trialStatus,
+                    stripeCustomerId: user.stripeCustomerId
+                }
+            });
+        }
+        
+        // Get customer from Stripe
+        const customer = await stripe.customers.retrieve(user.stripeCustomerId);
+        
+        // Get all subscriptions
+        const subscriptions = await stripe.subscriptions.list({
+            customer: user.stripeCustomerId,
+            status: 'all',
+            limit: 10
+        });
+        
+        // Get price information for each subscription
+        const subscriptionsWithPrices = await Promise.all(
+            subscriptions.data.map(async (sub) => {
+                const price = await stripe.prices.retrieve(sub.items.data[0].price.id);
+                return {
+                    id: sub.id,
+                    status: sub.status,
+                    current_period_start: new Date(sub.current_period_start * 1000),
+                    current_period_end: new Date(sub.current_period_end * 1000),
+                    cancel_at_period_end: sub.cancel_at_period_end,
+                    canceled_at: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
+                    trial_end: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
+                    metadata: sub.metadata,
+                    price: {
+                        id: price.id,
+                        unit_amount: price.unit_amount,
+                        currency: price.currency,
+                        recurring: price.recurring
+                    }
+                };
+            })
+        );
+        
+        res.json({
+            user: {
+                id: user._id,
+                email: user.email,
+                subscription: user.subscription,
+                trialStatus: user.trialStatus,
+                stripeCustomerId: user.stripeCustomerId,
+                billing: user.billing
+            },
+            stripeCustomer: {
+                id: customer.id,
+                email: customer.email,
+                created: new Date(customer.created * 1000)
+            },
+            subscriptions: subscriptionsWithPrices
+        });
+    } catch (error) {
+        console.error('Debug subscription error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 module.exports = router;

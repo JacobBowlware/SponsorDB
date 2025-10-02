@@ -1,0 +1,10 @@
+[33m52f7e4d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Fix headers already sent error in Python scraper admin route
+[33me7e3c25[m Fix Python scraper issues: add headersSent checks and Python command detection
+[33m9537d63[m Remove Python postinstall script for Heroku deployment
+[33m703fba7[m Add root package.json and Procfile for Heroku deployment
+[33m555f4a7[m Update stripe price IDs, and admin.tsx routes
+[33mfb70ca0[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge branch 'main' of https://github.com/JacobBowlware/SponsorTrail
+[33m42dd561[m Update newsletter scraper to python. Update Admin page
+[33m33894d9[m No horizontal scrolling
+[33m90ab142[m Update front-end, shouldnt skip getting db-info for unauthed users (sponsorCount, newsletterCount)
+[33m634df21[m Update auth process, expire JWTs

@@ -91,3 +91,7 @@ Make sure your Stripe webhook is configured to send these events:
 ## 📞 Need Help?
 
 If you need help with any of these steps, just let me know! The most important thing is getting the correct price IDs from your Stripe Dashboard.
+
+
+
+

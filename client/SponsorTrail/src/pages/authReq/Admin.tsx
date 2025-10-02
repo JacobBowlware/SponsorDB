@@ -2,14 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faUsers, 
-    faChartLine, 
     faClock, 
     faCheckCircle,
-    faPlay,
-    faCheck,
     faTimes,
     faDownload,
-    faFileAlt,
     faSearch,
     faSort,
     faSortUp,
@@ -20,12 +16,17 @@ import {
     faRobot,
     faRefresh,
     faExternalLink,
-    faHistory,
-    faChartBar
+    faEnvelope,
+    faLink,
+    faTrash,
+    faCalendarAlt,
+    faFilter,
+    faCheck,
+    faTimes as faTimesIcon
 } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import config from '../../config';
-import './Admin.css';
+import '../../css/pages/authReq/Admin.css';
 
 interface Sponsor {
     _id: string;
@@ -35,68 +36,48 @@ interface Sponsor {
     tags: string[];
     newsletterSponsored: string;
     subscriberCount: number;
-    businessContact: string;
+    sponsorEmail?: string;
+    sponsorApplication?: string;
+    contactMethod: 'email' | 'application' | 'both' | 'none';
     confidence: number;
-    contactMethod: 'email' | 'partner-page' | 'media-kit' | 'none';
-    estimatedSubscribers?: number;
-    subscriberReasoning?: string;
-    enrichmentNotes?: string;
     analysisStatus: 'complete' | 'manual_review_required' | 'pending';
-    sponsorshipEvidence?: string;
     dateAdded: string;
-    lastAnalyzed: string;
+    status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
 }
 
 interface DashboardStats {
     totalSponsors: number;
-    scrapedThisWeek: number;
     pendingReview: number;
-    successRate: number;
-}
-
-interface ActivityItem {
-    type: 'discovered' | 'approved' | 'rejected';
-    message: string;
-    details: string;
-    timestamp: string;
-}
-
-interface PaginationInfo {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
+    addedThisWeek: number;
+    lastScraperRun: string;
+    weeklyData?: Array<{
+        week: string;
+        count: number;
+    }>;
 }
 
 const Admin = () => {
     // State management
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-    const [activities, setActivities] = useState<ActivityItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
     // Table state
     const [selectedSponsors, setSelectedSponsors] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('all');
-    const [sortBy, setSortBy] = useState('confidence');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sourceFilter, setSourceFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('all');
+    const [sortBy, setSortBy] = useState('dateAdded');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [currentPage, setCurrentPage] = useState(1);
-    const [pagination, setPagination] = useState<PaginationInfo | null>(null);
-    
-    // Modal state
-    const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
-    const [showModal, setShowModal] = useState(false);
-    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [confirmAction, setConfirmAction] = useState<{action: string, count: number} | null>(null);
-    
-    // Action states
     const [isRunningScraper, setIsRunningScraper] = useState(false);
     const [isPerformingBulkAction, setIsPerformingBulkAction] = useState(false);
-    const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+    const [isRunningMigration, setIsRunningMigration] = useState(false);
+    const [migrationResults, setMigrationResults] = useState<any>(null);
 
-    // Fetch all dashboard data
+    // Fetch dashboard data
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -110,49 +91,41 @@ const Admin = () => {
 
             const headers = { 'x-auth-token': token };
             
-            // Fetch all data in parallel
-            const [statsRes, sponsorsRes, activitiesRes] = await Promise.all([
+            // Build query parameters
+            const queryParams = new URLSearchParams({
+                page: currentPage.toString(),
+                limit: '50',
+                sortBy,
+                sortOrder,
+                search: searchTerm,
+                status: statusFilter
+            });
+            
+            // Fetch data
+            const [statsRes, sponsorsRes] = await Promise.all([
                 axios.get(`${config.backendUrl}admin/stats`, { headers }),
-                axios.get(`${config.backendUrl}admin/sponsors/pending?page=${currentPage}&limit=50&sortBy=${sortBy}&sortOrder=${sortOrder}&search=${searchTerm}&filter=${filter}`, { headers }),
-                axios.get(`${config.backendUrl}admin/activity?limit=20`, { headers })
+                axios.get(`${config.backendUrl}admin/sponsors/all?${queryParams}`, { headers })
             ]);
 
-            setStats(statsRes.data);
+            setStats({
+                totalSponsors: statsRes.data.totalSponsors,
+                pendingReview: statsRes.data.pendingReview,
+                addedThisWeek: statsRes.data.scrapedThisWeek,
+                lastScraperRun: new Date().toLocaleString()
+            });
             setSponsors(sponsorsRes.data.sponsors);
-            setPagination(sponsorsRes.data.pagination);
-            setActivities(activitiesRes.data);
-            setLastRefresh(new Date());
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
             setError('Failed to load dashboard data');
         } finally {
             setLoading(false);
         }
-    }, [currentPage, sortBy, sortOrder, searchTerm, filter]);
-
-    // Auto-refresh every 60 seconds
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchData();
-        }, 60000);
-        
-        return () => clearInterval(interval);
-    }, [fetchData]);
+    }, [currentPage, sortBy, sortOrder, searchTerm, statusFilter]);
 
     // Initial load
     useEffect(() => {
         fetchData();
     }, [fetchData]);
-
-    // Handle search and filter changes
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            setCurrentPage(1);
-            fetchData();
-        }, 500);
-        
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, filter, sortBy, sortOrder, fetchData]);
 
     // Run scraper
     const handleRunScraper = async () => {
@@ -164,7 +137,6 @@ const Admin = () => {
             });
             
             if (response.data.success) {
-                // Refresh data after successful run
                 setTimeout(() => {
                     fetchData();
                 }, 2000);
@@ -177,76 +149,82 @@ const Admin = () => {
         }
     };
 
+    // Run migration
+    const handleRunMigration = async () => {
+        try {
+            setIsRunningMigration(true);
+            setError(null);
+            const token = localStorage.getItem('token');
+            const response = await axios.post(`${config.backendUrl}admin/migrate-contacts`, {}, {
+                headers: { 'x-auth-token': token }
+            });
+            
+            setMigrationResults(response.data.results);
+            console.log('Migration completed:', response.data);
+            
+            // Refresh data after migration
+            setTimeout(() => {
+                fetchData();
+            }, 1000);
+        } catch (err) {
+            console.error('Error running migration:', err);
+            setError('Failed to run migration');
+        } finally {
+            setIsRunningMigration(false);
+        }
+    };
+
     // Handle bulk actions
     const handleBulkAction = async (action: string) => {
         if (selectedSponsors.length === 0) return;
-        
-        setConfirmAction({ action, count: selectedSponsors.length });
-        setShowConfirmDialog(true);
-    };
-
-    const confirmBulkAction = async () => {
-        if (!confirmAction) return;
         
         try {
             setIsPerformingBulkAction(true);
             const token = localStorage.getItem('token');
             
             await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
-                action: confirmAction.action,
+                action,
                 sponsorIds: selectedSponsors
             }, {
                 headers: { 'x-auth-token': token }
             });
             
             setSelectedSponsors([]);
-            setShowConfirmDialog(false);
-            setConfirmAction(null);
             fetchData();
         } catch (err) {
             console.error('Error performing bulk action:', err);
-            setError(`Failed to ${confirmAction.action} sponsors`);
+            setError(`Failed to ${action} sponsors`);
         } finally {
             setIsPerformingBulkAction(false);
         }
     };
 
     // Handle individual sponsor actions
-    const handleApproveSponsor = async (sponsor: Sponsor) => {
+    const handleSponsorAction = async (sponsorId: string, action: string) => {
         try {
             const token = localStorage.getItem('token');
             await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
-                action: 'approve',
-                sponsorIds: [sponsor._id]
+                action,
+                sponsorIds: [sponsorId]
             }, {
                 headers: { 'x-auth-token': token }
             });
             
-            setShowModal(false);
-            setSelectedSponsor(null);
             fetchData();
         } catch (err) {
-            console.error('Error approving sponsor:', err);
-            setError('Failed to approve sponsor');
+            console.error(`Error ${action}ing sponsor:`, err);
+            setError(`Failed to ${action} sponsor`);
         }
     };
 
-    const handleRejectSponsor = async (sponsor: Sponsor) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
-                action: 'reject',
-                sponsorIds: [sponsor._id]
-            }, {
-                headers: { 'x-auth-token': token }
-            });
-            
-            setShowModal(false);
-            setSelectedSponsor(null);
-            fetchData();
-        } catch (err) {
-            console.error('Error rejecting sponsor:', err);
-            setError('Failed to reject sponsor');
+    // Handle double-click to edit sponsor
+    const handleEditSponsor = (sponsor: any) => {
+        // For now, just open the sponsor link in a new tab
+        // You can implement a proper edit modal later
+        if (sponsor.sponsorLink) {
+            window.open(sponsor.sponsorLink, '_blank');
+        } else {
+            alert('No sponsor link available for editing');
         }
     };
 
@@ -258,6 +236,8 @@ const Admin = () => {
             setSortBy(column);
             setSortOrder('desc');
         }
+        // Reset to first page when sorting changes
+        setCurrentPage(1);
     };
 
     // Handle selection
@@ -278,10 +258,10 @@ const Admin = () => {
     };
 
     // Export CSV
-    const handleExportCSV = async (type: 'pending' | 'approved' = 'pending') => {
+    const handleExportCSV = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(`${config.backendUrl}admin/export/csv?type=${type}`, {
+            const response = await axios.get(`${config.backendUrl}admin/export/csv?type=pending`, {
                 headers: { 'x-auth-token': token },
                 responseType: 'blob'
             });
@@ -289,7 +269,7 @@ const Admin = () => {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `${type}_sponsors.csv`);
+            link.setAttribute('download', 'sponsors.csv');
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -299,31 +279,67 @@ const Admin = () => {
         }
     };
 
-    // Get confidence color
-    const getConfidenceColor = (confidence: number) => {
-        if (confidence >= 85) return '#28a745';
-        if (confidence >= 70) return '#ffc107';
-        return '#dc3545';
-    };
-
-    // Get activity icon
-    const getActivityIcon = (type: string) => {
-        switch (type) {
-            case 'discovered': return faRobot;
-            case 'approved': return faCheckCircle;
-            case 'rejected': return faTimes;
-            default: return faHistory;
+    // Get status badge info
+    const getStatusBadge = (sponsor: Sponsor) => {
+        if (sponsor.status === 'approved') {
+            return { text: 'Complete', color: '#28a745', icon: faCheckCircle };
+        } else if (sponsor.status === 'rejected') {
+            return { text: 'Rejected', color: '#dc3545', icon: faTimes };
+        } else if (sponsor.analysisStatus === 'manual_review_required') {
+            return { text: 'Manual Review', color: '#ffc107', icon: faExclamationTriangle };
+        } else {
+            return { text: 'Pending', color: '#6c757d', icon: faClock };
         }
     };
 
-    // Get activity color
-    const getActivityColor = (type: string) => {
-        switch (type) {
-            case 'discovered': return '#17a2b8';
-            case 'approved': return '#28a745';
-            case 'rejected': return '#dc3545';
-            default: return '#6c757d';
+    // Get contact info display
+    const getContactDisplay = (sponsor: Sponsor) => {
+        const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim();
+        const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim();
+        
+        if (hasEmail && hasApplication) {
+            return (
+                <div className="contact-both">
+                    <div className="contact-item">
+                        <FontAwesomeIcon icon={faEnvelope} />
+                        <span>{sponsor.sponsorEmail}</span>
+                    </div>
+                    <div className="contact-item">
+                        <FontAwesomeIcon icon={faLink} />
+                        <a href={sponsor.sponsorApplication} target="_blank" rel="noopener noreferrer">
+                            Application
+                        </a>
+                    </div>
+                </div>
+            );
+        } else if (hasEmail) {
+            return (
+                <div className="contact-item">
+                    <FontAwesomeIcon icon={faEnvelope} />
+                    <span>{sponsor.sponsorEmail}</span>
+                </div>
+            );
+        } else if (hasApplication) {
+            return (
+                <div className="contact-item">
+                    <FontAwesomeIcon icon={faLink} />
+                    <a href={sponsor.sponsorApplication} target="_blank" rel="noopener noreferrer">
+                        Application
+                    </a>
+                </div>
+            );
+        } else {
+            return <span className="no-contact">No contact</span>;
         }
+    };
+
+    // Format date
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
     };
 
     if (loading && !stats) {
@@ -336,478 +352,384 @@ const Admin = () => {
     }
 
     return (
-        <div className="admin-dashboard">
-            {/* Header */}
-            <div className="admin-header">
-                <div className="admin-header__content">
-                    <h1>Sponsor Management Dashboard</h1>
-                    <p>Comprehensive sponsor review and management system</p>
-                    <div className="admin-header__meta">
-                        <span className="admin-header__refresh">
-                            <FontAwesomeIcon icon={faRefresh} />
-                            Last updated: {lastRefresh.toLocaleTimeString()}
-                        </span>
+        <div className="admin-page">
+            <div className="admin-dashboard">
+                {/* Header */}
+                <div className="admin-header">
+                    <div className="admin-header-content">
+                        <h1>Sponsor Management</h1>
+                        <p className="admin-subtitle">Manage sponsors, review pending entries, and monitor system activity</p>
+                    </div>
+                    <div className="admin-actions">
+                        <button 
+                            className="btn btn-warning"
+                            onClick={handleRunMigration}
+                            disabled={isRunningMigration}
+                        >
+                            <FontAwesomeIcon icon={isRunningMigration ? faSpinner : faDownload} spin={isRunningMigration} />
+                            {isRunningMigration ? 'Migrating...' : 'Run Migration'}
+                        </button>
+                        <button 
+                            className="btn btn-primary"
+                            onClick={handleRunScraper}
+                            disabled={isRunningScraper}
+                        >
+                            <FontAwesomeIcon icon={isRunningScraper ? faSpinner : faRobot} spin={isRunningScraper} />
+                            {isRunningScraper ? 'Running...' : 'Run Scraper'}
+                        </button>
+                        <button 
+                            className="btn btn-secondary"
+                            onClick={fetchData}
+                            disabled={loading}
+                        >
+                            <FontAwesomeIcon icon={faRefresh} spin={loading} />
+                            Refresh
+                        </button>
                     </div>
                 </div>
-            </div>
 
             {/* Stats Cards */}
             {stats && (
                 <div className="stats-grid">
-                    <div className="stats-card">
-                        <div className="stats-card__icon">
+                    <div className="stat-card">
+                        <div className="stat-icon">
                             <FontAwesomeIcon icon={faUsers} />
                         </div>
-                        <div className="stats-card__content">
-                            <h3>{stats.totalSponsors.toLocaleString()}</h3>
+                        <div className="stat-content">
+                            <h3>{stats.totalSponsors?.toLocaleString() || '0'}</h3>
                             <p>Total Sponsors</p>
                         </div>
                     </div>
                     
-                    <div className="stats-card">
-                        <div className="stats-card__icon">
-                            <FontAwesomeIcon icon={faChartLine} />
+                    <div className="stat-card stat-card--warning">
+                        <div className="stat-icon">
+                            <FontAwesomeIcon icon={faExclamationTriangle} />
                         </div>
-                        <div className="stats-card__content">
-                            <h3>{stats.scrapedThisWeek}</h3>
-                            <p>Scraped This Week</p>
-                        </div>
-                    </div>
-                    
-                    <div className="stats-card">
-                        <div className="stats-card__icon">
-                            <FontAwesomeIcon icon={faClock} />
-                        </div>
-                        <div className="stats-card__content">
-                            <h3>{stats.pendingReview}</h3>
+                        <div className="stat-content">
+                            <h3>{stats.pendingReview?.toLocaleString() || '0'}</h3>
                             <p>Pending Review</p>
                         </div>
                     </div>
                     
-                    <div className="stats-card">
-                        <div className="stats-card__icon">
-                            <FontAwesomeIcon icon={faCheckCircle} />
+                    <div className="stat-card stat-card--info">
+                        <div className="stat-icon">
+                            <FontAwesomeIcon icon={faCalendarAlt} />
                         </div>
-                        <div className="stats-card__content">
-                            <h3>{stats.successRate}%</h3>
-                            <p>Success Rate</p>
+                        <div className="stat-content">
+                            <h3>{stats.addedThisWeek?.toLocaleString() || '0'}</h3>
+                            <p>Added This Week</p>
+                        </div>
+                    </div>
+                    
+                    <div className="stat-card stat-card--success">
+                        <div className="stat-icon">
+                            <FontAwesomeIcon icon={faRobot} />
+                        </div>
+                        <div className="stat-content">
+                            <h3>Active</h3>
+                            <p>Last Run: {stats.lastScraperRun || 'Never'}</p>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="action-buttons">
-                <button 
-                    className="action-btn action-btn--primary"
-                    onClick={handleRunScraper}
-                    disabled={isRunningScraper}
-                >
-                    <FontAwesomeIcon icon={isRunningScraper ? faSpinner : faPlay} spin={isRunningScraper} />
-                    {isRunningScraper ? 'Running Scraper...' : 'Run Scraper Now'}
-                </button>
-                
-                <button 
-                    className="action-btn action-btn--success"
-                    onClick={() => handleBulkAction('approve')}
-                    disabled={selectedSponsors.length === 0 || isPerformingBulkAction}
-                >
-                    <FontAwesomeIcon icon={faCheck} />
-                    Bulk Approve High Confidence ({selectedSponsors.length})
-                </button>
-                
-                <button 
-                    className="action-btn action-btn--info"
-                    onClick={() => handleExportCSV('pending')}
-                >
-                    <FontAwesomeIcon icon={faDownload} />
-                    Export CSV
-                </button>
-                
-                <button 
-                    className="action-btn action-btn--secondary"
-                    onClick={() => handleExportCSV('approved')}
-                >
-                    <FontAwesomeIcon icon={faFileAlt} />
-                    View Logs
-                </button>
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="main-content">
-                {/* Sponsor Review Table */}
-                <div className="sponsor-review-section">
-                    <div className="section-header">
-                        <h2>Sponsor Review Queue</h2>
-                        <div className="table-controls">
-                            <div className="search-box">
-                                <FontAwesomeIcon icon={faSearch} />
-                                <input
-                                    type="text"
-                                    placeholder="Search sponsors..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                            
-                            <select 
-                                value={filter} 
-                                onChange={(e) => setFilter(e.target.value)}
-                                className="filter-select"
-                            >
-                                <option value="all">All Sponsors</option>
-                                <option value="high">High Confidence (85%+)</option>
-                                <option value="medium">Medium Confidence (70-84%)</option>
-                                <option value="low">Low Confidence (&lt;70%)</option>
-                                <option value="has-contact">Has Contact Info</option>
-                            </select>
+            {/* Weekly Chart */}
+            {stats && stats.weeklyData && stats.weeklyData.length > 0 && (
+                <div className="chart-section">
+                    <div className="chart-header">
+                        <h3>Weekly Sponsor Additions</h3>
+                        <p>Track how many sponsors our scraper has added each week</p>
+                    </div>
+                    <div className="chart-container">
+                        <div className="weekly-chart">
+                            {stats.weeklyData.map((week, index) => (
+                                <div key={week.week} className="chart-bar">
+                                    <div 
+                                        className="bar-fill" 
+                                        style={{ 
+                                            height: `${Math.max((week.count / Math.max(...(stats.weeklyData || []).map(w => w.count), 1)) * 100, 5)}%` 
+                                        }}
+                                    ></div>
+                                    <div className="bar-label">{week.week}</div>
+                                    <div className="bar-value">{week.count}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
+                </div>
+            )}
 
-                    <div className="table-container">
-                        <table className="sponsor-table">
-                            <thead>
-                                <tr>
-                                    <th className="table-checkbox">
+            {/* Filters */}
+            <div className="filters-section">
+                <div className="search-box">
+                    <FontAwesomeIcon icon={faSearch} />
+                    <input
+                        type="text"
+                        placeholder="Search sponsors, newsletters, domains..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                
+                <div className="filter-group">
+                    <label>Status</label>
+                    <select 
+                        value={statusFilter} 
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending Review</option>
+                        <option value="approved">Complete</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="manual_review">Manual Review Required</option>
+                    </select>
+                </div>
+                
+                <div className="filter-group">
+                    <label>Source</label>
+                    <select 
+                        value={sourceFilter} 
+                        onChange={(e) => setSourceFilter(e.target.value)}
+                    >
+                        <option value="all">All Sources</option>
+                        {/* Add dynamic newsletter options here */}
+                    </select>
+                </div>
+                
+                <div className="filter-group">
+                    <label>Added</label>
+                    <select 
+                        value={dateFilter} 
+                        onChange={(e) => setDateFilter(e.target.value)}
+                    >
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+            </div>
+
+
+            {/* Bulk Actions */}
+            {selectedSponsors.length > 0 && (
+                <div className="bulk-actions">
+                    <div className="selected-count">
+                        {selectedSponsors.length} selected
+                    </div>
+                    <button 
+                        className="btn btn-success btn-sm"
+                        onClick={() => handleBulkAction('approve')}
+                        disabled={isPerformingBulkAction}
+                    >
+                        <FontAwesomeIcon icon={faCheck} />
+                        Approve All
+                    </button>
+                    <button 
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleBulkAction('reject')}
+                        disabled={isPerformingBulkAction}
+                    >
+                        <FontAwesomeIcon icon={faTimesIcon} />
+                        Reject All
+                    </button>
+                    <button 
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setSelectedSponsors([])}
+                    >
+                        Clear Selection
+                    </button>
+                </div>
+            )}
+
+            {/* Main Table */}
+            <div className="table-container">
+                <table className="sponsor-table">
+                    <thead>
+                        <tr>
+                            <th style={{ width: '50px' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedSponsors.length === sponsors.length && sponsors.length > 0}
+                                    onChange={handleSelectAll}
+                                    style={{ transform: 'scale(1.2)' }}
+                                />
+                            </th>
+                            <th 
+                                className="sortable"
+                                onClick={() => handleSort('sponsorName')}
+                            >
+                                Sponsor Name
+                                <FontAwesomeIcon 
+                                    icon={sortBy === 'sponsorName' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
+                                    className={`sort-icon ${sortBy === 'sponsorName' ? 'active' : ''}`}
+                                />
+                            </th>
+                            <th>Domain</th>
+                            <th>Email/Application</th>
+                            <th>Status</th>
+                            <th 
+                                className="sortable"
+                                onClick={() => handleSort('newsletterSponsored')}
+                            >
+                                Source
+                                <FontAwesomeIcon 
+                                    icon={sortBy === 'newsletterSponsored' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
+                                    className={`sort-icon ${sortBy === 'newsletterSponsored' ? 'active' : ''}`}
+                                />
+                            </th>
+                            <th 
+                                className="sortable"
+                                onClick={() => handleSort('subscriberCount')}
+                            >
+                                Audience
+                                <FontAwesomeIcon 
+                                    icon={sortBy === 'subscriberCount' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
+                                    className={`sort-icon ${sortBy === 'subscriberCount' ? 'active' : ''}`}
+                                />
+                            </th>
+                            <th 
+                                className="sortable"
+                                onClick={() => handleSort('dateAdded')}
+                            >
+                                Added Date
+                                <FontAwesomeIcon 
+                                    icon={sortBy === 'dateAdded' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
+                                    className={`sort-icon ${sortBy === 'dateAdded' ? 'active' : ''}`}
+                                />
+                            </th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sponsors.map((sponsor) => {
+                            const statusBadge = getStatusBadge(sponsor);
+                            
+                            return (
+                                <tr 
+                                    key={sponsor._id}
+                                    onDoubleClick={() => handleEditSponsor(sponsor)}
+                                    className="sponsor-row"
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <td>
                                         <input
                                             type="checkbox"
-                                            checked={selectedSponsors.length === sponsors.length && sponsors.length > 0}
-                                            onChange={handleSelectAll}
+                                            checked={selectedSponsors.includes(sponsor._id)}
+                                            onChange={() => handleSelectSponsor(sponsor._id)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            style={{ transform: 'scale(1.2)' }}
                                         />
-                                    </th>
-                                    <th 
-                                        className="sortable"
-                                        onClick={() => handleSort('sponsorName')}
-                                    >
-                                        Sponsor Name & Domain
-                                        <FontAwesomeIcon 
-                                            icon={sortBy === 'sponsorName' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                            className={`sort-icon ${sortBy === 'sponsorName' ? 'active' : ''}`}
-                                        />
-                                    </th>
-                                    <th 
-                                        className="sortable"
-                                        onClick={() => handleSort('confidence')}
-                                    >
-                                        Confidence
-                                        <FontAwesomeIcon 
-                                            icon={sortBy === 'confidence' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                            className={`sort-icon ${sortBy === 'confidence' ? 'active' : ''}`}
-                                        />
-                                    </th>
-                                    <th>Source Newsletter</th>
-                                    <th>Discovery Method</th>
-                                    <th>Evidence Preview</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sponsors.map((sponsor) => (
-                                    <tr key={sponsor._id}>
-                                        <td className="table-checkbox">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedSponsors.includes(sponsor._id)}
-                                                onChange={() => handleSelectSponsor(sponsor._id)}
-                                            />
-                                        </td>
-                                        <td className="sponsor-info">
-                                            <div 
-                                                className="sponsor-name"
-                                                onClick={() => {
-                                                    setSelectedSponsor(sponsor);
-                                                    setShowModal(true);
-                                                }}
-                                            >
-                                                {sponsor.sponsorName}
-                                            </div>
-                                            <div className="sponsor-domain">
-                                                <a 
-                                                    href={sponsor.sponsorLink} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
+                                    </td>
+                                    <td className="sponsor-name">
+                                        <div 
+                                            className="sponsor-name-link"
+                                            onClick={() => window.open(sponsor.sponsorLink, '_blank')}
+                                        >
+                                            {sponsor.sponsorName}
+                                            <FontAwesomeIcon icon={faExternalLink} />
+                                        </div>
+                                    </td>
+                                    <td className="domain">
+                                        {sponsor.rootDomain}
+                                    </td>
+                                    <td className="contact-info">
+                                        {getContactDisplay(sponsor)}
+                                    </td>
+                                    <td>
+                                        <span 
+                                            className="status-badge"
+                                            style={{ backgroundColor: statusBadge.color }}
+                                        >
+                                            <FontAwesomeIcon icon={statusBadge.icon} />
+                                            {statusBadge.text}
+                                        </span>
+                                    </td>
+                                    <td className="source">
+                                        {sponsor.newsletterSponsored}
+                                    </td>
+                                    <td className="audience">
+                                        {sponsor.subscriberCount ? sponsor.subscriberCount.toLocaleString() : 'N/A'}
+                                    </td>
+                                    <td className="date">
+                                        {formatDate(sponsor.dateAdded)}
+                                    </td>
+                                    <td className="actions">
+                                        {sponsor.status === 'pending' ? (
+                                            <>
+                                                <button 
+                                                    className="btn btn-sm btn-success"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleSponsorAction(sponsor._id, 'approve');
+                                                    }}
+                                                    title="Approve"
                                                 >
-                                                    {sponsor.rootDomain}
-                                                    <FontAwesomeIcon icon={faExternalLink} />
-                                                </a>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span 
-                                                className="confidence-badge"
-                                                style={{ backgroundColor: getConfidenceColor(sponsor.confidence) }}
-                                            >
-                                                {sponsor.confidence}%
-                                            </span>
-                                        </td>
-                                        <td>{sponsor.newsletterSponsored}</td>
-                                        <td>
-                                            <span className="discovery-method">
-                                                {sponsor.analysisStatus === 'complete' ? 'email_scraper' : 'manual'}
-                                            </span>
-                                        </td>
-                                        <td className="evidence-preview">
-                                            {sponsor.sponsorshipEvidence ? 
-                                                sponsor.sponsorshipEvidence.substring(0, 100) + '...' : 
-                                                'No evidence'
-                                            }
-                                        </td>
-                                        <td className="table-actions">
+                                                    <FontAwesomeIcon icon={faCheck} />
+                                                </button>
+                                                <button 
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleSponsorAction(sponsor._id, 'reject');
+                                                    }}
+                                                    title="Reject"
+                                                >
+                                                    <FontAwesomeIcon icon={faTimesIcon} />
+                                                </button>
+                                            </>
+                                        ) : (
                                             <button 
-                                                className="action-btn action-btn--small action-btn--view"
-                                                onClick={() => {
-                                                    setSelectedSponsor(sponsor);
-                                                    setShowModal(true);
+                                                className="btn btn-sm btn-danger"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleSponsorAction(sponsor._id, 'delete');
                                                 }}
+                                                title="Remove from Database"
                                             >
-                                                <FontAwesomeIcon icon={faEye} />
+                                                <FontAwesomeIcon icon={faTrash} />
                                             </button>
-                                            <button 
-                                                className="action-btn action-btn--small action-btn--approve"
-                                                onClick={() => handleApproveSponsor(sponsor)}
-                                            >
-                                                <FontAwesomeIcon icon={faCheck} />
-                                            </button>
-                                            <button 
-                                                className="action-btn action-btn--small action-btn--reject"
-                                                onClick={() => handleRejectSponsor(sponsor)}
-                                            >
-                                                <FontAwesomeIcon icon={faTimes} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        
-                        {sponsors.length === 0 && !loading && (
-                            <div className="empty-state">
-                                <FontAwesomeIcon icon={faUsers} />
-                                <h3>No sponsors found</h3>
-                                <p>Try adjusting your search or filters</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Pagination */}
-                    {pagination && pagination.pages > 1 && (
-                        <div className="pagination">
-                            <button 
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                disabled={currentPage === 1}
-                            >
-                                Previous
-                            </button>
-                            
-                            <span className="pagination-info">
-                                Page {currentPage} of {pagination.pages} ({pagination.total} total)
-                            </span>
-                            
-                            <button 
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(prev => Math.min(pagination.pages, prev + 1))}
-                                disabled={currentPage === pagination.pages}
-                            >
-                                Next
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Recent Activity Sidebar */}
-                <div className="activity-sidebar">
-                    <div className="section-header">
-                        <h3>Recent Activity</h3>
-                        <FontAwesomeIcon icon={faHistory} />
-                    </div>
-                    
-                    <div className="activity-feed">
-                        {activities.map((activity, index) => (
-                            <div key={index} className="activity-item">
-                                <div className="activity-icon" style={{ color: getActivityColor(activity.type) }}>
-                                    <FontAwesomeIcon icon={getActivityIcon(activity.type)} />
-                                </div>
-                                <div className="activity-content">
-                                    <div className="activity-message">{activity.message}</div>
-                                    <div className="activity-details">{activity.details}</div>
-                                    <div className="activity-time">
-                                        {new Date(activity.timestamp).toLocaleString()}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Analytics Section */}
-            <div className="analytics-section">
-                <div className="section-header">
-                    <h2>Analytics Overview</h2>
-                    <FontAwesomeIcon icon={faChartBar} />
-                </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
                 
-                <div className="analytics-grid">
-                    <div className="analytics-card">
-                        <h4>Top Newsletter Sources</h4>
-                        <div className="analytics-content">
-                            <p>Analytics coming soon...</p>
-                        </div>
+                {sponsors.length === 0 && !loading && (
+                    <div className="empty-state">
+                        <FontAwesomeIcon icon={faUsers} />
+                        <h3>No sponsors found</h3>
+                        <p>Try adjusting your search or filters</p>
                     </div>
-                    
-                    <div className="analytics-card">
-                        <h4>Confidence Distribution</h4>
-                        <div className="analytics-content">
-                            <p>Analytics coming soon...</p>
-                        </div>
-                    </div>
-                    
-                    <div className="analytics-card">
-                        <h4>Daily Discovery Rate</h4>
-                        <div className="analytics-content">
-                            <p>Analytics coming soon...</p>
-                        </div>
-                    </div>
-                </div>
+                )}
             </div>
 
-            {/* Sponsor Detail Modal */}
-            {showModal && selectedSponsor && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>{selectedSponsor.sponsorName}</h2>
-                            <button onClick={() => setShowModal(false)} className="modal-close">
-                                <FontAwesomeIcon icon={faTimes} />
-                            </button>
+            {/* Migration Results */}
+            {migrationResults && (
+                <div className="migration-results">
+                    <h3>Migration Results</h3>
+                    <div className="migration-stats">
+                        <div className="migration-stat">
+                            <strong>Total Processed:</strong> {migrationResults.totalProcessed}
                         </div>
-                        
-                        <div className="modal-body">
-                            <div className="modal-section">
-                                <h3>Basic Information</h3>
-                                <div className="modal-grid">
-                                    <div className="modal-field">
-                                        <label>Newsletter</label>
-                                        <p>{selectedSponsor.newsletterSponsored}</p>
-                                    </div>
-                                    <div className="modal-field">
-                                        <label>Website</label>
-                                        <a href={selectedSponsor.sponsorLink} target="_blank" rel="noopener noreferrer">
-                                            {selectedSponsor.sponsorLink}
-                                        </a>
-                                    </div>
-                                    <div className="modal-field">
-                                        <label>Confidence Score</label>
-                                        <p style={{color: getConfidenceColor(selectedSponsor.confidence)}}>
-                                            {selectedSponsor.confidence}%
-                                        </p>
-                                    </div>
-                                    <div className="modal-field">
-                                        <label>Estimated Subscribers</label>
-                                        <p>{selectedSponsor.estimatedSubscribers?.toLocaleString() || 'Unknown'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="modal-section">
-                                <h3>Contact Information</h3>
-                                <div className="modal-field">
-                                    <label>Business Contact</label>
-                                    <p style={{
-                                        background: '#f0fff4',
-                                        border: '2px solid #48bb78',
-                                        fontWeight: '600',
-                                        fontSize: '1.1rem',
-                                        padding: '0.5rem',
-                                        borderRadius: '8px'
-                                    }}>
-                                        {selectedSponsor.businessContact || 'No contact found'}
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            <div className="modal-section">
-                                <h3>Analysis Details</h3>
-                                <div className="modal-field">
-                                    <label>Sponsorship Evidence</label>
-                                    <p>{selectedSponsor.sponsorshipEvidence || 'No evidence provided'}</p>
-                                </div>
-                                <div className="modal-field">
-                                    <label>Subscriber Reasoning</label>
-                                    <p>{selectedSponsor.subscriberReasoning || 'No reasoning provided'}</p>
-                                </div>
-                                <div className="modal-field">
-                                    <label>Enrichment Notes</label>
-                                    <p>{selectedSponsor.enrichmentNotes || 'No notes provided'}</p>
-                                </div>
-                            </div>
-                            
-                            <div className="modal-section">
-                                <h3>Tags</h3>
-                                <div className="modal-tags">
-                                    {selectedSponsor.tags?.map((tag, index) => (
-                                        <span key={index} className="modal-tag">{tag}</span>
-                                    ))}
-                                </div>
-                            </div>
+                        <div className="migration-stat">
+                            <strong>Total Errors:</strong> {migrationResults.totalErrors}
                         </div>
-                        
-                        <div className="modal-actions">
-                            <button 
-                                onClick={() => handleApproveSponsor(selectedSponsor)}
-                                className="modal-btn modal-btn--approve"
-                            >
-                                <FontAwesomeIcon icon={faCheck} />
-                                Approve Sponsor
-                            </button>
-                            <button 
-                                onClick={() => handleRejectSponsor(selectedSponsor)}
-                                className="modal-btn modal-btn--reject"
-                            >
-                                <FontAwesomeIcon icon={faTimes} />
-                                Reject Sponsor
-                            </button>
+                        <div className="migration-stat">
+                            <strong>Potential Sponsors:</strong> {migrationResults.potentialSponsors.processed} processed, {migrationResults.potentialSponsors.errors} errors
+                        </div>
+                        <div className="migration-stat">
+                            <strong>Sponsors:</strong> {migrationResults.sponsors.processed} processed, {migrationResults.sponsors.errors} errors
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Confirmation Dialog */}
-            {showConfirmDialog && confirmAction && (
-                <div className="modal-overlay" onClick={() => setShowConfirmDialog(false)}>
-                    <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
-                        <div className="confirm-header">
-                            <FontAwesomeIcon icon={faExclamationTriangle} />
-                            <h3>Confirm Action</h3>
-                        </div>
-                        <div className="confirm-body">
-                            <p>Are you sure you want to {confirmAction.action} {confirmAction.count} sponsor(s)?</p>
-                            <p>This action cannot be undone.</p>
-                        </div>
-                        <div className="confirm-actions">
-                            <button 
-                                className="confirm-btn confirm-btn--cancel"
-                                onClick={() => setShowConfirmDialog(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                className="confirm-btn confirm-btn--confirm"
-                                onClick={confirmBulkAction}
-                                disabled={isPerformingBulkAction}
-                            >
-                                {isPerformingBulkAction ? (
-                                    <>
-                                        <FontAwesomeIcon icon={faSpinner} spin />
-                                        Processing...
-                                    </>
-                                ) : (
-                                    `Yes, ${confirmAction.action}`
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                    <button 
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => setMigrationResults(null)}
+                    >
+                        Dismiss
+                    </button>
                 </div>
             )}
 
@@ -817,10 +739,11 @@ const Admin = () => {
                     <FontAwesomeIcon icon={faExclamationTriangle} />
                     <span>{error}</span>
                     <button onClick={() => setError(null)}>
-                        <FontAwesomeIcon icon={faTimes} />
+                        <FontAwesomeIcon icon={faTimesIcon} />
                     </button>
                 </div>
             )}
+            </div>
         </div>
     );
 };

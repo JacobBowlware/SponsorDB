@@ -1,0 +1,30 @@
+{
+  "name": "SponsorDB",
+  "description": "SponsorDB - Newsletter Sponsor Database",
+  "repository": "https://github.com/your-username/SponsorDB",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["node", "express", "mongodb", "python", "newsletter", "sponsors"],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment",
+      "value": "production"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  }
+}
+
+
+

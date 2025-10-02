@@ -49,16 +49,36 @@ router.get('/stats', [auth, admin], async (req, res) => {
         const sponsorsWithApplications = await Sponsor.find({ appliedBy: { $exists: true, $ne: [] } });
         const totalApplications = sponsorsWithApplications.reduce((sum, sponsor) => sum + sponsor.appliedBy.length, 0);
 
+        // Get weekly data for the last 8 weeks
+        const weeklyData = [];
+        for (let i = 7; i >= 0; i--) {
+            const weekStart = new Date(now.getTime() - (i * 7 + 6) * 24 * 60 * 60 * 1000);
+            const weekEnd = new Date(now.getTime() - (i * 7) * 24 * 60 * 60 * 1000);
+            
+            const weekCount = await Sponsor.countDocuments({
+                dateAdded: {
+                    $gte: weekStart,
+                    $lte: weekEnd
+                }
+            });
+            
+            const weekLabel = weekStart.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            weeklyData.push({
+                week: weekLabel,
+                count: weekCount
+            });
+        }
+
         const stats = {
             totalSponsors,
-            scrapedThisWeek,
-            pendingReview,
-            successRate,
-            approvedSponsors,
-            rejectedSponsors,
-            reviewedSponsors,
-            totalViews,
-            totalApplications
+            pendingReview: scrapedThisWeek,
+            addedThisWeek: scrapedThisWeek,
+            lastScraperRun: new Date().toLocaleString(),
+            weeklyData
         };
         
         res.status(200).json(stats);
@@ -402,85 +422,97 @@ router.get('/activity', [auth, admin], async (req, res) => {
 
 // Run Python scraper
 router.post('/scraper/run', [auth, admin], async (req, res) => {
+    let responseSent = false;
+    
+    const sendResponse = (statusCode, data) => {
+        if (!responseSent) {
+            responseSent = true;
+            res.status(statusCode).json(data);
+        }
+    };
+    
     try {
         console.log("Starting Python Newsletter Scraper from admin dashboard...");
         
-        // Path to the Python API wrapper
-        const pythonScriptPath = path.join(__dirname, '../../newsletter_scraper/api_wrapper.py');
+        // Check if we're in a Heroku environment
+        const isHeroku = process.env.NODE_ENV === 'production' && process.env.DYNO;
         
-        // Spawn Python process - try python3 first, then python
-        const pythonCommands = ['python3', 'python'];
-        let pythonProcess;
-        let pythonCommand;
-        
-        for (const cmd of pythonCommands) {
-            try {
-                pythonProcess = spawn(cmd, [pythonScriptPath], {
-                    cwd: path.join(__dirname, '../../newsletter_scraper'),
-                    env: {
-                        ...process.env,
-                        PYTHONPATH: path.join(__dirname, '../../newsletter_scraper')
-                    }
-                });
-                pythonCommand = cmd;
-                break; // Success, exit the loop
-            } catch (error) {
-                console.log(`Failed to spawn ${cmd}, trying next...`);
-                continue;
-            }
-        }
-        
-        if (!pythonProcess) {
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to start Python process - no Python interpreter found',
-                error: 'No Python interpreter available'
-            });
-        }
-        
-        let output = '';
-        let errorOutput = '';
-        
-        // Capture stdout
-        pythonProcess.stdout.on('data', (data) => {
-            output += data.toString();
-        });
-        
-        // Capture stderr
-        pythonProcess.stderr.on('data', (data) => {
-            errorOutput += data.toString();
-        });
-        
-        // Handle process completion
-        pythonProcess.on('close', (code) => {
-            console.log(`Python scraper process exited with code ${code}`);
+        if (isHeroku) {
+            // In Heroku, try to use Python directly
+            const pythonCommands = ['python3', 'python'];
+            let pythonProcess;
+            let pythonCommand;
             
-            if (code === 0) {
+            for (const cmd of pythonCommands) {
                 try {
-                    const result = JSON.parse(output);
-                    console.log("Python scraper completed successfully:", result);
-                    if (!res.headersSent) {
-                        res.status(200).json({
+                    // Path to the Python API wrapper
+                    const pythonScriptPath = path.join(__dirname, '../newsletter_scraper/api_wrapper.py');
+                    
+                    pythonProcess = spawn(cmd, [pythonScriptPath], {
+                        cwd: path.join(__dirname, '../newsletter_scraper'),
+                        env: {
+                            ...process.env,
+                            PYTHONPATH: path.join(__dirname, '../newsletter_scraper'),
+                            MAX_EMAILS_PER_RUN: '20'  // Override for admin runs
+                        }
+                    });
+                    pythonCommand = cmd;
+                    console.log(`Successfully started Python process with ${cmd}`);
+                    break; // Success, exit the loop
+                } catch (error) {
+                    console.log(`Failed to spawn ${cmd}, trying next...`, error.message);
+                    continue;
+                }
+            }
+            
+            if (!pythonProcess) {
+                return sendResponse(500, {
+                    success: false,
+                    message: 'Failed to start Python process - no Python interpreter found',
+                    error: 'No Python interpreter available in Heroku environment. Make sure Python buildpack is added.'
+                });
+            }
+            
+            let output = '';
+            let errorOutput = '';
+            
+            // Capture stdout
+            pythonProcess.stdout.on('data', (data) => {
+                output += data.toString();
+            });
+            
+            // Capture stderr
+            pythonProcess.stderr.on('data', (data) => {
+                const logData = data.toString();
+                errorOutput += logData;
+                console.log("Python stderr:", logData);
+            });
+            
+            // Handle process completion
+            pythonProcess.on('close', (code) => {
+                console.log(`Python scraper process exited with code ${code}`);
+                
+                if (code === 0) {
+                    try {
+                        const result = JSON.parse(output);
+                        console.log("Python scraper completed successfully:", result);
+                        sendResponse(200, {
                             success: true,
                             message: 'Scraper completed successfully',
                             result: result
                         });
-                    }
-                } catch (parseError) {
-                    console.error("Error parsing Python output:", parseError);
-                    if (!res.headersSent) {
-                        res.status(200).json({
+                    } catch (parseError) {
+                        console.error("Error parsing Python output:", parseError);
+                        sendResponse(200, {
                             success: true,
                             message: 'Scraper completed (output parsing failed)',
                             rawOutput: output,
                             errorOutput: errorOutput
                         });
                     }
-                }
-            } else {
-                console.error("Python scraper failed with code:", code);
-                if (!res.headersSent) {
-                    res.status(400).json({
+                } else {
+                    console.error("Python scraper failed with code:", code);
+                    sendResponse(400, {
                         success: false,
                         message: 'Scraper failed',
                         exitCode: code,
@@ -488,39 +520,47 @@ router.post('/scraper/run', [auth, admin], async (req, res) => {
                         output: output
                     });
                 }
-            }
-        });
-        
-        // Handle process errors
-        pythonProcess.on('error', (error) => {
-            console.error("Failed to start Python scraper:", error);
-            if (!res.headersSent) {
-                res.status(500).json({
+            });
+            
+            // Handle process errors
+            pythonProcess.on('error', (error) => {
+                console.error("Failed to start Python scraper:", error);
+                sendResponse(500, {
                     success: false,
                     message: 'Failed to start scraper',
                     error: error.message
                 });
-            }
-        });
-        
-        // Set timeout (10 minutes for admin)
-        setTimeout(() => {
-            if (!pythonProcess.killed) {
-                console.log("Python scraper timeout - killing process");
-                pythonProcess.kill();
-                if (!res.headersSent) {
-                    res.status(408).json({
+            });
+            
+            // Set timeout (10 minutes for admin)
+            setTimeout(() => {
+                if (!pythonProcess.killed) {
+                    console.log("Python scraper timeout - killing process");
+                    pythonProcess.kill();
+                    sendResponse(408, {
                         success: false,
                         message: 'Scraper timeout',
                         timeout: true
                     });
                 }
-            }
-        }, 600000); // 10 minutes
+            }, 600000); // 10 minutes
+            
+        } else {
+            // Local development - return a mock response
+            console.log("Running in development mode - returning mock scraper response");
+            sendResponse(200, {
+                success: true,
+                message: 'Scraper simulation completed (development mode)',
+                result: {
+                    sponsors_found: 0,
+                    message: 'Python scraper not available in development mode'
+                }
+            });
+        }
         
     } catch (error) {
         console.error("Error running Python scraper:", error);
-        res.status(500).json({
+        sendResponse(500, {
             success: false,
             message: 'Error running scraper',
             error: error.message

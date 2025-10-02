@@ -37,6 +37,10 @@ class EmailProcessor:
     def get_recent_emails(self, limit: int = MAX_EMAILS_PER_RUN) -> List[Dict]:
         """Get recent emails from inbox"""
         try:
+            if not self.mail:
+                logger.error("Email connection not established")
+                return []
+                
             # Search for unread emails
             status, messages = self.mail.search(None, 'UNSEEN')
             if status != 'OK':
@@ -138,27 +142,22 @@ class EmailProcessor:
         return body
     
     def has_sponsor_indicators(self, email_data: Dict) -> bool:
-        """Check if email has strong sponsor indicators - MUCH STRICTER"""
+        """Check if email has sponsor indicators - much more practical"""
         subject = email_data.get('subject', '').upper()
         body = email_data.get('body', '').upper()
         
-        # Check for explicit sponsor markers
+        # Check for sponsor markers
         sponsor_count = 0
         for marker in SPONSOR_MARKERS:
             if marker in subject or marker in body:
                 sponsor_count += 1
         
-        # Require minimum sponsor indicators - MUCH HIGHER
+        # Much more lenient threshold
         if sponsor_count < MIN_SPONSOR_INDICATORS:
             logger.debug(f"Email has only {sponsor_count} sponsor indicators, minimum required: {MIN_SPONSOR_INDICATORS}")
             return False
         
-        # Additional check: require explicit sponsorship language in context
-        if not self._has_explicit_sponsorship_context(body):
-            logger.debug("Email lacks explicit sponsorship context")
-            return False
-        
-        logger.info(f"Email has {sponsor_count} sponsor indicators and explicit context - processing")
+        logger.info(f"Email has {sponsor_count} sponsor indicators - processing")
         return True
     
     def _has_explicit_sponsorship_context(self, body: str) -> bool:
@@ -182,25 +181,81 @@ class EmailProcessor:
         """Extract potential sponsor sections from email"""
         body = email_data.get('body', '')
         subject = email_data.get('subject', '')
+        raw_message = email_data.get('raw_message')
         
         sponsor_sections = []
         
-        # Split body into sections and analyze each
-        sections = self._split_into_sections(body)
+        # First try HTML analysis if available
+        if raw_message:
+            html_sections = self._extract_sponsor_section_html(raw_message)
+            for text, soup in html_sections:
+                links = self._extract_links_from_section(text)
+                if links:  # Only add if we found links
+                    sponsor_sections.append({
+                        'section_text': text,
+                        'section_index': len(sponsor_sections),
+                        'links': links,
+                        'sponsor_evidence': self._extract_sponsor_evidence(text),
+                        'source': 'html_analysis'
+                    })
         
-        for i, section in enumerate(sections):
-            if self._is_sponsor_section(section):
-                links = self._extract_links_from_section(section)
-                if links:
+        # Fallback to text-based analysis
+        if not sponsor_sections:
+            sections = self._split_into_sections(body)
+            
+            for i, section in enumerate(sections):
+                if self._is_sponsor_section(section):
+                    links = self._extract_links_from_section(section)
                     sponsor_sections.append({
                         'section_text': section,
                         'section_index': i,
                         'links': links,
-                        'sponsor_evidence': self._extract_sponsor_evidence(section)
+                        'sponsor_evidence': self._extract_sponsor_evidence(section),
+                        'source': 'text_analysis'
                     })
         
         logger.info(f"Found {len(sponsor_sections)} potential sponsor sections")
         return sponsor_sections
+    
+    def _extract_sponsor_section_html(self, email_message) -> List[Tuple[str, BeautifulSoup]]:
+        """Extract sponsor sections using HTML structure"""
+        sponsor_sections = []
+        
+        if email_message.is_multipart():
+            for part in email_message.walk():
+                if part.get_content_type() == "text/html":
+                    html = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                    soup = BeautifulSoup(html, 'html.parser')
+                    
+                    # Look for tables/divs with sponsor indicators
+                    sponsor_containers = soup.find_all(['table', 'div'], 
+                        class_=re.compile(r'sponsor|partner|ad|promoted', re.I))
+                    
+                    for container in sponsor_containers:
+                        text = container.get_text()
+                        if self._has_sponsor_keywords(text):
+                            sponsor_sections.append((text, container))
+                    
+                    # Also check for explicit sponsor markers in headings
+                    for heading in soup.find_all(['h1', 'h2', 'h3', 'h4']):
+                        heading_text = heading.get_text().upper()
+                        if any(marker in heading_text for marker in ['SPONSORED', 'PARTNER', 'BROUGHT TO YOU']):
+                            # Get the section after this heading
+                            section = heading.find_next(['div', 'table', 'section'])
+                            if section:
+                                sponsor_sections.append((section.get_text(), section))
+        
+        return sponsor_sections
+    
+    def _has_sponsor_keywords(self, text: str) -> bool:
+        """Check if text contains sponsor keywords"""
+        text_upper = text.upper()
+        sponsor_marker_count = 0
+        for marker in SPONSOR_MARKERS:
+            if marker in text_upper:
+                sponsor_marker_count += 1
+        
+        return sponsor_marker_count >= MIN_SPONSOR_SECTION_MARKERS
     
     def _split_into_sections(self, text: str) -> List[str]:
         """Split text into logical sections"""
@@ -227,45 +282,29 @@ class EmailProcessor:
         return [s.strip() for s in sections if s.strip()]
     
     def _is_sponsor_section(self, section: str) -> bool:
-        """Check if section contains sponsor content - MUCH STRICTER"""
+        """Check if section contains sponsor content - much more practical"""
         section_upper = section.upper()
         
-        # Check for sponsor markers - require many more
+        # Check for sponsor markers
         sponsor_marker_count = 0
         for marker in SPONSOR_MARKERS:
             if marker in section_upper:
                 sponsor_marker_count += 1
         
-        # Check for links (sponsors usually have links)
+        # Much more lenient - just need minimum markers
+        if sponsor_marker_count < MIN_SPONSOR_SECTION_MARKERS:
+            return False
+        
+        # Check for links (sponsors usually have links) - but don't require them
         link_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
         links = re.findall(link_pattern, section)
         
-        # Must have many sponsor markers AND links AND explicit sponsorship context
-        if sponsor_marker_count < MIN_SPONSOR_SECTION_MARKERS or len(links) == 0:
-            return False
+        # If we have links, that's a good sign
+        has_links = len(links) > 0
         
-        # Additional validation: must have explicit sponsorship language
-        explicit_phrases = [
-            'SPONSORED BY',
-            'BROUGHT TO YOU BY',
-            'PRESENTED BY',
-            'PARTNERED WITH',
-            'IN PARTNERSHIP WITH',
-            'PAID FOR BY',
-            'PROMOTED BY'
-        ]
-        
-        explicit_count = sum(1 for phrase in explicit_phrases if phrase in section_upper)
-        if explicit_count < 2:
-            return False
-        
-        # Check for payment/sponsorship indicators
-        payment_indicators = [
-            'PAID', 'SPONSORSHIP', 'ADVERTISING', 'PARTNERSHIP', 'PROMOTION'
-        ]
-        payment_count = sum(1 for indicator in payment_indicators if indicator in section_upper)
-        
-        return payment_count >= 2
+        # If we have enough sponsor markers, that's sufficient
+        # Links are a bonus but not required
+        return sponsor_marker_count >= MIN_SPONSOR_SECTION_MARKERS
     
     def _extract_links_from_section(self, section: str) -> List[str]:
         """Extract all links from a section"""
@@ -316,6 +355,81 @@ class EmailProcessor:
             logger.warning(f"Failed to mark email {email_id} as read: {e}")
             return False
     
+    def calculate_confidence_score(self, email_data: Dict, sponsor_sections: List[Dict]) -> float:
+        """Calculate confidence score for sponsor detection (0.0 to 1.0)"""
+        if not sponsor_sections:
+            return 0.0
+        
+        body = email_data.get('body', '').upper()
+        subject = email_data.get('subject', '').upper()
+        
+        confidence_factors = []
+        
+        # Factor 1: Explicit sponsorship language (0.4 weight)
+        explicit_phrases = [
+            'SPONSORED BY', 'BROUGHT TO YOU BY', 'PRESENTED BY',
+            'PARTNERED WITH', 'IN PARTNERSHIP WITH', 'PAID FOR BY',
+            'PROMOTED BY', 'ADVERTISEMENT', 'SPONSORED CONTENT'
+        ]
+        explicit_count = sum(1 for phrase in explicit_phrases if phrase in body or phrase in subject)
+        explicit_score = min(explicit_count * 0.1, 0.4)  # Max 0.4
+        confidence_factors.append(explicit_score)
+        
+        # Factor 2: Clickable company links (0.3 weight)
+        total_links = sum(len(section.get('links', [])) for section in sponsor_sections)
+        link_score = min(total_links * 0.05, 0.3)  # Max 0.3
+        confidence_factors.append(link_score)
+        
+        # Factor 3: Tracking URLs and promotional CTAs (0.2 weight)
+        tracking_indicators = [
+            'UTM_SOURCE', 'UTM_MEDIUM', 'UTM_CAMPAIGN', 'DISCOUNT CODE',
+            'PROMO CODE', 'COUPON CODE', 'TRY IT FREE', 'GET STARTED AT',
+            'USE CODE', 'SPECIAL PRICING', 'EXCLUSIVE OFFER'
+        ]
+        tracking_count = sum(1 for indicator in tracking_indicators if indicator in body)
+        tracking_score = min(tracking_count * 0.05, 0.2)  # Max 0.2
+        confidence_factors.append(tracking_score)
+        
+        # Factor 4: Sponsor section quality (0.1 weight)
+        section_quality = min(len(sponsor_sections) * 0.02, 0.1)  # Max 0.1
+        confidence_factors.append(section_quality)
+        
+        total_confidence = sum(confidence_factors)
+        return min(total_confidence, 1.0)  # Cap at 1.0
+    
+    def determine_processing_status(self, confidence_score: float) -> str:
+        """Determine processing status based on confidence score"""
+        if confidence_score >= 0.8:
+            return 'complete'  # High confidence - auto-approve
+        elif confidence_score >= 0.5:
+            return 'needs_review'  # Medium confidence - manual review
+        else:
+            return 'rejected'  # Low confidence - don't add to database
+    
+    def process_sponsor_sections_with_confidence(self, email_data: Dict) -> List[Dict]:
+        """Process sponsor sections with confidence scoring and status assignment"""
+        sponsor_sections = self.extract_sponsor_sections(email_data)
+        
+        if not sponsor_sections:
+            return []
+        
+        # Calculate confidence score
+        confidence_score = self.calculate_confidence_score(email_data, sponsor_sections)
+        
+        # Determine processing status
+        status = self.determine_processing_status(confidence_score)
+        
+        # Add confidence and status to each section
+        processed_sections = []
+        for section in sponsor_sections:
+            processed_section = section.copy()
+            processed_section['confidence_score'] = confidence_score
+            processed_section['processing_status'] = status
+            processed_sections.append(processed_section)
+        
+        logger.info(f"Processed {len(processed_sections)} sponsor sections with confidence {confidence_score:.2f}, status: {status}")
+        return processed_sections
+
     def get_newsletter_name(self, email_data: Dict) -> str:
         """Extract newsletter name from email"""
         sender = email_data.get('sender', '')

@@ -36,9 +36,18 @@ const sponsorSchema = new mongoose.Schema({
         type: Number,
         required: false
     },
-    businessContact: {
+    sponsorEmail: {
         type: String,
         required: false
+    },
+    sponsorApplication: {
+        type: String,
+        required: false
+    },
+    contactMethod: {
+        type: String,
+        enum: ['email', 'application', 'both', 'none'],
+        default: 'none'
     },
     dateAdded: {
         type: Date,
@@ -84,7 +93,9 @@ const validateSponsor = (sponsor) => {
         tags: Joi.array().items(Joi.string()).max(5),
         newsletterSponsored: Joi.string().max(1000),
         subscriberCount: Joi.number(),
-        businessContact: Joi.string(),
+        sponsorEmail: Joi.string(),
+        sponsorApplication: Joi.string(),
+        contactMethod: Joi.string().valid('email', 'application', 'both', 'none'),
         dateAdded: Joi.date(),
         viewedBy: Joi.array().items(Joi.string()),
         appliedBy: Joi.array().items(Joi.string()),

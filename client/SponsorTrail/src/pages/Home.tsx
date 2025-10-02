@@ -32,6 +32,11 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
     const [arrowPosition, setArrowPosition] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
     
+    // Provide fallback values if data is still loading
+    const safeSponsorCount = sponsorCount || 0;
+    const safeNewsletterCount = newsletterCount || 0;
+    const safeLastUpdated = lastUpdated || new Date().toISOString();
+    
     // Time tracking
     const pageLoadTime = useRef(Date.now());
     const [timeOnPage, setTimeOnPage] = useState(0);
@@ -45,8 +50,8 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
         
         trackPageView('Home', 'Find Newsletter Sponsors Fast');
         trackUserJourney('home_page_view', 1, { 
-            sponsorCount, 
-            newsletterCount, 
+            sponsorCount: safeSponsorCount, 
+            newsletterCount: safeNewsletterCount, 
             isSubscribed: isSubscribed ? 'yes' : 'no' 
         });
 
@@ -106,7 +111,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                 trackTimeOnPage('Home', finalTime);
             }
         };
-    }, [sponsorCount, newsletterCount, isSubscribed, visibleSections]);
+    }, [safeSponsorCount, safeNewsletterCount, isSubscribed, visibleSections]);
 
     // Detect mobile screen size
     useEffect(() => {
@@ -124,18 +129,18 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
         trackButtonClick('signup_cta', 'home', { 
             location, 
             time_on_page: timeOnPage,
-            sponsor_count: sponsorCount 
+            sponsor_count: safeSponsorCount 
         });
         trackUserJourney('signup_click', 2, { location, time_on_page: timeOnPage });
-    }, [timeOnPage, sponsorCount]);
+    }, [timeOnPage, safeSponsorCount]);
 
     const handlePricingClick = useCallback(() => {
         trackButtonClick('pricing_cta', 'home', { 
             time_on_page: timeOnPage,
-            sponsor_count: sponsorCount 
+            sponsor_count: safeSponsorCount 
         });
         trackUserJourney('pricing_click', 3, { time_on_page: timeOnPage });
-    }, [timeOnPage, sponsorCount]);
+    }, [timeOnPage, safeSponsorCount]);
 
     const handleVideoInteraction = useCallback((action: string) => {
         trackContentInteraction('demo_video', 'youtube_demo', action, 'home');
@@ -153,7 +158,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                     <div className="hero-content">
                         <div className="hero-text">
                             <h1 className="web-section__container-header airtable-header text-center">
-                                Connect with {sponsorCount}+ Newsletter Sponsors Who Actually Pay
+                                Connect with {safeSponsorCount}+ Newsletter Sponsors Who Actually Pay
                             </h1>
                             <p className="hero-text-p">
                                 Skip the research and cold outreach. Access verified sponsors with proven track records of paying newsletter creators like you.

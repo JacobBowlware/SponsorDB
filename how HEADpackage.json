@@ -1,0 +1,32 @@
+{
+  "name": "sponsor-db",
+  "version": "1.0.0",
+  "description": "SponsorDB - Newsletter Sponsor Discovery Platform",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "cd server && node server.js",
+    "dev": "cd server && npm run dev",
+    "test": "cd server && npm test",
+    "build": "cd client/SponsorTrail && npm run build",
+    "install-client": "cd client/SponsorTrail && npm install",
+    "install-server": "cd server && npm install",
+    "postinstall": "npm run install-server && npm run install-client && npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "newsletter",
+    "sponsors",
+    "discovery",
+    "marketing",
+    "outreach"
+  ],
+  "author": "Jacob Bowlware",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JacobBowlware/SponsorTrail.git"
+  }
+}
