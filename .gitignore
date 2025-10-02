@@ -1,12 +1,30 @@
 # Dependencies
 node_modules/
 */node_modules/
-
-# Production builds
+node_modules/
+client/SponsorTrail/node_modules/
 client/SponsorTrail/build/
-client/SponsorTrail/dist/
+server/node_modules/
+server/build/
+server/dist/
+server/public/
+server/uploads/
+server/uploads/
+client/SponsorTrail/node_modules/.cache/default-development/7.pack
 
-# Environment variables
+# Build outputs
+build/
+dist/
+*/build/
+*/dist/
+
+# Cache directories
+.cache/
+*/cache/
+node_modules/.cache/
+client/SponsorTrail/node_modules/.cache/
+
+# Environment files
 .env
 .env.local
 .env.development.local
@@ -18,7 +36,6 @@ client/SponsorTrail/dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
 # Runtime data
 pids
@@ -28,7 +45,6 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
-*.lcov
 
 # nyc test coverage
 .nyc_output
@@ -38,15 +54,6 @@ jspm_packages/
 
 # Optional npm cache directory
 .npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
 
 # Optional REPL history
 .node_repl_history
@@ -59,37 +66,12 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
-.env.test
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# Editor directories and files
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
 # OS generated files
 .DS_Store
@@ -112,5 +94,5 @@ ENV/
 env.bak/
 venv.bak/
 
-# Heroku
-.heroku/
+# Firebase
+.firebase/
