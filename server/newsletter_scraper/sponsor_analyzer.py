@@ -54,30 +54,53 @@ class SponsorAnalyzer:
     def _analyze_single_link(self, link: str, context: str, newsletter_name: str) -> Optional[Dict]:
         """Analyze a single link and extract sponsor information"""
         try:
+            logger.info(f"=== ANALYZING LINK: {link} ===")
+            
             # Parse URL
             parsed_url = urlparse(link)
             root_domain = self._extract_root_domain(parsed_url.netloc)
+            logger.info(f"Root domain: {root_domain}")
             
             # 1. STRICT DOMAIN BLACKLISTING - Check first!
             if self._is_blacklisted(link, root_domain):
-                logger.debug(f"Blacklisted URL/domain: {link}")
+                logger.info(f"REJECTED: Blacklisted - {link}")
                 return None
+            logger.info(f"✓ Passed blacklist check")
             
-            # 2. REQUIRE MINIMUM TEXT CONTEXT
+            # 2. CHECK FOR SELF-REFERENCE - Newsletter advertising itself
+            newsletter_domain = self._extract_newsletter_domain(newsletter_name)
+            if newsletter_domain and root_domain.lower() == newsletter_domain.lower():
+                logger.info(f"REJECTED: Self-reference - {root_domain} matches {newsletter_domain}")
+                return None
+            logger.info(f"✓ Passed self-reference check")
+            
+            # 3. REQUIRE MINIMUM TEXT CONTEXT
             if not self._has_sufficient_context(link, context):
-                logger.debug(f"Insufficient sponsorship context for: {link}")
+                logger.info(f"REJECTED: Insufficient context - {link}")
                 return None
+            logger.info(f"✓ Passed context check")
             
-            # 3. VALIDATE COMPANY NAME QUALITY
+            # 4. VALIDATE COMPANY NAME QUALITY
             company_name = self._extract_company_name_from_context(link, context, root_domain)
+            logger.info(f"Extracted company name: {company_name}")
             if not self._is_valid_company_name(company_name):
-                logger.debug(f"Invalid company name: {company_name}")
+                logger.info(f"REJECTED: Invalid company name - {company_name}")
                 return None
+            logger.info(f"✓ Passed company name validation")
             
-            # 4. Check if it's a non-sponsor company
+            # 5. Check if it's a non-sponsor company
             if self._is_non_sponsor_company(company_name, root_domain):
-                logger.debug(f"Non-sponsor company: {company_name}")
+                logger.info(f"REJECTED: Non-sponsor company - {company_name}")
                 return None
+            logger.info(f"✓ Passed non-sponsor check")
+            
+            # 6. STRENGTHEN SPONSOR VALIDATION - Must be legitimate business
+            if not self._is_legitimate_company(company_name, root_domain, link):
+                logger.info(f"REJECTED: Not legitimate company - {company_name}")
+                return None
+            logger.info(f"✓ Passed legitimacy check")
+            
+            logger.info(f"SUCCESS: Sponsor passed all checks - {company_name}")
             
             # Create sponsor data
             sponsor_data = {
@@ -96,6 +119,19 @@ class SponsorAnalyzer:
             if additional_info:
                 sponsor_data.update(additional_info)
             
+            # 7. MANDATORY CONTACT INFO REQUIREMENT
+            if not self._has_contact_info(sponsor_data):
+                logger.debug(f"No contact info found for: {company_name}")
+                # Set analysis status to pending instead of rejecting
+                sponsor_data['analysisStatus'] = 'pending'
+                sponsor_data['contactMethod'] = 'none'
+                # Don't return None - allow it to be saved as pending
+            
+            # 8. NEWSLETTER AUDIENCE SIZE ESTIMATION
+            estimated_subscribers = self._estimate_subscriber_count(context, newsletter_name)
+            sponsor_data['estimatedSubscribers'] = estimated_subscribers['count']
+            sponsor_data['subscriberReasoning'] = estimated_subscribers['reasoning']
+            
             logger.info(f"Successfully analyzed sponsor: {company_name} ({root_domain})")
             return sponsor_data
             
@@ -107,6 +143,7 @@ class SponsorAnalyzer:
         """Check if URL or domain is blacklisted"""
         # Check exact domain matches
         if domain.lower() in [d.lower() for d in EXCLUDED_DOMAINS]:
+            logger.debug(f"Blacklist reason: Exact domain match - {domain}")
             return True
         
         # Check for common unwanted patterns
@@ -123,41 +160,48 @@ class SponsorAnalyzer:
         
         for pattern in unwanted_patterns:
             if re.search(pattern, url_lower):
+                logger.debug(f"Blacklist reason: Unwanted pattern '{pattern}' - {url}")
                 return True
         
         # Check for blog/content site indicators
         if self._is_blog_or_content_site(domain, url):
+            logger.debug(f"Blacklist reason: Blog/content site - {domain}")
             return True
         
-        # Check if it's likely a business (not content) site
-        if not self._is_likely_business_site(domain, url):
-            return True
+        # CHANGED: Commented out the _is_likely_business_site check as it's too restrictive
+        # and blocks legitimate sponsors. Let the _is_legitimate_company method handle this.
+        # if not self._is_likely_business_site(domain, url):
+        #     return True
         
         return False
     
     def _is_blog_or_content_site(self, domain: str, url: str) -> bool:
-        """Detect if domain is a blog, news site, or content platform"""
+        """Detect if domain is a blog, news site, or content platform (less aggressive)"""
         domain_lower = domain.lower()
         url_lower = url.lower()
         
-        # Common blog/content site patterns
+        # More conservative blog/content site patterns
         blog_indicators = [
             'blog', 'news', 'article', 'post', 'story', 'journal',
             'times', 'daily', 'weekly', 'magazine', 'media',
             'today', 'hustle', 'information', 'engineering',
-            'research', 'verse', 'marketer', 'newsletter'
+            'research', 'verse', 'marketer', 'newsletter',
+            'upside', 'donut', 'valley'
         ]
         
-        # Check if domain contains blog indicators
-        for indicator in blog_indicators:
-            if indicator in domain_lower:
-                return True
+        # CHANGED: Only reject if domain has 2+ blog indicators OR is in known_content_domains
+        # Single word matches are too aggressive
+        indicator_count = sum(1 for indicator in blog_indicators if indicator in domain_lower)
+        if indicator_count >= 2:  # Require multiple matches
+            logger.debug(f"Multiple blog indicators ({indicator_count}) found in domain: {domain}")
+            return True
         
-        # Check for common content site TLDs and patterns
-        content_tlds = ['.co', '.io', '.ai', '.news', '.blog']
+        # Check for common content site TLDs and patterns (more restrictive)
+        content_tlds = ['.news', '.blog', '.media']
         for tld in content_tlds:
             if domain_lower.endswith(tld) and len(domain_lower.split('.')) == 2:
                 # Single word domains with these TLDs are often content sites
+                logger.debug(f"Content TLD '{tld}' found in domain: {domain}")
                 return True
         
         # Check URL patterns that indicate content
@@ -165,12 +209,29 @@ class SponsorAnalyzer:
             r'/blog/', r'/news/', r'/article/', r'/post/', r'/story/',
             r'/202\d/', r'/january/', r'/february/', r'/march/', r'/april/',
             r'/may/', r'/june/', r'/july/', r'/august/', r'/september/',
-            r'/october/', r'/november/', r'/december/'
+            r'/october/', r'/november/', r'/december/',
+            r'/category/', r'/tag/', r'/author/', r'/archive/',
+            r'/feed/', r'/rss/', r'/sitemap'
         ]
         
         for pattern in content_url_patterns:
             if re.search(pattern, url_lower):
+                logger.debug(f"Content URL pattern '{pattern}' found in URL: {url}")
                 return True
+        
+        # Known content domains (exact matches only)
+        known_content_domains = [
+            'socialmediatoday.com', 'searchengineland.com', 'theinformation.com',
+            'interestingengineering.com', 'techcrunch.com', 'mashable.com',
+            'engadget.com', 'wired.com', 'venturebeat.com', 'theverge.com',
+            'arstechnica.com', 'recode.com', 'buzzfeed.com', 'huffpost.com',
+            'medium.com', 'substack.com', 'ghost.io', 'wordpress.com',
+            'tumblr.com', 'blogger.com'
+        ]
+        
+        if domain_lower in known_content_domains:
+            logger.debug(f"Known content domain: {domain}")
+            return True
         
         return False
     
@@ -220,39 +281,66 @@ class SponsorAnalyzer:
         # Find link position in text
         link_pos = section_text.find(link)
         if link_pos == -1:
-            return False
+            # Try to find just the domain
+            from urllib.parse import urlparse
+            domain = urlparse(link).netloc
+            link_pos = section_text.find(domain)
+            if link_pos == -1:
+                logger.debug(f"Link not found in section text")
+                return False
         
-        # Get 200 chars before and after link
-        start = max(0, link_pos - 200)
-        end = min(len(section_text), link_pos + len(link) + 200)
+        # Get 300 chars before and after link (increased from 200)
+        start = max(0, link_pos - 300)
+        end = min(len(section_text), link_pos + len(link) + 300)
         context = section_text[start:end].upper()
         
-        # Must have sponsor keywords within 200 chars
-        required_keywords = ['SPONSOR', 'PARTNER', 'BROUGHT TO YOU', 'PRESENTED BY', 'PAID']
-        has_keyword = any(kw in context for kw in required_keywords)
+        logger.debug(f"Context for validation: {context[:200]}...")
         
-        # Must have CTA or business language
-        business_terms = ['TRY', 'GET', 'START', 'LEARN', 'VISIT', 'DISCOUNT', 'CODE', 'OFFER']
-        has_business_term = any(term in context for term in business_terms)
-        
-        # Additional validation: check for content indicators that suggest this is NOT a sponsor
+        # Check for content indicators that suggest this is NOT a sponsor
         content_indicators = [
-            'READ MORE', 'FULL ARTICLE', 'CONTINUE READING', 'LEARN MORE',
-            'BLOG POST', 'NEWS ARTICLE', 'STORY', 'JOURNAL', 'MAGAZINE',
+            'READ MORE', 'FULL ARTICLE', 'CONTINUE READING',
+            'BLOG POST', 'NEWS ARTICLE', 'STORY', 'JOURNAL',
             'TODAY\'S NEWS', 'DAILY UPDATE', 'WEEKLY ROUNDUP'
         ]
         
         has_content_indicator = any(indicator in context for indicator in content_indicators)
-        
-        # If it has content indicators, it's likely not a sponsor
         if has_content_indicator:
+            logger.debug(f"Has content indicators - likely not a sponsor")
             return False
         
-        return has_keyword and has_business_term
+        # Strong sponsor indicators - if we find these, we're good
+        strong_sponsor_keywords = [
+            'SPONSORED BY', 'BROUGHT TO YOU BY', 'PRESENTED BY', 
+            'PAID PARTNERSHIP', 'PARTNER CONTENT', 'ADVERTISEMENT'
+        ]
+        
+        if any(kw in context for kw in strong_sponsor_keywords):
+            logger.debug(f"Found strong sponsor keyword - approved")
+            return True
+        
+        # Weaker sponsor indicators
+        sponsor_keywords = ['SPONSOR', 'PARTNER', 'PAID']
+        has_sponsor_keyword = any(kw in context for kw in sponsor_keywords)
+        
+        # Business/CTA terms
+        business_terms = [
+            'TRY', 'GET', 'START', 'LEARN', 'VISIT', 'DISCOUNT', 
+            'CODE', 'OFFER', 'SIGN UP', 'FREE', 'DEMO', 'PRICING'
+        ]
+        has_business_term = any(term in context for term in business_terms)
+        
+        # Accept if we have sponsor keyword OR business term (not both required)
+        result = has_sponsor_keyword or has_business_term
+        logger.debug(f"Context check result: sponsor_kw={has_sponsor_keyword}, business={has_business_term}, result={result}")
+        
+        return result
     
     def _is_valid_company_name(self, name: str) -> bool:
         """Validate extracted company name is legitimate"""
+        logger.debug(f"Validating company name: '{name}'")
+        
         if not name or len(name) < 3:
+            logger.debug(f"Company name fail: Too short or empty - '{name}'")
             return False
         
         # Invalid patterns
@@ -271,6 +359,7 @@ class SponsorAnalyzer:
         name_lower = name.lower()
         for pattern in invalid_patterns:
             if re.search(pattern, name_lower, re.I):
+                logger.debug(f"Company name fail: Invalid pattern '{pattern}' - '{name}'")
                 return False
         
         # Check for blog post titles and content indicators
@@ -284,24 +373,30 @@ class SponsorAnalyzer:
         
         for indicator in content_indicators:
             if indicator in name_lower:
+                logger.debug(f"Company name fail: Content indicator '{indicator}' - '{name}'")
                 return False
         
         # Check for sentence-like patterns (blog post titles)
         if len(name.split()) > 6:  # Long titles are usually blog posts
+            logger.debug(f"Company name fail: Too many words (likely blog title) - '{name}'")
             return False
         
         # Check for question patterns
         if name.endswith('?') or name.startswith(('what', 'how', 'why', 'when', 'where')):
+            logger.debug(f"Company name fail: Question pattern - '{name}'")
             return False
         
         # Must have at least one letter
         if not re.search(r'[a-zA-Z]', name):
+            logger.debug(f"Company name fail: No letters - '{name}'")
             return False
         
         # Reasonable length
         if len(name) > 100:
+            logger.debug(f"Company name fail: Too long - '{name}'")
             return False
         
+        logger.debug(f"Company name validation passed: '{name}'")
         return True
     
     def _extract_company_name_from_context(self, link: str, context: str, domain: str) -> str:
@@ -320,6 +415,8 @@ class SponsorAnalyzer:
             r'([A-Z][a-zA-Z\s&]+?)\s+(?:sponsors|partners?|presents)',
             r'(?:sponsored by|brought to you by|presented by|partnered with)\s+([A-Z][a-zA-Z\s&]+)',
             r'([A-Z][a-zA-Z\s&]+?)\s+(?:try|get|start|learn|visit)',
+            # CHANGED: Added pattern for "Partner: Company Name" format
+            r'partner:\s*([A-Z][a-zA-Z\s&]+)',
         ]
         
         for pattern in patterns:
@@ -348,6 +445,23 @@ class SponsorAnalyzer:
         
         return netloc
     
+    def _extract_newsletter_domain(self, newsletter_name: str) -> Optional[str]:
+        """Extract domain from newsletter name (e.g., 'crew@stackedmarketer.com' -> 'stackedmarketer.com')"""
+        if not newsletter_name:
+            return None
+        
+        # Look for email pattern in newsletter name
+        email_match = re.search(r'[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', newsletter_name)
+        if email_match:
+            return email_match.group(1)
+        
+        # Look for domain pattern
+        domain_match = re.search(r'([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', newsletter_name)
+        if domain_match:
+            return domain_match.group(1)
+        
+        return None
+    
     def _is_non_sponsor_company(self, company_name: str, domain: str) -> bool:
         """Check if this is a known non-sponsor company"""
         name_lower = company_name.lower()
@@ -359,6 +473,173 @@ class SponsorAnalyzer:
         
         return False
     
+    def _is_legitimate_company(self, company_name: str, domain: str, url: str) -> bool:
+        """Check if this is a legitimate business that could sponsor newsletters"""
+        domain_lower = domain.lower()
+        url_lower = url.lower()
+        name_lower = company_name.lower()
+        
+        # Must not be clearly a blog/content site (relaxed check)
+        if self._is_clearly_content_site(domain, url, name_lower):
+            logger.debug(f"Legitimacy fail: Blog/content site - {domain}")
+            return False
+        
+        # Must have evidence of B2B business model OR business page structure
+        business_indicators = [
+            'app', 'platform', 'software', 'tool', 'service', 'solution',
+            'company', 'corp', 'inc', 'llc', 'ltd', 'group', 'tech',
+            'systems', 'labs', 'works', 'studio', 'agency', 'consulting',
+            'api', 'saas', 'cloud', 'enterprise', 'business', 'professional'
+        ]
+        
+        has_business_indicator = any(indicator in domain_lower or indicator in name_lower 
+                                   for indicator in business_indicators)
+        
+        if not has_business_indicator:
+            logger.debug(f"Legitimacy fail: No business indicators - {domain}, {company_name}")
+        else:
+            logger.debug(f"Found business indicators in: {domain}, {company_name}")
+        
+        # Check for business page patterns
+        business_url_patterns = [
+            r'/contact', r'/about', r'/partnership', r'/partners', r'/advertise',
+            r'/media-kit', r'/press', r'/business', r'/enterprise', r'/pricing'
+        ]
+        
+        has_business_page = any(re.search(pattern, url_lower) for pattern in business_url_patterns)
+        
+        # If it's a root domain, assume it has business pages
+        if url_lower == f"https://{domain_lower}" or url_lower == f"http://{domain_lower}":
+            has_business_page = True
+            logger.debug(f"Root domain detected - assuming business pages: {url}")
+        
+        if has_business_page:
+            logger.debug(f"Found business page patterns in URL: {url}")
+        
+        # CHANGED: Use OR logic - accept if has business indicators OR business page
+        result = has_business_indicator or has_business_page
+        logger.debug(f"Legitimacy check result: {result} (business_indicator: {has_business_indicator}, business_page: {has_business_page})")
+        return result
+    
+    def _is_clearly_content_site(self, domain: str, url: str, name_lower: str) -> bool:
+        """Check if this is clearly a content/news site (more restrictive than before)"""
+        domain_lower = domain.lower()
+        url_lower = url.lower()
+        
+        # Only block if it's clearly a content site with multiple indicators
+        content_indicators = [
+            'blog', 'news', 'article', 'post', 'story', 'journal',
+            'times', 'daily', 'weekly', 'magazine', 'media', 'today',
+            'hustle', 'information', 'engineering', 'research', 'verse',
+            'marketer', 'newsletter', 'upside', 'donut', 'valley'
+        ]
+        
+        # Count how many content indicators are present
+        indicator_count = sum(1 for indicator in content_indicators 
+                            if indicator in domain_lower or indicator in name_lower)
+        
+        # Only reject if 2+ indicators (not just one)
+        if indicator_count >= 2:
+            return True
+        
+        # Known content domains (exact matches only)
+        known_content_domains = [
+            'socialmediatoday.com', 'searchengineland.com', 'theinformation.com',
+            'interestingengineering.com', 'techcrunch.com', 'mashable.com',
+            'engadget.com', 'wired.com', 'venturebeat.com', 'theverge.com',
+            'arstechnica.com', 'recode.com', 'buzzfeed.com', 'huffpost.com',
+            'medium.com', 'substack.com', 'ghost.io', 'wordpress.com',
+            'tumblr.com', 'blogger.com'
+        ]
+        
+        if domain_lower in known_content_domains:
+            return True
+        
+        return False
+    
+    def _has_contact_info(self, sponsor_data: Dict) -> bool:
+        """Check if sponsor has required contact information"""
+        has_email = sponsor_data.get('sponsorEmail') and sponsor_data.get('sponsorEmail').strip()
+        has_application = sponsor_data.get('sponsorApplication') and sponsor_data.get('sponsorApplication').strip()
+        
+        # Must have either valid email OR application page URL
+        if has_email or has_application:
+            # Update contact method and set as complete
+            if has_email and has_application:
+                sponsor_data['contactMethod'] = 'both'
+            elif has_email:
+                sponsor_data['contactMethod'] = 'email'
+            else:
+                sponsor_data['contactMethod'] = 'application'
+            
+            # Only mark as complete if we have contact info
+            sponsor_data['analysisStatus'] = 'complete'
+            return True
+        
+        # No contact found - set to none and pending
+        sponsor_data['contactMethod'] = 'none'
+        sponsor_data['analysisStatus'] = 'pending'
+        return False
+    
+    def _estimate_subscriber_count(self, context: str, newsletter_name: str) -> Dict:
+        """Estimate newsletter audience size with conservative estimates"""
+        context_lower = context.lower()
+        
+        # Look for explicit subscriber mentions
+        subscriber_patterns = [
+            r'(\d{1,3}(?:,\d{3})*)\s*subscribers?',
+            r'(\d{1,3}(?:,\d{3})*)\s*readers?',
+            r'(\d{1,3}(?:,\d{3})*)\s*audience',
+            r'(\d{1,3}(?:,\d{3})*)\s*people',
+            r'(\d{1,3}(?:,\d{3})*)\s*members?'
+        ]
+        
+        for pattern in subscriber_patterns:
+            match = re.search(pattern, context_lower)
+            if match:
+                count_str = match.group(1).replace(',', '')
+                try:
+                    count = int(count_str)
+                    if count >= 1000:  # Only trust counts >= 1000
+                        return {
+                            'count': count,
+                            'reasoning': f'Found explicit subscriber count: {count:,}'
+                        }
+                except ValueError:
+                    continue
+        
+        # Look for social proof indicators
+        social_proof_indicators = [
+            'thousands of', 'millions of', 'hundreds of',
+            'growing community', 'large audience', 'massive following',
+            'popular newsletter', 'top newsletter', 'leading newsletter'
+        ]
+        
+        has_social_proof = any(indicator in context_lower for indicator in social_proof_indicators)
+        
+        # Conservative estimates based on newsletter type and indicators
+        if 'thousands' in context_lower or 'millions' in context_lower:
+            return {
+                'count': 50000,  # Large
+                'reasoning': 'Found "thousands/millions" indicator - estimated 50K+'
+            }
+        elif has_social_proof or 'growing' in context_lower:
+            return {
+                'count': 25000,  # Medium-Large
+                'reasoning': 'Found social proof indicators - estimated 25K'
+            }
+        elif 'community' in context_lower or 'audience' in context_lower:
+            return {
+                'count': 10000,  # Medium
+                'reasoning': 'Found community/audience indicators - estimated 10K'
+            }
+        else:
+            # Default conservative estimate
+            return {
+                'count': 5000,  # Small-Medium
+                'reasoning': 'Conservative default estimate - 5K subscribers'
+            }
+    
     def _scrape_website_info(self, url: str, domain: str) -> Optional[Dict]:
         """Scrape additional information from the website"""
         try:
@@ -366,8 +647,8 @@ class SponsorAnalyzer:
             if not url.startswith(('http://', 'https://')):
                 return None
             
-            # Set a timeout to avoid hanging
-            response = requests.get(url, timeout=10, headers={
+            # CHANGED: Reduced timeout from 10 to 5 seconds
+            response = requests.get(url, timeout=5, headers={
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             })
             response.raise_for_status()
@@ -382,32 +663,84 @@ class SponsorAnalyzer:
             meta_desc = soup.find('meta', attrs={'name': 'description'})
             description = meta_desc.get('content', '').strip() if meta_desc else ""
             
-            # Try to find contact email
+            # Try to find contact email and application page
             contact_email = self._find_contact_email(soup, domain)
+            application_url = self._find_application_url(soup, domain, url)
             
             info = {}
             if title_text and self._is_valid_company_name(title_text):
                 info['extractedTitle'] = title_text
             if description:
                 info['extractedDescription'] = description
+            
+            # Set contact information
             if contact_email:
                 info['sponsorEmail'] = contact_email
+            if application_url:
+                info['sponsorApplication'] = application_url
+            
+            # Determine contact method and confidence
+            if contact_email and application_url:
+                info['contactMethod'] = 'both'
+                info['analysisStatus'] = 'complete'
+                info['confidence'] = 0.9  # Very high confidence with both
+            elif contact_email:
                 info['contactMethod'] = 'email'
+                info['analysisStatus'] = 'complete'
+                info['confidence'] = 0.8  # High confidence with email
+            elif application_url:
+                info['contactMethod'] = 'application'
+                info['analysisStatus'] = 'complete'
+                info['confidence'] = 0.7  # Good confidence with application
+            else:
+                # No contact found - mark as pending for manual review
+                info['contactMethod'] = 'none'
+                info['analysisStatus'] = 'pending'
+                info['confidence'] = 0.0  # No confidence without contact
             
             return info if info else None
             
         except Exception as e:
             logger.debug(f"Failed to scrape website {url}: {e}")
-            return None
+            # CHANGED: If scraping fails, DON'T reject the sponsor - just mark as pending
+            return {
+                'contactMethod': 'none',
+                'analysisStatus': 'pending',
+                'confidence': 0.5  # Medium confidence - needs manual review
+            }
     
     def _find_contact_email(self, soup: BeautifulSoup, domain: str) -> Optional[str]:
-        """Find contact email on the website"""
+        """Find contact email on the website - check multiple sources"""
         # Look for common email patterns
         email_patterns = [
             r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
         ]
         
+        # First check the main page
         text = soup.get_text()
+        email = self._extract_email_from_text(text, domain)
+        if email:
+            return email
+        
+        # Look for contact/about links and check those pages
+        contact_links = self._find_contact_links(soup)
+        for link in contact_links[:3]:  # Limit to first 3 contact links
+            try:
+                contact_email = self._scrape_contact_page(link, domain)
+                if contact_email:
+                    return contact_email
+            except Exception as e:
+                logger.debug(f"Failed to scrape contact page {link}: {e}")
+                continue
+        
+        return None
+    
+    def _extract_email_from_text(self, text: str, domain: str) -> Optional[str]:
+        """Extract business email from text"""
+        email_patterns = [
+            r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+        ]
+        
         for pattern in email_patterns:
             matches = re.findall(pattern, text)
             for email in matches:
@@ -418,6 +751,72 @@ class SponsorAnalyzer:
                 # Or if it's from the same domain
                 if domain.lower() in email_lower:
                     return email
+        
+        return None
+    
+    def _find_contact_links(self, soup: BeautifulSoup) -> List[str]:
+        """Find contact/about page links"""
+        contact_links = []
+        
+        # Look for common contact page patterns
+        contact_patterns = [
+            r'/contact', r'/about', r'/team', r'/company', r'/hello',
+            r'/reach', r'/get-in-touch', r'/connect'
+        ]
+        
+        for link in soup.find_all('a', href=True):
+            href = link['href'].lower()
+            for pattern in contact_patterns:
+                if re.search(pattern, href):
+                    contact_links.append(link['href'])
+                    break
+        
+        return contact_links
+    
+    def _scrape_contact_page(self, url: str, domain: str) -> Optional[str]:
+        """Scrape a contact page for email"""
+        try:
+            # Make sure URL is absolute
+            if url.startswith('/'):
+                url = f"https://{domain}{url}"
+            elif not url.startswith('http'):
+                url = f"https://{url}"
+            
+            # CHANGED: Reduced timeout from 10 to 5 seconds
+            response = requests.get(url, timeout=5, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            text = soup.get_text()
+            
+            return self._extract_email_from_text(text, domain)
+            
+        except Exception as e:
+            logger.debug(f"Failed to scrape contact page {url}: {e}")
+            return None
+    
+    def _find_application_url(self, soup: BeautifulSoup, domain: str, base_url: str) -> Optional[str]:
+        """Find application/partnership page URL"""
+        # Look for common application page patterns
+        application_patterns = [
+            r'/partners', r'/advertise', r'/media-kit', r'/contact',
+            r'/partnership', r'/sponsor', r'/advertising', r'/business',
+            r'/enterprise', r'/pricing', r'/get-started', r'/sign-up'
+        ]
+        
+        for link in soup.find_all('a', href=True):
+            href = link['href'].lower()
+            for pattern in application_patterns:
+                if re.search(pattern, href):
+                    # Make sure it's a full URL
+                    if href.startswith('http'):
+                        return href
+                    elif href.startswith('/'):
+                        return f"https://{domain}{href}"
+                    else:
+                        return f"https://{domain}/{href}"
         
         return None
     
