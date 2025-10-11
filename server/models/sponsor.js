@@ -93,13 +93,13 @@ const Sponsor = mongoose.model('Sponsor', sponsorSchema);
 const validateSponsor = (sponsor) => {
     const schema = Joi.object({
         sponsorName: Joi.string().min(2).max(256).required(),
-        sponsorLink: Joi.string().min(0).max(256),
-        rootDomain: Joi.string().max(256),
+        sponsorLink: Joi.string().min(0).max(256).allow(''),
+        rootDomain: Joi.string().max(256).allow(''),
         tags: Joi.array().items(Joi.string()).max(5),
-        newsletterSponsored: Joi.string().max(1000),
+        newsletterSponsored: Joi.string().max(1000).allow(''),
         subscriberCount: Joi.number(),
-        sponsorEmail: Joi.string(),
-        sponsorApplication: Joi.string(),
+        sponsorEmail: Joi.string().allow(''),
+        sponsorApplication: Joi.string().allow(''),
         contactMethod: Joi.string().valid('email', 'application', 'both', 'none'),
         analysisStatus: Joi.string().valid('complete', 'manual_review_required', 'pending'),
         dateAdded: Joi.date(),
