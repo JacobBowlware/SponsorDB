@@ -6,7 +6,6 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
-require('../middleware/corHeaders')(router);
 
 // Import sponsors csv
 var Airtable = require('airtable');
@@ -309,14 +308,8 @@ router.get('/sample', async (req, res) => {
 // Update a sponsor
 router.put('/:id', [auth, admin], async (req, res) => {
     try {
-        console.log('=== SPONSOR UPDATE REQUEST ===');
-        console.log('Sponsor ID:', req.params.id);
-        console.log('Request body:', JSON.stringify(req.body, null, 2));
-        
         const { error } = validateSponsor(req.body);
         if (error) {
-            console.log('Sponsor validation error:', error.details[0].message);
-            console.log('Full validation error:', error);
             return res.status(400).send(error.details[0].message);
         }
 

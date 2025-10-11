@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-require('../middleware/corHeaders')(router);
 
 // Scheduler endpoint for sponsor agent
 router.post('/scheduler-run', async (req, res) => {

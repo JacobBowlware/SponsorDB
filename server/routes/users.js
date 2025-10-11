@@ -9,9 +9,8 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const sendEmail = require("../utils/sendEmail");
 const jwt = require("jsonwebtoken");
 
-require('../middleware/corHeaders')(router);
 const stripePriceIdTest = "";
-const stripePriceId = "price_1RS2RRBKPgChhmNgHhLwtLzP"; 
+const stripePriceId = "price_1SGOx0BKPgChhmNgp7XfUt1p"; 
 
 router.get('/test', (req, res) => {
     res.send("Test route, it works!");
@@ -215,7 +214,6 @@ router.post('/', async (req, res) => {
 // Create a new user checkout session for subscription
 router.post('/checkout', auth, async (req, res) => {
     const userId = req.user._id;
-    const { plan } = req.body;
 
     // Check if user is already subscribed
     const user = await User.findById(userId);
@@ -223,21 +221,9 @@ router.post('/checkout', auth, async (req, res) => {
         return res.status(400).send("User is already subscribed");
     }
 
-    if (!plan || !['basic', 'pro'].includes(plan)) {
-        return res.status(400).send("Valid plan (basic or pro) is required");
-    }
-
     try {
-        // Define price IDs for different plans
-        const priceIds = {
-            basic: "price_1S9SrBBKPgChhmNgfcwDLsFP", // Basic plan price ID
-            pro: "price_1S9SwKBKPgChhmNgOZeG1SwC"    // Pro plan price ID
-        };
-
-        const priceId = priceIds[plan];
-        if (!priceId) {
-            return res.status(400).send("Invalid plan selected");
-        }
+        // Use the single $20/month price ID
+        const priceId = stripePriceId;
 
         // Create or get Stripe customer
         let customerId = user.stripeCustomerId;
@@ -270,13 +256,13 @@ router.post('/checkout', auth, async (req, res) => {
             customer: customerId,
             metadata: {
                 userId: userId.toString(),
-                plan: plan
+                plan: 'premium'  // Single plan name
             },
             allow_promotion_codes: true,
             subscription_data: {
                 metadata: {
                     userId: userId.toString(),
-                    plan: plan
+                    plan: 'premium'  // Single plan name
                 },
                 // Add 14-day free trial
                 trial_period_days: 14
@@ -507,12 +493,11 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (req, res
 // Helper functions for webhook events
 async function handleCheckoutSessionCompleted(session) {
     const userId = session.metadata.userId;
-    const plan = session.metadata.plan;
     
-    if (userId && plan) {
+    if (userId) {
         const user = await User.findById(userId);
         if (user) {
-            user.subscription = plan;
+            user.subscription = 'premium';  // Single plan name
             user.billing = {
                 ...user.billing,
                 status: 'active',
@@ -532,7 +517,7 @@ async function handleSubscriptionCreated(subscription) {
     const user = await User.findOne({ stripeCustomerId: customerId });
     
     if (user) {
-        user.subscription = subscription.metadata.plan || 'pro';
+        user.subscription = 'premium';  // Single plan name
         user.billing = {
             ...user.billing,
             status: subscription.status,

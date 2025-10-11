@@ -3,11 +3,161 @@ const router = express.Router();
 const { PotentialSponsor } = require('../models/potentialSponsor');
 const { Sponsor } = require('../models/sponsor');
 const { DeniedSponsorLink } = require('../models/deniedSponsorLink');
+const { DeniedDomain } = require('../models/deniedDomain');
+const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const { spawn } = require('child_process');
 const path = require('path');
-require('../middleware/corHeaders')(router);
+
+// Migration endpoint to update sponsor analysis status
+router.post('/migrate-sponsor-status', [auth, admin], async (req, res) => {
+    try {
+        console.log('Starting sponsor analysis status migration...');
+        
+        const results = {
+            totalProcessed: 0,
+            updatedToPending: 0,
+            updatedToComplete: 0,
+            errors: 0,
+            details: []
+        };
+
+        const processCollection = async (Model, collectionName) => {
+            console.log(`\nProcessing ${collectionName} collection...`);
+            const sponsors = await Model.find({});
+            console.log(`Found ${sponsors.length} ${collectionName} to review`);
+            
+            for (const sponsor of sponsors) {
+                results.totalProcessed++;
+                try {
+                    // Ensure all sponsors have the required fields (add if missing)
+                    let updateFields = {};
+                    
+                    // Add missing fields if they don't exist
+                    if (!sponsor.hasOwnProperty('sponsorEmail')) {
+                        updateFields.sponsorEmail = '';
+                    }
+                    if (!sponsor.hasOwnProperty('sponsorApplication')) {
+                        updateFields.sponsorApplication = '';
+                    }
+                    if (!sponsor.hasOwnProperty('contactMethod')) {
+                        updateFields.contactMethod = 'none';
+                    }
+                    if (!sponsor.hasOwnProperty('analysisStatus')) {
+                        updateFields.analysisStatus = 'pending';
+                    }
+
+                    // Check for contact info in both old and new fields
+                    const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+                    const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+                    const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+
+                    let newAnalysisStatus = sponsor.analysisStatus || 'pending';
+                    let newContactMethod = sponsor.contactMethod || 'none';
+
+                    // Determine contact method and status
+                    if (hasEmail && hasApplication) {
+                        newContactMethod = 'both';
+                        newAnalysisStatus = 'complete';
+                    } else if (hasEmail) {
+                        newContactMethod = 'email';
+                        newAnalysisStatus = 'complete';
+                    } else if (hasApplication) {
+                        newContactMethod = 'application';
+                        newAnalysisStatus = 'complete';
+                    } else if (hasBusinessContact) {
+                        // Handle legacy businessContact field
+                        if (sponsor.businessContact.includes('@')) {
+                            newContactMethod = 'email';
+                            newAnalysisStatus = 'complete';
+                            // Migrate businessContact to sponsorEmail
+                            updateFields.sponsorEmail = sponsor.businessContact;
+                        } else {
+                            newContactMethod = 'application';
+                            newAnalysisStatus = 'complete';
+                            // Migrate businessContact to sponsorApplication
+                            updateFields.sponsorApplication = sponsor.businessContact;
+                        }
+                    } else {
+                        newContactMethod = 'none';
+                        newAnalysisStatus = 'pending';
+                    }
+
+                    // Always update analysisStatus and contactMethod based on actual contact info
+                    updateFields.analysisStatus = newAnalysisStatus;
+                    updateFields.contactMethod = newContactMethod;
+
+                    // Always update to ensure all sponsors have the same structure
+                    const updateData = {
+                        analysisStatus: newAnalysisStatus,
+                        contactMethod: newContactMethod,
+                        ...updateFields
+                    };
+
+                    await Model.findByIdAndUpdate(sponsor._id, {
+                        $set: updateData
+                    });
+                    
+                    if (newAnalysisStatus === 'pending') {
+                        results.updatedToPending++;
+                    } else {
+                        results.updatedToComplete++;
+                    }
+                    
+                    results.details.push({
+                        id: sponsor._id,
+                        name: sponsor.sponsorName,
+                        oldStatus: sponsor.analysisStatus || 'unknown',
+                        newStatus: newAnalysisStatus,
+                        oldContactMethod: sponsor.contactMethod || 'unknown',
+                        newContactMethod: newContactMethod,
+                        migratedFields: Object.keys(updateFields),
+                        message: 'Status and/or contact method updated'
+                    });
+                    
+                    console.log(`Updated ${sponsor.sponsorName}: ${sponsor.analysisStatus || 'unknown'} -> ${newAnalysisStatus}, contact: ${sponsor.contactMethod || 'unknown'} -> ${newContactMethod}`);
+                    if (Object.keys(updateFields).length > 0) {
+                        console.log(`  Migrated fields: ${Object.keys(updateFields).join(', ')}`);
+                    }
+                } catch (error) {
+                    results.errors++;
+                    results.details.push({
+                        id: sponsor._id,
+                        name: sponsor.sponsorName,
+                        error: error.message,
+                        message: 'Error processing sponsor'
+                    });
+                    console.error(`Error processing sponsor ${sponsor._id}:`, error);
+                }
+            }
+        };
+
+        await processCollection(Sponsor, 'Sponsor');
+        await processCollection(PotentialSponsor, 'PotentialSponsor');
+        
+        console.log('\n=== Migration Results ===');
+        console.log(`Total sponsors processed: ${results.totalProcessed}`);
+        console.log(`Updated to pending: ${results.updatedToPending}`);
+        console.log(`Updated to complete: ${results.updatedToComplete}`);
+        console.log(`Errors: ${results.errors}`);
+        console.log('Migration completed successfully!');
+        
+        res.json({
+            success: true,
+            message: 'Migration completed successfully',
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('Migration error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Migration failed',
+            error: error.message
+        });
+    }
+});
 
 // Get admin dashboard stats
 router.get('/stats', [auth, admin], async (req, res) => {
@@ -19,15 +169,28 @@ router.get('/stats', [auth, admin], async (req, res) => {
         // Get total sponsors (approved)
         const totalSponsors = await Sponsor.countDocuments();
         
+        // Get sponsors with contact info (for public display)
+        const sponsorsWithContactInfo = await Sponsor.countDocuments({
+            $or: [
+                { sponsorEmail: { $exists: true, $ne: '' } },
+                { sponsorApplication: { $exists: true, $ne: '' } },
+                { businessContact: { $exists: true, $ne: '' } }
+            ]
+        });
+        
         // Get sponsors scraped this week
         const scrapedThisWeek = await PotentialSponsor.countDocuments({
             dateAdded: { $gte: oneWeekAgo }
         });
         
-        // Get pending review count
-        const pendingReview = await PotentialSponsor.countDocuments({
+        // Get pending review count (both collections)
+        const pendingPotential = await PotentialSponsor.countDocuments({
             analysisStatus: { $in: ['manual_review_required', 'pending'] }
         });
+        const pendingSponsors = await Sponsor.countDocuments({
+            analysisStatus: { $in: ['manual_review_required', 'pending'] }
+        });
+        const pendingReview = pendingPotential + pendingSponsors;
         
         // Calculate success rate (approved vs total processed)
         const totalProcessed = await PotentialSponsor.countDocuments();
@@ -75,6 +238,7 @@ router.get('/stats', [auth, admin], async (req, res) => {
 
         const stats = {
             totalSponsors,
+            sponsorsWithContactInfo,
             pendingReview: scrapedThisWeek,
             addedThisWeek: scrapedThisWeek,
             lastScraperRun: new Date().toLocaleString(),
@@ -137,16 +301,19 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
         if (status !== 'all') {
             switch (status) {
                 case 'pending':
-                    // Only get potential sponsors
+                    // Sponsors without contact info
+                    potentialQuery.analysisStatus = 'pending';
+                    sponsorQuery.analysisStatus = 'pending';
                     break;
-                case 'approved':
-                    // Only get approved sponsors
+                case 'complete':
+                    // Sponsors with contact info
+                    potentialQuery.analysisStatus = 'complete';
+                    sponsorQuery.analysisStatus = 'complete';
                     break;
-                case 'rejected':
-                    // Get denied sponsors
-                    break;
-                case 'reviewed':
-                    // Get sponsors that have been viewed
+                case 'manual_review_required':
+                    // Sponsors requiring manual review
+                    potentialQuery.analysisStatus = 'manual_review_required';
+                    sponsorQuery.analysisStatus = 'manual_review_required';
                     break;
             }
         }
@@ -158,14 +325,14 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
         let sponsors = [];
         let total = 0;
         
-        if (status === 'all' || status === 'pending') {
+        if (status === 'all' || status === 'pending' || status === 'complete' || status === 'manual_review_required') {
             // Get potential sponsors
             const potentialSponsors = await PotentialSponsor.find(potentialQuery)
                 .sort(sort);
             
             const potentialWithStatus = potentialSponsors.map(sponsor => ({
                 ...sponsor.toObject(),
-                status: 'pending',
+                status: sponsor.analysisStatus || 'pending',
                 analysisStatus: sponsor.analysisStatus || 'pending'
             }));
             
@@ -173,14 +340,14 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
             total += await PotentialSponsor.countDocuments(potentialQuery);
         }
         
-        if (status === 'all' || status === 'approved') {
+        if (status === 'all' || status === 'complete' || status === 'pending' || status === 'manual_review_required') {
             // Get approved sponsors
             const approvedSponsors = await Sponsor.find(sponsorQuery)
                 .sort(sort);
             
             const approvedWithStatus = approvedSponsors.map(sponsor => ({
                 ...sponsor.toObject(),
-                status: 'approved',
+                status: sponsor.analysisStatus || 'complete',
                 analysisStatus: 'complete'
             }));
             
@@ -309,10 +476,24 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
         
         let result;
         
+        // Convert string IDs to ObjectIds for all operations
+        const objectIds = sponsorIds.map(id => {
+            try {
+                return new mongoose.Types.ObjectId(id);
+            } catch (error) {
+                console.error(`Invalid ObjectId: ${id}`);
+                return null;
+            }
+        }).filter(id => id !== null);
+        
+        if (objectIds.length === 0) {
+            return res.status(400).json({ error: 'No valid sponsor IDs provided' });
+        }
+        
         switch (action) {
             case 'approve':
                 // Move sponsors from potential to approved
-                const sponsorsToApprove = await PotentialSponsor.find({ _id: { $in: sponsorIds } });
+                const sponsorsToApprove = await PotentialSponsor.find({ _id: { $in: objectIds } });
                 
                 // Create approved sponsors
                 const approvedSponsors = sponsorsToApprove.map(sponsor => ({
@@ -328,32 +509,67 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                 await Sponsor.insertMany(approvedSponsors);
                 
                 // Delete from potential sponsors
-                await PotentialSponsor.deleteMany({ _id: { $in: sponsorIds } });
+                await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
                 
-                result = { message: `Approved ${sponsorIds.length} sponsors` };
+                result = { message: `Approved ${objectIds.length} sponsors` };
                 break;
                 
             case 'reject':
                 // Add domains to denied list and delete from potential
-                const sponsorsToReject = await PotentialSponsor.find({ _id: { $in: sponsorIds } });
+                const sponsorsToReject = await PotentialSponsor.find({ _id: { $in: objectIds } });
                 
-                // Add to denied list
-                const deniedEntries = sponsorsToReject
+                // Add to denied domains list
+                const deniedDomains = sponsorsToReject
                     .filter(sponsor => sponsor.rootDomain)
                     .map(sponsor => ({
-                        rootDomain: sponsor.rootDomain,
+                        rootDomain: sponsor.rootDomain.toLowerCase(),
                         reason: 'Bulk rejected by admin',
-                        dateDenied: new Date()
+                        dateAdded: new Date(),
+                        addedBy: 'admin'
                     }));
                 
-                if (deniedEntries.length > 0) {
-                    await DeniedSponsorLink.insertMany(deniedEntries);
+                if (deniedDomains.length > 0) {
+                    // Use upsert to avoid duplicates
+                    for (const domain of deniedDomains) {
+                        await DeniedDomain.findOneAndUpdate(
+                            { rootDomain: domain.rootDomain },
+                            domain,
+                            { upsert: true, new: true }
+                        );
+                    }
                 }
                 
                 // Delete from potential sponsors
-                await PotentialSponsor.deleteMany({ _id: { $in: sponsorIds } });
+                await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
                 
-                result = { message: `Rejected ${sponsorIds.length} sponsors` };
+                result = { message: `Rejected ${objectIds.length} sponsors` };
+                break;
+                
+            case 'mark-complete':
+                // Update analysis status to complete for selected sponsors
+                const updatedPotential = await PotentialSponsor.updateMany(
+                    { _id: { $in: objectIds } },
+                    { $set: { analysisStatus: 'complete' } }
+                );
+                
+                const updatedSponsors = await Sponsor.updateMany(
+                    { _id: { $in: objectIds } },
+                    { $set: { analysisStatus: 'complete' } }
+                );
+                
+                const totalUpdated = updatedPotential.modifiedCount + updatedSponsors.modifiedCount;
+                
+                result = { message: `Marked ${totalUpdated} sponsors as complete` };
+                break;
+                
+            case 'delete':
+                // Delete sponsors from both collections
+                const deletedFromPotential = await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
+                const deletedFromSponsors = await Sponsor.deleteMany({ _id: { $in: objectIds } });
+                
+                const totalDeleted = deletedFromPotential.deletedCount + deletedFromSponsors.deletedCount;
+                
+                result = { message: `Deleted ${totalDeleted} sponsors` };
                 break;
                 
             default:
@@ -762,6 +978,85 @@ router.post('/migrate-contacts', [auth, admin], async (req, res) => {
             message: 'Migration failed',
             error: error.message
         });
+    }
+});
+
+// Deny domain permanently
+router.post('/deny-domain', [auth, admin], async (req, res) => {
+    try {
+        const { rootDomain, reason } = req.body;
+        
+        if (!rootDomain) {
+            return res.status(400).json({ error: 'Root domain is required' });
+        }
+        
+        // Add to denied domains list
+        const deniedDomain = new DeniedDomain({
+            rootDomain: rootDomain.toLowerCase(),
+            reason: reason || 'Rejected by admin',
+            dateAdded: new Date(),
+            addedBy: 'admin'
+        });
+        
+        await deniedDomain.save();
+        
+        res.status(200).json({ 
+            success: true, 
+            message: `Domain ${rootDomain} has been permanently blocked`,
+            deniedDomain: deniedDomain
+        });
+    } catch (error) {
+        console.error('Error denying domain:', error);
+        res.status(500).json({ error: 'Error denying domain' });
+    }
+});
+
+// Get denied domains
+router.get('/denied-domains', [auth, admin], async (req, res) => {
+    try {
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (page - 1) * limit;
+        
+        const deniedDomains = await DeniedDomain.find()
+            .sort({ dateAdded: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+        
+        const total = await DeniedDomain.countDocuments();
+        
+        res.status(200).json({
+            deniedDomains,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error getting denied domains:', error);
+        res.status(500).json({ error: 'Error getting denied domains' });
+    }
+});
+
+// Remove domain from denied list
+router.delete('/denied-domains/:domainId', [auth, admin], async (req, res) => {
+    try {
+        const { domainId } = req.params;
+        
+        const result = await DeniedDomain.findByIdAndDelete(domainId);
+        
+        if (!result) {
+            return res.status(404).json({ error: 'Denied domain not found' });
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            message: `Domain ${result.rootDomain} has been unblocked` 
+        });
+    } catch (error) {
+        console.error('Error removing denied domain:', error);
+        res.status(500).json({ error: 'Error removing denied domain' });
     }
 });
 

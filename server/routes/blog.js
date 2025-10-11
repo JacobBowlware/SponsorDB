@@ -5,7 +5,6 @@ const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const Joi = require('joi');
 
-require('../middleware/corHeaders')(router);
 
 // Initialize blog posts if none exist
 const initializeBlogPosts = async () => {

@@ -4,7 +4,6 @@ const { PotentialSponsor, validatePotentialSponsor } = require('../models/potent
 const { Sponsor } = require('../models/sponsor');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
-require('../middleware/corHeaders')(router);
 
 // Check if a sponsor already exists in either collection
 router.get('/checkDuplicate', async (req, res) => {
