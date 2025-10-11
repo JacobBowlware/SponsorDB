@@ -15,6 +15,10 @@ interface Sponsor {
     newsletterSponsored: string;
     subscriberCount: number;
     businessContact: string;
+    sponsorEmail?: string;
+    sponsorApplication?: string;
+    contactMethod?: 'email' | 'application' | 'both' | 'none';
+    analysisStatus?: 'complete' | 'manual_review_required' | 'pending';
     dateAdded: string;
     isViewed?: boolean;
     isApplied?: boolean;
@@ -249,6 +253,19 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
     const filteredSponsors = useMemo(() => {
         let filtered = allSponsors;
         
+        // Filter out sponsors without contact info (only show sponsors with email or application)
+        filtered = filtered.filter(sponsor => {
+            // Check new contact fields first
+            const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+            const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+            
+            // Also check the legacy businessContact field
+            const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+            
+            // Only show sponsors that have at least one contact method
+            return hasEmail || hasApplication || hasBusinessContact;
+        });
+        
         // Apply category filter - only filter if there are active filters
         if (activeFilter && activeFilter.trim() !== '') {
             const filterTags = activeFilter.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== '');
@@ -451,6 +468,8 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         if (!sponsor.isViewed) {
             markAsViewed(sponsor._id);
         }
+        // Open sponsor website
+        window.open(`https://${sponsor.rootDomain}`, '_blank');
     };
 
     const handleContactClick = (sponsor: Sponsor) => {
@@ -460,6 +479,49 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         if (!sponsor.isViewed) {
             markAsViewed(sponsor._id);
         }
+    };
+
+    const generateEmailTemplate = (sponsor: Sponsor) => {
+        // Get user's newsletter name from localStorage or use a default
+        const userNewsletter = localStorage.getItem('userNewsletter') || 'My Newsletter';
+        
+        const subject = `Partnership opportunity with ${userNewsletter}`;
+        const body = `Hi there,
+
+I hope this email finds you well. I'm reaching out from ${userNewsletter}, and I'd love to explore a potential partnership opportunity with ${sponsor.sponsorName}.
+
+I noticed that ${sponsor.sponsorName} has sponsored other newsletters in the past, and I believe our audience would be a great fit for your products/services.
+
+About ${userNewsletter}:
+- We have a growing community of engaged readers
+- Our audience is interested in [your industry/niche]
+- We're looking for partners who can provide value to our readers
+
+Would you be interested in discussing potential sponsorship opportunities? I'd be happy to share more details about our audience and discuss how we can work together.
+
+Best regards,
+[Your Name]
+${userNewsletter}`;
+
+        return {
+            subject: encodeURIComponent(subject),
+            body: encodeURIComponent(body)
+        };
+    };
+
+    const handleEmailClick = (sponsor: Sponsor) => {
+        if (!sponsor.businessContact || !sponsor.businessContact.includes('@')) {
+            return;
+        }
+
+        const template = generateEmailTemplate(sponsor);
+        const mailtoLink = `mailto:${sponsor.businessContact}?subject=${template.subject}&body=${template.body}`;
+        
+        // Mark as applied and viewed
+        handleContactClick(sponsor);
+        
+        // Open email client
+        window.location.href = mailtoLink;
     };
 
     if (error) {
@@ -558,286 +620,218 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         );
     }
 
-    // Desktop view - Table
+    // Desktop view - Optimized Table
     return (
-        <div>
-            <div className="sponsor-table-container">
-                <div className="sponsor-table" style={{ 
-                    height: '600px', 
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
-                    <div style={{ flex: '0 0 auto' }}>
-                        <table style={{ width: '100%', tableLayout: 'fixed' }}>
-                            <thead>
-                                <tr>
-                                    <th className="sponsor-table__column-header" style={{ width: '20%' }}>
-                                        Sponsor
-                                        <FontAwesomeIcon 
-                                            icon={sortBy === 'sponsorName' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                            className={`sponsor-table__sort-icon ${sortBy === 'sponsorName' ? 'active' : ''}`}
-                                        />
-                                    </th>
-                                    <th className="sponsor-table__column-header" style={{ width: '20%' }}>Contact</th>
-                                    <th className="sponsor-table__column-header" style={{ width: '15%' }}>Newsletter</th>
-                                    <th className="sponsor-table__column-header" style={{ width: '12%' }}>
-                                        Audience Size
-                                        <FontAwesomeIcon 
-                                            icon={sortBy === 'subscriberCount' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                            className={`sponsor-table__sort-icon ${sortBy === 'subscriberCount' ? 'active' : ''}`}
-                                        />
-                                    </th>
-                                    <th className="sponsor-table__column-header" style={{ width: '20%', textAlign: 'left' }}>Tags</th>
-                                    <th className="sponsor-table__column-header" style={{ width: '10%' }}>
-                                        Date Added
-                                        <FontAwesomeIcon 
-                                            icon={sortBy === 'dateAdded' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
-                                            className={`sponsor-table__sort-icon ${sortBy === 'dateAdded' ? 'active' : ''}`}
-                                        />
-                                    </th>
-                                    {isAdmin && <th className="sponsor-table__column-header" style={{ width: '3%' }}>Actions</th>}
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                    <div 
-                        style={{ 
-                            flex: '1 1 auto', 
-                            overflowY: 'auto'
-                        }}
-                        onScroll={handleScroll}
-                    >
-                        <table style={{ width: '100%', tableLayout: 'fixed' }}>
-                            <tbody>
-                                {displayedSponsors.map((sponsor, index) => (
-                                    <tr key={`${sponsor.sponsorName || index}-${index}`} 
-                                        className={`sponsor-table__row ${sponsor.isViewed || sponsor.isApplied ? 'sponsor-table__row--inactive' : ''}`}>
-                                        <td className="sponsor-table__row" style={{ width: '20%' }}>
-                                            <a 
-                                                href={sponsor.sponsorLink} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="sponsor-table__link"
-                                                onClick={() => handleSponsorClick(sponsor)}
-                                            >
-                                                {sponsor.sponsorName}
-                                                <FontAwesomeIcon 
-                                                    icon={faExternalLink} 
-                                                    className="sponsor-table__link-icon" 
-                                                />
-                                            </a>
-                                        </td>
-                                        <td className="sponsor-table__row" style={{ width: '20%' }}>{sponsor.businessContact ? (
-                                            sponsor.businessContact.includes('@') ? (
-                                                <a 
-                                                    href={`mailto:${sponsor.businessContact}`}
-                                                    className="sponsor-table__link"
-                                                    onClick={() => handleContactClick(sponsor)}
+        <>
+        <div className="sponsor-table-container">
+            <div className="sponsor-table-optimized">
+                <table className="sponsor-table-full">
+                    <thead>
+                        <tr>
+                            <th className="sponsor-table__column-header sponsor-name-col">
+                                Sponsor Name
+                                <FontAwesomeIcon 
+                                    icon={sortBy === 'sponsorName' ? (sortOrder === 'asc' ? faSortUp : faSortDown) : faSort} 
+                                    className={`sponsor-table__sort-icon ${sortBy === 'sponsorName' ? 'active' : ''}`}
+                                />
+                            </th>
+                            <th className="sponsor-table__column-header sponsor-domain-col">Domain</th>
+                            <th className="sponsor-table__column-header sponsor-contact-col">Contact Method</th>
+                            <th className="sponsor-table__column-header sponsor-newsletter-col">Newsletter Source</th>
+                            <th className="sponsor-table__column-header sponsor-actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {displayedSponsors.map((sponsor, index) => (
+                            <tr key={`${sponsor.sponsorName || index}-${index}`} 
+                                className={`sponsor-table__row ${sponsor.isViewed || sponsor.isApplied ? 'sponsor-table__row--inactive' : ''}`}>
+                                
+                                {/* Sponsor Name */}
+                                <td className="sponsor-table__cell sponsor-name-cell">
+                                    <div className="sponsor-name-container">
+                                        <a 
+                                            href={`https://${sponsor.rootDomain}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="sponsor-table__link sponsor-name-link"
+                                            onClick={() => handleSponsorClick(sponsor)}
+                                        >
+                                            {sponsor.sponsorName}
+                                            <FontAwesomeIcon 
+                                                icon={faExternalLink} 
+                                                className="sponsor-table__link-icon" 
+                                            />
+                                        </a>
+                                    </div>
+                                </td>
+                                
+                                {/* Domain */}
+                                <td className="sponsor-table__cell sponsor-domain-cell">
+                                    <span className="sponsor-domain">{sponsor.rootDomain}</span>
+                                </td>
+                                
+                                {/* Contact Method */}
+                                <td className="sponsor-table__cell sponsor-contact-cell">
+                                    {sponsor.businessContact ? (
+                                        sponsor.businessContact.includes('@') ? (
+                                            <div className="contact-method">
+                                                <FontAwesomeIcon icon={faEnvelope} className="contact-icon" />
+                                                <button 
+                                                    className="contact-link contact-button"
+                                                    onClick={() => handleEmailClick(sponsor)}
                                                 >
-                                                    {sponsor.businessContact}
-                                                    <FontAwesomeIcon 
-                                                        icon={faEnvelope} 
-                                                        className="sponsor-table__link-icon" 
-                                                    />
-                                                </a>
-                                            ) : (
+                                                    Send Email
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="contact-method">
+                                                <FontAwesomeIcon icon={faArrowRight} className="contact-icon" />
                                                 <a 
                                                     href={sponsor.businessContact}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="sponsor-table__link"
+                                                    className="sponsor-table__link contact-link"
                                                     onClick={() => handleContactClick(sponsor)}
                                                 >
-                                                    Apply <FontAwesomeIcon 
-                                                        icon={faArrowRight} 
-                                                        className="sponsor-table__link-icon" 
-                                                    />
+                                                    Complete their partnership form
                                                 </a>
-                                            )
-                                        ) : (
-                                            <span></span>
-                                        )}</td>
-                                        <td className="sponsor-table__row" style={{ width: '15%' }}>
-                                            <span className="sponsor-table__newsletter">{sponsor.newsletterSponsored}</span>
-                                        </td>
-                                        <td className="sponsor-table__row" style={{ width: '12%' }}>{sponsor.subscriberCount ? sponsor.subscriberCount.toLocaleString() : ''}</td>
-                                        <td className="sponsor-table__row" style={{ width: '20%' }}>
-                                            <div className="sponsor-table__tags">
-                                                {sponsor.tags && sponsor.tags.length > 0 ? (
-                                                    sponsor.tags.map((tag, tagIndex) => (
-                                                        <span key={tagIndex} className={getTagClass(tag)}>
-                                                            {tag}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="sponsor-table__tag">No tags</span>
-                                                )}
                                             </div>
-                                        </td>
-                                        <td className="sponsor-table__row" style={{ width: '10%' }}>{sponsor.dateAdded ? new Date(sponsor.dateAdded).toLocaleDateString() : ''}</td>
-                                        {isAdmin && (
-                                            <td className="sponsor-table__row" style={{ width: '3%' }}>
-                                                <button
-                                                    className="sponsor-table__edit-btn"
-                                                    onClick={() => handleEdit(sponsor)}
-                                                >
-                                                    <FontAwesomeIcon icon={faEdit} />
-                                                </button>
-                                            </td>
+                                        )
+                                    ) : (
+                                        <span className="no-contact">No contact</span>
+                                    )}
+                                </td>
+                                
+                                {/* Newsletter Source */}
+                                <td className="sponsor-table__cell sponsor-newsletter-cell">
+                                    <span className="sponsor-table__newsletter">{sponsor.newsletterSponsored}</span>
+                                </td>
+                                
+                                {/* Actions */}
+                                <td className="sponsor-table__cell sponsor-actions-cell">
+                                    <div className="sponsor-actions">
+                                        <button 
+                                            className="sponsor-action-btn sponsor-view-btn"
+                                            onClick={() => handleSponsorClick(sponsor)}
+                                            title="View Website"
+                                        >
+                                            <FontAwesomeIcon icon={faExternalLink} />
+                                        </button>
+                                        {sponsor.businessContact && (
+                                            <button 
+                                                className="sponsor-action-btn sponsor-apply-btn"
+                                                onClick={() => sponsor.businessContact.includes('@') ? handleEmailClick(sponsor) : handleContactClick(sponsor)}
+                                                title={sponsor.businessContact.includes('@') ? 'Send Email with Template' : 'Open Application'}
+                                            >
+                                                <FontAwesomeIcon icon={sponsor.businessContact.includes('@') ? faEnvelope : faHandshake} />
+                                            </button>
                                         )}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {loading && allSponsors.length > 0 && (
-                            <div className="sponsor-table__loading">
-                                <FontAwesomeIcon icon={faSpinner} spin className="sponsor-table__loading-icon" />
-                                Loading more sponsors...
-                            </div>
-                        )}
-                        {!loading && hasMore && (
-                            <div className="sponsor-table__loading">
-                                <span>Scroll to load more sponsors</span>
-                            </div>
-                        )}
-                        {!loading && !hasMore && displayedSponsors.length > 0 && (
-                            <div className="sponsor-table__loading">
-                                {displayedSponsors.length} of {sortedSponsors.length} sponsors
-                            </div>
-                        )}
+                                        {isAdmin && (
+                                            <button
+                                                className="sponsor-action-btn sponsor-edit-btn"
+                                                onClick={() => handleEdit(sponsor)}
+                                                title="Edit Sponsor"
+                                            >
+                                                <FontAwesomeIcon icon={faEdit} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                
+                {loading && allSponsors.length > 0 && (
+                    <div className="sponsor-table__loading">
+                        <FontAwesomeIcon icon={faSpinner} spin className="sponsor-table__loading-icon" />
+                        Loading more sponsors...
                     </div>
+                )}
+                {!loading && hasMore && (
+                    <div className="sponsor-table__loading">
+                        <span>Scroll to load more sponsors</span>
+                    </div>
+                )}
+                {!loading && !hasMore && displayedSponsors.length > 0 && (
+                    <div className="sponsor-table__loading">
+                        {displayedSponsors.length} of {sortedSponsors.length} sponsors
+                    </div>
+                )}
+            </div>
+        </div>
+
+        {editingSponsor && (
+            <div className="sponsor-table__edit-modal">
+                <div className="sponsor-table__edit-form">
+                    <h3>Edit Sponsor</h3>
+                    <form onSubmit={handleEditSubmit}>
+                        <div className="sponsor-table__form-group">
+                            <label>Sponsor Name</label>
+                            <input
+                                type="text"
+                                value={editFormData.sponsorName || ''}
+                                onChange={(e) => setEditFormData({...editFormData, sponsorName: e.target.value})}
+                                required
+                            />
+                        </div>
+                        <div className="sponsor-table__form-group">
+                            <label>Sponsor Link</label>
+                            <input
+                                type="url"
+                                value={editFormData.sponsorLink || ''}
+                                onChange={(e) => setEditFormData({...editFormData, sponsorLink: e.target.value})}
+                            />
+                        </div>
+                        <div className="sponsor-table__form-group">
+                            <label>Root Domain</label>
+                            <input
+                                type="text"
+                                value={editFormData.rootDomain || ''}
+                                onChange={(e) => setEditFormData({...editFormData, rootDomain: e.target.value})}
+                            />
+                        </div>
+                        <div className="sponsor-table__form-group">
+                            <label>Newsletter Sponsored</label>
+                            <input
+                                type="text"
+                                value={editFormData.newsletterSponsored || ''}
+                                onChange={(e) => setEditFormData({...editFormData, newsletterSponsored: e.target.value})}
+                            />
+                        </div>
+                        <div className="sponsor-table__form-group">
+                            <label>Subscriber Count</label>
+                            <input
+                                type="number"
+                                value={editFormData.subscriberCount || ''}
+                                onChange={(e) => setEditFormData({...editFormData, subscriberCount: parseInt(e.target.value) || 0})}
+                            />
+                        </div>
+                        <div className="sponsor-table__form-group">
+                            <label>Business Contact</label>
+                            <input
+                                type="text"
+                                value={editFormData.businessContact || ''}
+                                onChange={(e) => setEditFormData({...editFormData, businessContact: e.target.value})}
+                            />
+                        </div>
+                        <div className="sponsor-table__form-group">
+                            <label>Tags (comma-separated)</label>
+                            <input
+                                type="text"
+                                value={editFormData.tags?.join(', ') || ''}
+                                onChange={(e) => setEditFormData({...editFormData, tags: e.target.value.split(',').map(tag => tag.trim())})}
+                            />
+                        </div>
+                        <div className="sponsor-table__form-actions">
+                            <button type="submit" className="sponsor-table__submit-btn">Save Changes</button>
+                            <button type="button" className="sponsor-table__cancel-btn" onClick={handleEditCancel}>Cancel</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            {/* Mobile Sponsor Cards */}
-            {isMobile && (
-                <div className="mobile-sponsors-grid">
-                    {displayedSponsors.map((sponsor) => (
-                        <div key={sponsor._id} className="sponsor-card">
-                            <div className="sponsor-card-header">
-                                <div>
-                                    <h3 className="sponsor-name">{sponsor.sponsorName}</h3>
-                                    <p className="sponsor-domain">{sponsor.rootDomain}</p>
-                                </div>
-                            </div>
-                            
-                            <div className="sponsor-tags">
-                                {sponsor.tags?.map((tag, index) => (
-                                    <span key={index} className="sponsor-tag">{tag}</span>
-                                ))}
-                            </div>
-                            
-                            <div className="sponsor-details">
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Newsletter</span>
-                                    <span className="sponsor-detail-value">{sponsor.newsletterSponsored}</span>
-                                </div>
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Audience</span>
-                                    <span className="sponsor-detail-value">{sponsor.subscriberCount.toLocaleString()}</span>
-                                </div>
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Contact</span>
-                                    <span className="sponsor-detail-value">{sponsor.businessContact}</span>
-                                </div>
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Added</span>
-                                    <span className="sponsor-detail-value">{new Date(sponsor.dateAdded).toLocaleDateString()}</span>
-                                </div>
-                            </div>
-                            
-                            <div className="sponsor-actions">
-                                <button 
-                                    className="sponsor-action-btn sponsor-view-btn"
-                                    onClick={() => handleSponsorClick(sponsor)}
-                                >
-                                    <FontAwesomeIcon icon={faExternalLink} />
-                                    View
-                                </button>
-                                <button 
-                                    className="sponsor-action-btn sponsor-apply-btn"
-                                    onClick={() => handleContactClick(sponsor)}
-                                >
-                                    <FontAwesomeIcon icon={faHandshake} />
-                                    {sponsor.isApplied ? 'Applied' : 'Apply'}
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {editingSponsor && (
-                <div className="sponsor-table__edit-modal">
-                    <div className="sponsor-table__edit-form">
-                        <h3>Edit Sponsor</h3>
-                        <form onSubmit={handleEditSubmit}>
-                            <div className="sponsor-table__form-group">
-                                <label>Sponsor Name</label>
-                                <input
-                                    type="text"
-                                    value={editFormData.sponsorName || ''}
-                                    onChange={(e) => setEditFormData({...editFormData, sponsorName: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="sponsor-table__form-group">
-                                <label>Sponsor Link</label>
-                                <input
-                                    type="url"
-                                    value={editFormData.sponsorLink || ''}
-                                    onChange={(e) => setEditFormData({...editFormData, sponsorLink: e.target.value})}
-                                />
-                            </div>
-                            <div className="sponsor-table__form-group">
-                                <label>Root Domain</label>
-                                <input
-                                    type="text"
-                                    value={editFormData.rootDomain || ''}
-                                    onChange={(e) => setEditFormData({...editFormData, rootDomain: e.target.value})}
-                                />
-                            </div>
-                            <div className="sponsor-table__form-group">
-                                <label>Newsletter Sponsored</label>
-                                <input
-                                    type="text"
-                                    value={editFormData.newsletterSponsored || ''}
-                                    onChange={(e) => setEditFormData({...editFormData, newsletterSponsored: e.target.value})}
-                                />
-                            </div>
-                            <div className="sponsor-table__form-group">
-                                <label>Subscriber Count</label>
-                                <input
-                                    type="number"
-                                    value={editFormData.subscriberCount || ''}
-                                    onChange={(e) => setEditFormData({...editFormData, subscriberCount: parseInt(e.target.value) || 0})}
-                                />
-                            </div>
-                            <div className="sponsor-table__form-group">
-                                <label>Business Contact</label>
-                                <input
-                                    type="text"
-                                    value={editFormData.businessContact || ''}
-                                    onChange={(e) => setEditFormData({...editFormData, businessContact: e.target.value})}
-                                />
-                            </div>
-                            <div className="sponsor-table__form-group">
-                                <label>Tags (comma-separated)</label>
-                                <input
-                                    type="text"
-                                    value={editFormData.tags?.join(', ') || ''}
-                                    onChange={(e) => setEditFormData({...editFormData, tags: e.target.value.split(',').map(tag => tag.trim())})}
-                                />
-                            </div>
-                            <div className="sponsor-table__form-actions">
-                                <button type="submit" className="sponsor-table__submit-btn">Save Changes</button>
-                                <button type="button" className="sponsor-table__cancel-btn" onClick={handleEditCancel}>Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
+        )}
+        </>
     );
 };
 

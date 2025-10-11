@@ -507,7 +507,7 @@
     overflow: hidden;
     margin-top: 1rem;
     width: 100%;
-    max-width: 100%;
+    max-width: none;
     box-sizing: border-box;
 }
 
@@ -626,4 +626,204 @@
 .sponsor-table__date {
     color: #666;
     font-size: 0.9rem;
+}
+
+/* Optimized Desktop Table Styles */
+.sponsor-table-optimized {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.sponsor-table-full {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.sponsor-table-full .sponsor-table__column-header {
+    background: #f8f9fa;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.9rem;
+}
+
+.sponsor-table-full .sponsor-table__cell {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.sponsor-table-full .sponsor-table__row:hover {
+    background-color: #f8f9fa;
+}
+
+/* Column widths for optimized layout */
+.sponsor-name-col {
+    width: 25%;
+    min-width: 200px;
+}
+
+.sponsor-domain-col {
+    width: 20%;
+    min-width: 150px;
+}
+
+.sponsor-contact-col {
+    width: 20%;
+    min-width: 120px;
+}
+
+.sponsor-newsletter-col {
+    width: 20%;
+    min-width: 150px;
+}
+
+.sponsor-actions-col {
+    width: 15%;
+    min-width: 120px;
+}
+
+/* Sponsor name styling */
+.sponsor-name-link {
+    font-weight: 600;
+    color: #1a1a1a;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sponsor-name-link:hover {
+    color: #007bff;
+}
+
+.sponsor-domain {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Contact method styling */
+.contact-method {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contact-icon {
+    color: #28a745;
+    font-size: 0.8rem;
+}
+
+.contact-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.contact-link:hover {
+    text-decoration: underline;
+}
+
+.contact-button {
+    background: none;
+    border: none;
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    font-size: inherit;
+}
+
+.contact-button:hover {
+    text-decoration: underline;
+}
+
+.no-contact {
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Newsletter source styling */
+.sponsor-table__newsletter {
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Actions styling */
+.sponsor-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.sponsor-action-btn {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.sponsor-view-btn {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.sponsor-view-btn:hover {
+    background: #e9ecef;
+    color: #212529;
+}
+
+.sponsor-apply-btn {
+    background: #28a745;
+    color: white;
+}
+
+.sponsor-apply-btn:hover {
+    background: #218838;
+}
+
+.sponsor-edit-btn {
+    background: #007bff;
+    color: white;
+}
+
+.sponsor-edit-btn:hover {
+    background: #0056b3;
+}
+
+/* Responsive adjustments for optimized table */
+@media (max-width: 1200px) {
+    .sponsor-table-full {
+        font-size: 0.8rem;
+    }
+    
+    .sponsor-table-full .sponsor-table__column-header,
+    .sponsor-table-full .sponsor-table__cell {
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .sponsor-table-optimized {
+        overflow-x: auto;
+    }
+    
+    .sponsor-table-full {
+        min-width: 600px;
+    }
 } 

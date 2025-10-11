@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Joi = require('joi');
 const config = require('config');
 const jwt = require('jsonwebtoken');
+const RefreshToken = require('./refreshToken');
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -37,7 +38,7 @@ const userSchema = new mongoose.Schema({
     },
     subscription: {
         type: String,
-        enum: ['basic', 'pro', 'none'],
+        enum: ['premium', 'basic', 'none'],
         default: 'none'
     },
     trialStatus: {
@@ -254,13 +255,52 @@ const userSchema = new mongoose.Schema({
     }]
 });
 
-userSchema.methods.generateAuthToken = function () {
+// Generate access token (short-lived, 15 minutes)
+userSchema.methods.generateAccessToken = function () {
     const token = jwt.sign(
         { _id: this._id }, 
         process.env.JWT_PRIVATE_KEY || config.get('JWT_PRIVATE_KEY'),
-        { expiresIn: '24h' }
+        { expiresIn: '15m' }
     );
     return token;
+}
+
+// Generate refresh token (long-lived, 30 days)
+userSchema.methods.generateRefreshToken = async function (userAgent, ipAddress) {
+    const tokenValue = RefreshToken.generateToken();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    
+    const refreshToken = new RefreshToken({
+        token: tokenValue,
+        userId: this._id,
+        expiresAt: expiresAt,
+        userAgent: userAgent,
+        ipAddress: ipAddress
+    });
+    
+    await refreshToken.save();
+    return tokenValue;
+}
+
+// Generate both access and refresh tokens
+userSchema.methods.generateAuthTokens = async function (userAgent, ipAddress) {
+    const accessToken = this.generateAccessToken();
+    const refreshToken = await this.generateRefreshToken(userAgent, ipAddress);
+    
+    return {
+        accessToken,
+        refreshToken
+    };
+}
+
+// Legacy method for backward compatibility
+userSchema.methods.generateAuthToken = function () {
+    return this.generateAccessToken();
+}
+
+// Revoke all refresh tokens for this user
+userSchema.methods.revokeAllRefreshTokens = async function () {
+    return await RefreshToken.revokeAllForUser(this._id);
 }
 
 const User = mongoose.model('User', userSchema);
@@ -273,7 +313,7 @@ const validateUser = (user) => {
         name: Joi.string(),
         picture: Joi.string(),
         stripeCustomerId: Joi.string(),
-        subscription: Joi.string().valid('basic', 'pro', 'none'),
+        subscription: Joi.string().valid('premium', 'basic', 'none'),
         trialStatus: Joi.string().valid('active', 'expired', 'none'),
         billing: Joi.object({
             stripeSubscriptionId: Joi.string(),

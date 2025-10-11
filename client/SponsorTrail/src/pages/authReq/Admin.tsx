@@ -22,10 +22,12 @@ import {
     faCalendarAlt,
     faFilter,
     faCheck,
-    faTimes as faTimesIcon
+    faTimes as faTimesIcon,
+    faEdit
 } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import config from '../../config';
+import EditSponsorModal from '../../components/EditSponsorModal';
 import '../../css/pages/authReq/Admin.css';
 
 interface Sponsor {
@@ -76,6 +78,10 @@ const Admin = () => {
     const [isPerformingBulkAction, setIsPerformingBulkAction] = useState(false);
     const [isRunningMigration, setIsRunningMigration] = useState(false);
     const [migrationResults, setMigrationResults] = useState<any>(null);
+    
+    // Edit modal state
+    const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Fetch dashboard data
     const fetchData = useCallback(async () => {
@@ -155,7 +161,7 @@ const Admin = () => {
             setIsRunningMigration(true);
             setError(null);
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${config.backendUrl}admin/migrate-contacts`, {}, {
+            const response = await axios.post(`${config.backendUrl}admin/migrate-sponsor-status`, {}, {
                 headers: { 'x-auth-token': token }
             });
             
@@ -182,6 +188,18 @@ const Admin = () => {
             setIsPerformingBulkAction(true);
             const token = localStorage.getItem('token');
             
+            if (action === 'reject') {
+                // For bulk reject, show confirmation dialog
+                const confirmed = window.confirm(
+                    `Reject and block ${selectedSponsors.length} sponsors forever?\n\nThis will:\n- Permanently block all domains from future scraping\n- Remove all sponsors from the database\n\nThis action cannot be undone.`
+                );
+                
+                if (!confirmed) {
+                    setIsPerformingBulkAction(false);
+                    return;
+                }
+            }
+            
             await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
                 action,
                 sponsorIds: selectedSponsors
@@ -203,12 +221,44 @@ const Admin = () => {
     const handleSponsorAction = async (sponsorId: string, action: string) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
-                action,
-                sponsorIds: [sponsorId]
-            }, {
-                headers: { 'x-auth-token': token }
-            });
+            
+            if (action === 'reject') {
+                // For reject action, show confirmation dialog
+                const sponsor = sponsors.find(s => s._id === sponsorId);
+                if (sponsor) {
+                    const confirmed = window.confirm(
+                        `Reject and block ${sponsor.rootDomain} forever?\n\nThis will:\n- Permanently block the domain from future scraping\n- Remove the sponsor from the database\n\nThis action cannot be undone.`
+                    );
+                    
+                    if (!confirmed) {
+                        return;
+                    }
+                    
+                    // Call deny-domain API
+                    await axios.post(`${config.backendUrl}admin/deny-domain`, {
+                        rootDomain: sponsor.rootDomain,
+                        reason: 'Rejected by admin'
+                    }, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    
+                    // Also remove from potential sponsors
+                    await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
+                        action: 'reject',
+                        sponsorIds: [sponsorId]
+                    }, {
+                        headers: { 'x-auth-token': token }
+                    });
+                }
+            } else {
+                // For other actions, use the existing bulk action
+                await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
+                    action,
+                    sponsorIds: [sponsorId]
+                }, {
+                    headers: { 'x-auth-token': token }
+                });
+            }
             
             fetchData();
         } catch (err) {
@@ -217,15 +267,49 @@ const Admin = () => {
         }
     };
 
-    // Handle double-click to edit sponsor
-    const handleEditSponsor = (sponsor: any) => {
-        // For now, just open the sponsor link in a new tab
-        // You can implement a proper edit modal later
-        if (sponsor.sponsorLink) {
-            window.open(sponsor.sponsorLink, '_blank');
-        } else {
-            alert('No sponsor link available for editing');
+    // Handle edit sponsor
+    const handleEditSponsor = (sponsor: Sponsor) => {
+        setEditingSponsor(sponsor);
+    };
+
+    // Handle save sponsor
+    const handleSaveSponsor = async (updatedSponsor: Sponsor) => {
+        try {
+            setIsSaving(true);
+            const token = localStorage.getItem('token');
+            
+            const response = await axios.put(`${config.backendUrl}sponsors/${updatedSponsor._id}`, {
+                sponsorName: updatedSponsor.sponsorName,
+                sponsorLink: updatedSponsor.sponsorLink,
+                rootDomain: updatedSponsor.rootDomain,
+                tags: updatedSponsor.tags,
+                newsletterSponsored: updatedSponsor.newsletterSponsored,
+                subscriberCount: updatedSponsor.subscriberCount,
+                sponsorEmail: updatedSponsor.sponsorEmail,
+                sponsorApplication: updatedSponsor.sponsorApplication,
+                contactMethod: updatedSponsor.contactMethod
+            }, {
+                headers: { 'x-auth-token': token }
+            });
+
+            if (response.status === 200) {
+                // Update the sponsor in the local state
+                setSponsors(prev => prev.map(sponsor => 
+                    sponsor._id === updatedSponsor._id ? updatedSponsor : sponsor
+                ));
+                setEditingSponsor(null);
+            }
+        } catch (err) {
+            console.error('Error saving sponsor:', err);
+            setError('Failed to save sponsor changes');
+        } finally {
+            setIsSaving(false);
         }
+    };
+
+    // Handle close edit modal
+    const handleCloseEditModal = () => {
+        setEditingSponsor(null);
     };
 
     // Handle table sorting
@@ -401,27 +485,27 @@ const Admin = () => {
                         </div>
                     </div>
                     
+                    <div className="stat-card stat-card--success">
+                        <div className="stat-icon">
+                            <FontAwesomeIcon icon={faCheckCircle} />
+                        </div>
+                        <div className="stat-content">
+                            <h3>{sponsors.filter(s => s.contactMethod && s.contactMethod !== 'none').length}</h3>
+                            <p>With Contact Info</p>
+                        </div>
+                    </div>
+                    
                     <div className="stat-card stat-card--warning">
                         <div className="stat-icon">
                             <FontAwesomeIcon icon={faExclamationTriangle} />
                         </div>
                         <div className="stat-content">
-                            <h3>{stats.pendingReview?.toLocaleString() || '0'}</h3>
-                            <p>Pending Review</p>
+                            <h3>{sponsors.filter(s => !s.contactMethod || s.contactMethod === 'none').length}</h3>
+                            <p>Need Contact Info</p>
                         </div>
                     </div>
                     
                     <div className="stat-card stat-card--info">
-                        <div className="stat-icon">
-                            <FontAwesomeIcon icon={faCalendarAlt} />
-                        </div>
-                        <div className="stat-content">
-                            <h3>{stats.addedThisWeek?.toLocaleString() || '0'}</h3>
-                            <p>Added This Week</p>
-                        </div>
-                    </div>
-                    
-                    <div className="stat-card stat-card--success">
                         <div className="stat-icon">
                             <FontAwesomeIcon icon={faRobot} />
                         </div>
@@ -478,10 +562,9 @@ const Admin = () => {
                         onChange={(e) => setStatusFilter(e.target.value)}
                     >
                         <option value="all">All Statuses</option>
-                        <option value="pending">Pending Review</option>
-                        <option value="approved">Complete</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="manual_review">Manual Review Required</option>
+                        <option value="pending">Need Contact Info</option>
+                        <option value="complete">With Contact Info</option>
+                        <option value="manual_review_required">Manual Review Required</option>
                     </select>
                 </div>
                 
@@ -524,6 +607,14 @@ const Admin = () => {
                     >
                         <FontAwesomeIcon icon={faCheck} />
                         Approve All
+                    </button>
+                    <button 
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handleBulkAction('mark-complete')}
+                        disabled={isPerformingBulkAction}
+                    >
+                        <FontAwesomeIcon icon={faCheckCircle} />
+                        Mark as Complete
                     </button>
                     <button 
                         className="btn btn-danger btn-sm"
@@ -624,7 +715,7 @@ const Admin = () => {
                                     <td className="sponsor-name">
                                         <div 
                                             className="sponsor-name-link"
-                                            onClick={() => window.open(sponsor.sponsorLink, '_blank')}
+                                            onClick={() => window.open(`https://${sponsor.rootDomain}`, '_blank')}
                                         >
                                             {sponsor.sponsorName}
                                             <FontAwesomeIcon icon={faExternalLink} />
@@ -655,6 +746,16 @@ const Admin = () => {
                                         {formatDate(sponsor.dateAdded)}
                                     </td>
                                     <td className="actions">
+                                        <button 
+                                            className="btn btn-sm btn-primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEditSponsor(sponsor);
+                                            }}
+                                            title="Edit Sponsor"
+                                        >
+                                            <FontAwesomeIcon icon={faEdit} />
+                                        </button>
                                         {sponsor.status === 'pending' ? (
                                             <>
                                                 <button 
@@ -712,16 +813,16 @@ const Admin = () => {
                     <h3>Migration Results</h3>
                     <div className="migration-stats">
                         <div className="migration-stat">
-                            <strong>Total Processed:</strong> {migrationResults.totalProcessed}
+                            <strong>Total Processed:</strong> {migrationResults.totalProcessed} sponsors
                         </div>
                         <div className="migration-stat">
-                            <strong>Total Errors:</strong> {migrationResults.totalErrors}
+                            <strong>Updated to Complete:</strong> {migrationResults.updatedToComplete} sponsors
                         </div>
                         <div className="migration-stat">
-                            <strong>Potential Sponsors:</strong> {migrationResults.potentialSponsors.processed} processed, {migrationResults.potentialSponsors.errors} errors
+                            <strong>Updated to Pending:</strong> {migrationResults.updatedToPending} sponsors
                         </div>
                         <div className="migration-stat">
-                            <strong>Sponsors:</strong> {migrationResults.sponsors.processed} processed, {migrationResults.sponsors.errors} errors
+                            <strong>Errors:</strong> {migrationResults.errors} errors
                         </div>
                     </div>
                     <button 
@@ -742,6 +843,15 @@ const Admin = () => {
                         <FontAwesomeIcon icon={faTimesIcon} />
                     </button>
                 </div>
+            )}
+
+            {/* Edit Sponsor Modal */}
+            {editingSponsor && (
+                <EditSponsorModal
+                    sponsor={editingSponsor}
+                    onClose={handleCloseEditModal}
+                    onSave={handleSaveSponsor}
+                />
             )}
             </div>
         </div>

@@ -63,7 +63,8 @@
     font-weight: 500;
 }
 
-.edit-modal__field input {
+.edit-modal__field input,
+.edit-modal__field select {
     width: 100%;
     padding: 0.5rem;
     border: 1px solid #ddd;
@@ -71,7 +72,8 @@
     font-size: 1rem;
 }
 
-.edit-modal__field input:focus {
+.edit-modal__field input:focus,
+.edit-modal__field select:focus {
     outline: none;
     border-color: var(--var-color-accent);
 }
@@ -109,4 +111,18 @@
 
 .edit-modal__save:hover {
     opacity: 0.9;
+}
+
+/* Error styling */
+.edit-modal__field input.error,
+.edit-modal__field select.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
 } 

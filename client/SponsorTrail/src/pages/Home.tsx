@@ -158,27 +158,23 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                     <div className="hero-content">
                         <div className="hero-text">
                             <h1 className="web-section__container-header airtable-header text-center">
-                                Connect with {safeSponsorCount}+ Newsletter Sponsors Who Actually Pay
+                                Access 300+ Verified Newsletter Sponsors
                             </h1>
                             <p className="hero-text-p">
-                                Skip the research and cold outreach. Access verified sponsors with proven track records of paying newsletter creators like you.
+                                Stop searching. We've compiled sponsors actively paying for newsletter placements, with direct contact information and pre-filled outreach templates.
                             </p>
                             <div className="hero-features mb-0">
                                 <div className="hero-feature-card" onClick={() => handleFeatureCardClick('verified_sponsors')}>
                                     <FontAwesomeIcon icon={faDatabase} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Skip the research - </span>every sponsor has paid other newsletters</p>
+                                    <p><span className="hero-feature-card__title">Verified sponsor database - </span>updated weekly</p>
                                 </div>
                                 <div className="hero-feature-card" onClick={() => handleFeatureCardClick('direct_contact')}>
                                     <FontAwesomeIcon icon={faEnvelope} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Reach decision-makers directly - </span>with proven email templates</p>
+                                    <p><span className="hero-feature-card__title">Direct contact info - </span>email or application links</p>
                                 </div>
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('smart_matching')}>
+                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('email_templates')}>
                                     <FontAwesomeIcon icon={faRocket} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Get matched with sponsors - </span>that fit your audience</p>
-                                </div>
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('response_rates')}>
-                                    <FontAwesomeIcon icon={faCheckCircle} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Track your outreach and revenue - </span>in one place</p>
+                                    <p><span className="hero-feature-card__title">Pre-filled email templates - </span>based on your newsletter</p>
                                 </div>
                             </div>
                             <div className="hero-buttons">
@@ -467,17 +463,16 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                 <div className="web-section__container web-section-content">
                     <div className="home__pricing-container">
                         <div className="home__pricing-header">
-                            <h2 className="home__pricing-title">Access Our Sponsor Database</h2>
-                            <p className="home__pricing-subtitle">Get instant access to verified newsletter sponsors with proven track records</p>
+                            <h2 className="home__pricing-title">Simple, Clear Pricing</h2>
+                            <p className="home__pricing-subtitle">One plan. Everything you need to find and connect with sponsors.</p>
                         </div>
                         <div className="home__pricing-cards">
-                            <div className="home__pricing-card">
-                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
+                            <div className="home__pricing-card home__pricing-card--featured">
                                 <div className="home__pricing-card__header">
-                                    <h3 className="home__pricing-card__title">Basic</h3>
+                                    <h3 className="home__pricing-card__title">SponsorDB Access</h3>
                                     <div className="home__pricing-card__price">
                                         <span className="home__pricing-card__currency">$</span>
-                                        <span className="home__pricing-card__amount">29</span>
+                                        <span className="home__pricing-card__amount">20</span>
                                         <span className="home__pricing-card__period">/month</span>
                                     </div>
                                 </div>
@@ -485,15 +480,11 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                 <div className="home__pricing-card__benefits">
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Access to 300+ verified sponsors</span>
+                                        <span>Access to full sponsor database</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Direct contact links for each sponsor</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Sponsor search and filtering</span>
+                                        <span>Weekly updates with new sponsors</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
@@ -501,52 +492,16 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Sponsor response rate data</span>
-                                    </div>
-                                </div>
-                                
-                                <Link className="home__pricing-card__cta-button" to="/signup" onClick={handlePricingClick}>
-                                    Start 2-Week Free Trial
-                                </Link>
-                            </div>
-
-                            <div className="home__pricing-card home__pricing-card--featured">
-                                <div className="home__pricing-card__badge">Most Popular</div>
-                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
-                                <div className="home__pricing-card__header">
-                                    <h3 className="home__pricing-card__title">Pro</h3>
-                                    <div className="home__pricing-card__price">
-                                        <span className="home__pricing-card__currency">$</span>
-                                        <span className="home__pricing-card__amount">79</span>
-                                        <span className="home__pricing-card__period">/month</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="home__pricing-card__benefits">
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Everything in Basic</span>
+                                        <span>Contact info for all sponsors</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Smart sponsor matching based on your newsletter</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Priority access to new sponsors</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Advanced filtering by industry & budget</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Detailed sponsor contact history</span>
+                                        <span>Cancel anytime</span>
                                     </div>
                                 </div>
                                 
                                 <Link className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" to="/signup" onClick={handlePricingClick}>
-                                    Start 2-Week Free Trial
+                                    Get Started - $20/month
                                 </Link>
                             </div>
                         </div>
