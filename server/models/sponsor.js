@@ -49,6 +49,11 @@ const sponsorSchema = new mongoose.Schema({
         enum: ['email', 'application', 'both', 'none'],
         default: 'none'
     },
+    analysisStatus: {
+        type: String,
+        enum: ['complete', 'manual_review_required', 'pending'],
+        default: 'pending'
+    },
     dateAdded: {
         type: Date,
         default: Date.now
@@ -88,7 +93,7 @@ const Sponsor = mongoose.model('Sponsor', sponsorSchema);
 const validateSponsor = (sponsor) => {
     const schema = Joi.object({
         sponsorName: Joi.string().min(2).max(256).required(),
-        sponsorLink: Joi.string().min(2).max(256),
+        sponsorLink: Joi.string().min(0).max(256),
         rootDomain: Joi.string().max(256),
         tags: Joi.array().items(Joi.string()).max(5),
         newsletterSponsored: Joi.string().max(1000),
@@ -96,6 +101,7 @@ const validateSponsor = (sponsor) => {
         sponsorEmail: Joi.string(),
         sponsorApplication: Joi.string(),
         contactMethod: Joi.string().valid('email', 'application', 'both', 'none'),
+        analysisStatus: Joi.string().valid('complete', 'manual_review_required', 'pending'),
         dateAdded: Joi.date(),
         viewedBy: Joi.array().items(Joi.string()),
         appliedBy: Joi.array().items(Joi.string()),

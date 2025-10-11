@@ -45,8 +45,14 @@ const saveToAirtable = async (sponsor) => {
 // Get all sponsors
 router.get('/', auth, async (req, res) => {
     try {
-        // Fetch all sponsors and include whether the current user has viewed/applied to them
-        const sponsors = await Sponsor.find();
+        // Fetch all sponsors with contact info and include whether the current user has viewed/applied to them
+        const sponsors = await Sponsor.find({
+            $or: [
+                { sponsorEmail: { $exists: true, $ne: '' } },
+                { sponsorApplication: { $exists: true, $ne: '' } },
+                { businessContact: { $exists: true, $ne: '' } }
+            ]
+        });
         const sponsorsWithStatus = sponsors.map(sponsor => {
             const sponsorObj = sponsor.toObject();
             const isViewed = sponsor.viewedBy.includes(req.user._id);
@@ -74,17 +80,35 @@ router.get('/', auth, async (req, res) => {
 // Get DB info {sponsor count, newsletter count, last updated date}
 router.get('/db-info', async (req, res) => {
     try {
-        // Get sponsor count
-        const sponsors = await Sponsor.find();
+        // Get sponsor count - only sponsors with contact info (simplified check)
+        const sponsors = await Sponsor.find({
+            $or: [
+                { sponsorEmail: { $exists: true, $ne: '' } },
+                { sponsorApplication: { $exists: true, $ne: '' } },
+                { businessContact: { $exists: true, $ne: '' } }
+            ]
+        });
         const sponsorCount = sponsors.length;
 
-        // Get newsletter count
-        const newsletters = await Sponsor.distinct("newsletterSponsored");
+        // Get newsletter count - only from sponsors with contact info
+        const newsletters = await Sponsor.distinct("newsletterSponsored", {
+            $or: [
+                { sponsorEmail: { $exists: true, $ne: '' } },
+                { sponsorApplication: { $exists: true, $ne: '' } },
+                { businessContact: { $exists: true, $ne: '' } }
+            ]
+        });
         const newsletterCount = newsletters.length;
 
-        // Get last updated date (from last sponsor added)
-        const lastSponsor = await Sponsor.find().sort({ _id: -1 }).limit(1);
-        const lastUpdated = lastSponsor[0].dateAdded;
+        // Get last updated date (from last sponsor with contact info added)
+        const lastSponsor = await Sponsor.find({
+            $or: [
+                { sponsorEmail: { $exists: true, $ne: '' } },
+                { sponsorApplication: { $exists: true, $ne: '' } },
+                { businessContact: { $exists: true, $ne: '' } }
+            ]
+        }).sort({ _id: -1 }).limit(1);
+        const lastUpdated = lastSponsor[0] ? lastSponsor[0].dateAdded : null;
 
         res.status(200).send({ "sponsors": sponsorCount, "newsletters": newsletterCount, "lastUpdated": lastUpdated });
     }
@@ -287,6 +311,8 @@ router.put('/:id', [auth, admin], async (req, res) => {
     try {
         const { error } = validateSponsor(req.body);
         if (error) {
+            console.log('Sponsor validation error:', error.details[0].message);
+            console.log('Request body:', req.body);
             return res.status(400).send(error.details[0].message);
         }
 
@@ -299,7 +325,9 @@ router.put('/:id', [auth, admin], async (req, res) => {
                 tags: req.body.tags,
                 newsletterSponsored: req.body.newsletterSponsored,
                 subscriberCount: req.body.subscriberCount,
-                businessContact: req.body.businessContact
+                sponsorEmail: req.body.sponsorEmail,
+                sponsorApplication: req.body.sponsorApplication,
+                contactMethod: req.body.contactMethod
             },
             { new: true }
         );
@@ -466,6 +494,29 @@ router.post('/:id/apply', auth, async (req, res) => {
             }
             
             console.log('Successfully updated sponsor');
+            
+            // Create user application record if this is a new application
+            if (!hasApplied) {
+                try {
+                    const { UserApplication } = require('../models/userApplication');
+                    const applicationData = {
+                        userId: req.user._id,
+                        sponsorId: req.params.id,
+                        sponsorName: updatedSponsor.sponsorName,
+                        contactEmail: updatedSponsor.businessContact || updatedSponsor.sponsorEmail || '',
+                        dateApplied: currentDate,
+                        status: 'pending',
+                        lastContactDate: currentDate
+                    };
+                    
+                    const application = new UserApplication(applicationData);
+                    await application.save();
+                    console.log('Created user application record:', application._id);
+                } catch (appError) {
+                    console.error('Error creating user application:', appError);
+                    // Don't fail the request if application record creation fails
+                }
+            }
             
             // Return processed sponsor data with user status
             const sponsorObj = updatedSponsor.toObject();
