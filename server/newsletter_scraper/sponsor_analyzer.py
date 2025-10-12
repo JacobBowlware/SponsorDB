@@ -438,7 +438,15 @@ class SponsorAnalyzer:
         if netloc.startswith('www.'):
             netloc = netloc[4:]
         
-        # Split by dots and take last two parts
+        # Use tldextract library for proper domain parsing
+        import tldextract
+        extracted = tldextract.extract(netloc)
+        
+        # Return domain.suffix (e.g., "company.com" or "company.co.uk")
+        if extracted.domain and extracted.suffix:
+            return f"{extracted.domain}.{extracted.suffix}"
+        
+        # Fallback to original logic if tldextract fails
         parts = netloc.split('.')
         if len(parts) >= 2:
             return '.'.join(parts[-2:])
@@ -798,13 +806,14 @@ class SponsorAnalyzer:
             return None
     
     def _find_application_url(self, soup: BeautifulSoup, domain: str, base_url: str) -> Optional[str]:
-        """Find application/partnership page URL"""
-        # Look for common application page patterns
+        """Find application/partnership page URL - ONLY specific sponsor pages"""
+        # STRICT application page patterns - must be sponsor-specific
         application_patterns = [
-            r'/partners', r'/advertise', r'/media-kit', r'/contact',
-            r'/partnership', r'/sponsor', r'/advertising', r'/business',
-            r'/enterprise', r'/pricing', r'/get-started', r'/sign-up'
+            r'/partners', r'/advertise', r'/advertising', r'/media-kit',
+            r'/partnership', r'/sponsor', r'/business', r'/enterprise'
         ]
+        
+        # DO NOT include generic /contact or /pricing pages
         
         for link in soup.find_all('a', href=True):
             href = link['href'].lower()
@@ -812,12 +821,18 @@ class SponsorAnalyzer:
                 if re.search(pattern, href):
                     # Make sure it's a full URL
                     if href.startswith('http'):
+                        logger.debug(f"Found sponsor application page: {href}")
                         return href
                     elif href.startswith('/'):
-                        return f"https://{domain}{href}"
+                        url = f"https://{domain}{href}"
+                        logger.debug(f"Found sponsor application page: {url}")
+                        return url
                     else:
-                        return f"https://{domain}/{href}"
+                        url = f"https://{domain}/{href}"
+                        logger.debug(f"Found sponsor application page: {url}")
+                        return url
         
+        logger.debug(f"No sponsor-specific application page found for {domain}")
         return None
     
     def gpt_analyze_sponsor(self, sponsor_data: Dict) -> Dict:
