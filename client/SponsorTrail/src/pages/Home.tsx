@@ -6,7 +6,7 @@ import { useEffect, useState, useRef, memo, useCallback } from 'react';
 import FAQAccordian from "../components/FAQAccordian";
 
 // Font Awesome Icons
-import { faArrowRight, faArrowDown, faCheckCircle, faDatabase, faEnvelope, faChartLine, faSearch, faTimes, faExclamationTriangle, faRocket, faLaptopCode } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowDown, faCheckCircle, faDatabase, faEnvelope, faChartLine, faSearch, faTimes, faExclamationTriangle, faRocket, faClock, faEnvelopeOpen, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Analytics
@@ -208,20 +208,20 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                             <div className="problems-solved-image-container">
                                 <div className="problems-solved-image-placeholder problems-solved-image--database">
                                     <div className="problems-solved-image-overlay">
-                                        <FontAwesomeIcon icon={faDatabase} />
-                                        <span>Database</span>
+                                        <FontAwesomeIcon icon={faClock} />
+                                        <span>Time Wasted</span>
                                     </div>
                                 </div>
                                 <div className="problems-solved-image-placeholder problems-solved-image--application">
                                     <div className="problems-solved-image-overlay">
-                                        <FontAwesomeIcon icon={faEnvelope} />
-                                        <span>Applications</span>
+                                        <FontAwesomeIcon icon={faEnvelopeOpen} />
+                                        <span>Failed Emails</span>
                                     </div>
                                 </div>
                                 <div className="problems-solved-image-placeholder problems-solved-image--developer">
                                     <div className="problems-solved-image-overlay">
-                                        <FontAwesomeIcon icon={faLaptopCode} />
-                                        <span>Active Dev</span>
+                                        <FontAwesomeIcon icon={faQuestionCircle} />
+                                        <span>No Tracking</span>
                                     </div>
                                 </div>
                             </div>
@@ -430,7 +430,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                     <div className="demo-container">
                         <div className="demo-header">
                             <h2 className="demo-title">
-                                See SponsorTrail in Action
+                                See SponsorDB in Action
                             </h2>
                             <p className="demo-subtitle">
                                 Watch how easy it is to find and connect with sponsors using our platform

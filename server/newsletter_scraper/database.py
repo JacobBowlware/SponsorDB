@@ -13,6 +13,7 @@ class SponsorDatabase:
         self.client: MongoClient = None
         self.db: Database = None
         self.collection: Collection = None
+        self.denied_domains_collection: Collection = None
         self.connect()
     
     def connect(self):
@@ -21,6 +22,7 @@ class SponsorDatabase:
             self.client = MongoClient(MONGODB_URI)
             self.db = self.client[DATABASE_NAME]
             self.collection = self.db[COLLECTION_NAME]
+            self.denied_domains_collection = self.db['denieddomains']
             
             # Test connection
             self.client.admin.command('ping')
@@ -78,12 +80,45 @@ class SponsorDatabase:
             raise
     
     def get_sponsor_by_domain(self, domain: str) -> Optional[Dict]:
-        """Get sponsor by root domain"""
+        """Get sponsor by root domain - check both collections"""
         try:
-            return self.collection.find_one({'rootDomain': domain})
+            # First check the main sponsors collection
+            sponsor = self.collection.find_one({'rootDomain': domain})
+            if sponsor:
+                return sponsor
+            
+            # If not found, check potential sponsors collection
+            potential_sponsor = self.db['potentialsponsors'].find_one({'rootDomain': domain})
+            return potential_sponsor
+            
         except Exception as e:
             logger.error(f"Failed to get sponsor by domain {domain}: {e}")
             return None
+    
+    def is_domain_denied(self, domain: str) -> bool:
+        """Check if domain is in denied domains list"""
+        try:
+            denied_domain = self.denied_domains_collection.find_one({'rootDomain': domain.lower()})
+            return denied_domain is not None
+        except Exception as e:
+            logger.error(f"Failed to check denied domain {domain}: {e}")
+            return False
+    
+    def add_denied_domain(self, domain: str, reason: str, added_by: str = 'system') -> bool:
+        """Add domain to denied domains list"""
+        try:
+            denied_domain = {
+                'rootDomain': domain.lower(),
+                'reason': reason,
+                'dateAdded': datetime.utcnow(),
+                'addedBy': added_by
+            }
+            result = self.denied_domains_collection.insert_one(denied_domain)
+            logger.info(f"Added denied domain: {domain} - {reason}")
+            return result.inserted_id is not None
+        except Exception as e:
+            logger.error(f"Failed to add denied domain {domain}: {e}")
+            return False
     
     def get_sponsor_by_link(self, link: str) -> Optional[Dict]:
         """Get sponsor by sponsor link"""

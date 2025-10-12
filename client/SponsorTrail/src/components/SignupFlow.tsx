@@ -28,7 +28,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
     const [confirmPassword, setConfirmPassword] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [error, setError] = useState('');
-    const [selectedPlan, setSelectedPlan] = useState<'basic' | 'pro' | null>(null);
+    // No need for plan selection since there's only one plan
     const [userToken, setUserToken] = useState('');
     const [newsletterInfo, setNewsletterInfo] = useState<any>(null);
     const [showNewsletterPrompt, setShowNewsletterPrompt] = useState(false);
@@ -134,34 +134,20 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
         }
     };
 
-    const handlePlanSelection = (plan: 'basic' | 'pro') => {
-        setSelectedPlan(plan);
-        trackButtonClick('plan_selection', 'signup_flow', { plan });
-    };
+    // No need for plan selection since there's only one plan
 
     const handleSubscribe = async () => {
-        if (!selectedPlan) return;
         
         try {
-            // Update user subscription plan
-            await axios.put(`${config.backendUrl}users/subscription`, 
-                { subscription: selectedPlan }, 
-                { headers: { 'x-auth-token': userToken }
-            });
-
             // NOW update authentication state after signup flow is complete
             if (onAuthChange) {
                 onAuthChange(true);
             }
 
-            trackUserJourney('subscription_selected', 2, { 
-                plan: selectedPlan
-            });
+            trackUserJourney('subscription_selected', 2);
 
             // Redirect to Stripe checkout
-            const response = await axios.post(`${config.backendUrl}users/checkout`, {
-                plan: selectedPlan
-            }, {
+            const response = await axios.post(`${config.backendUrl}users/checkout`, {}, {
                 headers: { 'x-auth-token': userToken }
             });
 
@@ -242,7 +228,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
         setEmailError('');
         setPasswordError('');
         setError('');
-        setSelectedPlan(null);
+        // No need to reset plan selection
         setUserToken('');
         setNewsletterInfo(null);
         setShowNewsletterPrompt(false);
@@ -358,54 +344,27 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
                 </div>
             )}
             
-            <div className="pricing-grid">
-                <div 
-                    className={`pricing-card ${selectedPlan === 'basic' ? 'selected' : ''}`}
-                    onClick={() => handlePlanSelection('basic')}
-                >
+            <div className="pricing-info">
+                <div className="pricing-card featured">
+                    <div className="pricing-badge">2 Week Free Trial</div>
                     <div className="pricing-header">
-                        <h3>Basic</h3>
+                        <h3>Premium Access</h3>
                         <div className="pricing-price">
                             <span className="currency">$</span>
-                            <span className="amount">14</span>
+                            <span className="amount">20</span>
                             <span className="period">/month</span>
                         </div>
-                        <div className="price-discount">50% OFF First Month</div>
                     </div>
                     <ul className="pricing-features">
-                        <li>✅ Access to verified sponsor database</li>
-                        <li>✅ Email templates for outreach</li>
+                        <li>✅ Access to 300+ verified sponsors</li>
+                        <li>✅ Direct contact links for each sponsor</li>
                         <li>✅ Sponsor search & filtering tools</li>
-                        <li>✅ Contact information & details</li>
-                        <li>✅ Basic analytics tracking</li>
-                        <li>✅ 30-day money-back guarantee</li>
-                    </ul>
-                </div>
-
-                <div 
-                    className={`pricing-card featured ${selectedPlan === 'pro' ? 'selected' : ''}`}
-                    onClick={() => handlePlanSelection('pro')}
-                >
-                    <div className="pricing-badge">Most Popular</div>
-                    <div className="pricing-header">
-                        <h3>Pro</h3>
-                        <div className="pricing-price">
-                            <span className="currency">$</span>
-                            <span className="amount">39</span>
-                            <span className="period">/month</span>
-                        </div>
-                        <div className="price-discount">50% OFF First Month</div>
-                    </div>
-                    <ul className="pricing-features">
-                        <li>✅ Everything in Basic</li>
-                        <li>✅ Advanced sponsor matching tools</li>
-                        <li>✅ Custom email template generator</li>
-                        <li>✅ Detailed analytics & tracking</li>
-                        <li>✅ Priority sponsor verification</li>
-                        <li>✅ Outreach optimization tools</li>
-                        <li>✅ Revenue tracking dashboard</li>
-                        <li>✅ 1-on-1 setup call with our team</li>
-                        <li>✅ 30-day money-back guarantee</li>
+                        <li>✅ Pre-filled email templates</li>
+                        <li>✅ Sponsor response rate data</li>
+                        <li>✅ Smart sponsor matching based on your newsletter</li>
+                        <li>✅ Advanced filtering by industry & budget</li>
+                        <li>✅ 2-week free trial</li>
+                        <li>✅ Cancel anytime</li>
                     </ul>
                 </div>
             </div>
@@ -413,9 +372,8 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
             <button 
                 className="signup-btn" 
                 onClick={handleSubscribe}
-                disabled={!selectedPlan}
             >
-                {selectedPlan ? `Get ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} Access - 50% OFF` : 'Select Your Plan'}
+                Start 2-Week Free Trial
                 <FontAwesomeIcon icon={faArrowRight} />
             </button>
         </div>

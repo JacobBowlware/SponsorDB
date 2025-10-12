@@ -107,14 +107,15 @@ BUSINESS_EMAIL_PATTERNS = [
 
 # Excluded Domains - Comprehensive list of non-sponsor sites
 EXCLUDED_DOMAINS = [
-    # Social Media
-    'facebook.com', 'twitter.com', 'linkedin.com', 'instagram.com',
-    'youtube.com', 'tiktok.com', 'reddit.com', 'medium.com',
+    # Social Media Platforms
+    'facebook.com', 'twitter.com', 'x.com', 'linkedin.com', 'instagram.com',
+    'youtube.com', 'tiktok.com', 'reddit.com', 'pinterest.com', 'threads.net',
     
     # Newsletter Platforms & Content Sites
     'substack.com', 'ghost.io', 'wordpress.com', 'blogspot.com',
     'beehiiv.com', 'mailchimp.com', 'convertkit.com', 'buttondown.email',
     'getpocket.com', 'pocket.com', 'feedly.com', 'inoreader.com',
+    'medium.com',  # News/content site
     
     # News & Blog Sites (from your examples)
     'socialmediatoday.com', 'searchengineland.com', 'webflow.com',

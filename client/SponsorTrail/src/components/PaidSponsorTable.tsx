@@ -479,6 +479,14 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         if (!sponsor.isViewed) {
             markAsViewed(sponsor._id);
         }
+        
+        // Open the application link if it exists
+        if (sponsor.sponsorApplication) {
+            window.open(sponsor.sponsorApplication, '_blank');
+        } else if (sponsor.businessContact && !sponsor.businessContact.includes('@')) {
+            // Fallback to businessContact if it's not an email
+            window.open(sponsor.businessContact, '_blank');
+        }
     };
 
     const generateEmailTemplate = (sponsor: Sponsor) => {
@@ -510,12 +518,15 @@ ${userNewsletter}`;
     };
 
     const handleEmailClick = (sponsor: Sponsor) => {
-        if (!sponsor.businessContact || !sponsor.businessContact.includes('@')) {
+        // Check for email in new fields first, then fallback to legacy field
+        const email = sponsor.sponsorEmail || (sponsor.businessContact && sponsor.businessContact.includes('@') ? sponsor.businessContact : null);
+        
+        if (!email) {
             return;
         }
 
         const template = generateEmailTemplate(sponsor);
-        const mailtoLink = `mailto:${sponsor.businessContact}?subject=${template.subject}&body=${template.body}`;
+        const mailtoLink = `mailto:${email}?subject=${template.subject}&body=${template.body}`;
         
         // Mark as applied and viewed
         handleContactClick(sponsor);
@@ -672,7 +683,31 @@ ${userNewsletter}`;
                                 
                                 {/* Contact Method */}
                                 <td className="sponsor-table__cell sponsor-contact-cell">
-                                    {sponsor.businessContact ? (
+                                    {sponsor.sponsorEmail ? (
+                                        <div className="contact-method">
+                                            <FontAwesomeIcon icon={faEnvelope} className="contact-icon" />
+                                            <button 
+                                                className="contact-link contact-button"
+                                                onClick={() => handleEmailClick(sponsor)}
+                                            >
+                                                Send Email
+                                            </button>
+                                        </div>
+                                    ) : sponsor.sponsorApplication ? (
+                                        <div className="contact-method">
+                                            <FontAwesomeIcon icon={faArrowRight} className="contact-icon" />
+                                            <a 
+                                                href={sponsor.sponsorApplication}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="sponsor-table__link contact-link"
+                                                onClick={() => handleContactClick(sponsor)}
+                                            >
+                                                Complete their partnership form
+                                            </a>
+                                        </div>
+                                    ) : sponsor.businessContact ? (
+                                        // Fallback to legacy businessContact field
                                         sponsor.businessContact.includes('@') ? (
                                             <div className="contact-method">
                                                 <FontAwesomeIcon icon={faEnvelope} className="contact-icon" />
@@ -717,13 +752,29 @@ ${userNewsletter}`;
                                         >
                                             <FontAwesomeIcon icon={faExternalLink} />
                                         </button>
-                                        {sponsor.businessContact && (
+                                        {(sponsor.sponsorEmail || sponsor.sponsorApplication || sponsor.businessContact) && (
                                             <button 
                                                 className="sponsor-action-btn sponsor-apply-btn"
-                                                onClick={() => sponsor.businessContact.includes('@') ? handleEmailClick(sponsor) : handleContactClick(sponsor)}
-                                                title={sponsor.businessContact.includes('@') ? 'Send Email with Template' : 'Open Application'}
+                                                onClick={() => {
+                                                    if (sponsor.sponsorEmail) {
+                                                        handleEmailClick(sponsor);
+                                                    } else if (sponsor.sponsorApplication) {
+                                                        handleContactClick(sponsor);
+                                                    } else if (sponsor.businessContact) {
+                                                        sponsor.businessContact.includes('@') ? handleEmailClick(sponsor) : handleContactClick(sponsor);
+                                                    }
+                                                }}
+                                                title={
+                                                    sponsor.sponsorEmail ? 'Send Email with Template' : 
+                                                    sponsor.sponsorApplication ? 'Open Application' :
+                                                    sponsor.businessContact?.includes('@') ? 'Send Email with Template' : 'Open Application'
+                                                }
                                             >
-                                                <FontAwesomeIcon icon={sponsor.businessContact.includes('@') ? faEnvelope : faHandshake} />
+                                                <FontAwesomeIcon icon={
+                                                    sponsor.sponsorEmail ? faEnvelope :
+                                                    sponsor.sponsorApplication ? faHandshake :
+                                                    sponsor.businessContact?.includes('@') ? faEnvelope : faHandshake
+                                                } />
                                             </button>
                                         )}
                                         {isAdmin && (

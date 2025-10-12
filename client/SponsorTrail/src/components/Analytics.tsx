@@ -42,7 +42,7 @@ interface Sponsor {
 }
 
 interface SponsorApplication {
-    id: string;
+    _id: string;
     sponsorName: string;
     sponsorId: string;
     contactEmail: string;
@@ -52,10 +52,11 @@ interface SponsorApplication {
     followUpDate?: string;
     revenue?: number;
     notes?: string;
+    lastContactDate?: string;
 }
 
 interface Conversation {
-    id: string;
+    _id: string;
     sponsorName: string;
     sponsorId: string;
     lastContactDate: string;
@@ -68,7 +69,7 @@ interface Conversation {
 // Mock data for the new analytics system
 const MOCK_APPLICATIONS: SponsorApplication[] = [
     {
-        id: '1',
+        _id: '1',
         sponsorName: 'Eight Sleep',
         sponsorId: '1',
         contactEmail: 'partnerships@eightsleep.com',
@@ -79,7 +80,7 @@ const MOCK_APPLICATIONS: SponsorApplication[] = [
         notes: 'Great partnership, 3-month deal'
     },
     {
-        id: '2',
+        _id: '2',
         sponsorName: 'Notion',
         sponsorId: '4',
         contactEmail: 'partnerships@notion.so',
@@ -89,7 +90,7 @@ const MOCK_APPLICATIONS: SponsorApplication[] = [
         notes: 'Interested, discussing terms'
     },
     {
-        id: '3',
+        _id: '3',
         sponsorName: 'Calm',
         sponsorId: '6',
         contactEmail: 'business@calm.com',
@@ -99,7 +100,7 @@ const MOCK_APPLICATIONS: SponsorApplication[] = [
         notes: 'No response yet, follow up needed'
     },
     {
-        id: '4',
+        _id: '4',
         sponsorName: 'Spotify',
         sponsorId: '8',
         contactEmail: 'partnerships@spotify.com',
@@ -111,7 +112,7 @@ const MOCK_APPLICATIONS: SponsorApplication[] = [
 
 const MOCK_CONVERSATIONS: Conversation[] = [
     {
-        id: '1',
+        _id: '1',
         sponsorName: 'Notion',
         sponsorId: '4',
         lastContactDate: '2024-03-15T09:15:00Z',
@@ -120,7 +121,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
         revenue: 0
     },
     {
-        id: '2',
+        _id: '2',
         sponsorName: 'Calm',
         sponsorId: '6',
         lastContactDate: '2024-03-15T09:45:00Z',
@@ -130,7 +131,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
         revenue: 0
     },
     {
-        id: '3',
+        _id: '3',
         sponsorName: 'Spotify',
         sponsorId: '8',
         lastContactDate: '2024-03-17T10:15:00Z',
@@ -317,31 +318,24 @@ const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed }) => {
         try {
             setLoading(true);
             
-            // Check if we're in local development
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            if (isLocalDev) {
-                // Use mock data for development
-                setApplications(MOCK_APPLICATIONS);
-                setConversations(MOCK_CONVERSATIONS);
-                setLoading(false);
-                return;
-            }
-            
             const token = localStorage.getItem('token');
             if (!token) {
                 navigate('/login');
                 return;
             }
 
-            // TODO: Replace with actual API calls
-            // const applicationsResponse = await axios.get(`${config.backendUrl}applications`, {
-            //     headers: { 'x-auth-token': token }
-            // });
-            // const conversationsResponse = await axios.get(`${config.backendUrl}conversations`, {
-            //     headers: { 'x-auth-token': token }
-            // });
+            // Fetch real applications and conversations
+            const [applicationsResponse, conversationsResponse] = await Promise.all([
+                axios.get(`${config.backendUrl}userApplications`, {
+                    headers: { 'x-auth-token': token }
+                }),
+                axios.get(`${config.backendUrl}userApplications/conversations`, {
+                    headers: { 'x-auth-token': token }
+                })
+            ]);
             
+            setApplications(applicationsResponse.data);
+            setConversations(conversationsResponse.data);
             setLoading(false);
         } catch (err) {
             setError('Failed to load analytics data');
@@ -371,6 +365,15 @@ const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed }) => {
 
     const getPendingFollowUps = () => {
         return conversations.filter(conv => conv.followUpNeeded).length;
+    };
+
+    const needsFollowUp = (application: SponsorApplication) => {
+        const now = new Date();
+        const appliedDate = new Date(application.dateApplied);
+        const daysSinceApplied = Math.floor((now.getTime() - appliedDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // If it's been 3+ days and still pending, suggest follow-up
+        return daysSinceApplied >= 3 && application.status === 'pending';
     };
 
     const getROI = () => {
@@ -414,12 +417,26 @@ const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed }) => {
         return Math.round(((thisMonth - lastMonth) / lastMonth) * 100);
     };
 
-    const handleMarkResponse = (applicationId: string) => {
-        setApplications(prev => prev.map(app => 
-            app.id === applicationId 
-                ? { ...app, status: 'responded' as const, responseDate: new Date().toISOString() }
-                : app
-        ));
+    const handleMarkResponse = async (applicationId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            
+            await axios.put(`${config.backendUrl}userApplications/${applicationId}`, {
+                status: 'responded',
+                responseDate: new Date().toISOString()
+            }, {
+                headers: { 'x-auth-token': token }
+            });
+            
+            setApplications(prev => prev.map(app => 
+                app._id === applicationId 
+                    ? { ...app, status: 'responded' as const, responseDate: new Date().toISOString() }
+                    : app
+            ));
+        } catch (err) {
+            console.error('Error updating application status:', err);
+        }
     };
 
     const handleMarkClosedWon = (application: SponsorApplication) => {
@@ -428,49 +445,70 @@ const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed }) => {
         setShowRevenueModal(true);
     };
 
-    const handleConfirmRevenue = () => {
+    const handleConfirmRevenue = async () => {
         if (selectedApplication && revenueAmount) {
             const revenue = parseInt(revenueAmount);
             if (!isNaN(revenue) && revenue > 0) {
-                setApplications(prev => prev.map(app => 
-                    app.id === selectedApplication.id 
-                        ? { ...app, status: 'closed_won' as const, revenue }
-                        : app
-                ));
-                setShowRevenueModal(false);
-                setSelectedApplication(null);
-                setRevenueAmount('');
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) return;
+                    
+                    await axios.put(`${config.backendUrl}userApplications/${selectedApplication._id}`, {
+                        status: 'closed_won',
+                        revenue
+                    }, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    
+                    setApplications(prev => prev.map(app => 
+                        app._id === selectedApplication._id 
+                            ? { ...app, status: 'closed_won' as const, revenue }
+                            : app
+                    ));
+                    setShowRevenueModal(false);
+                    setSelectedApplication(null);
+                    setRevenueAmount('');
+                } catch (err) {
+                    console.error('Error updating application revenue:', err);
+                }
             }
         }
     };
 
-    const handleMarkClosedLost = (applicationId: string) => {
-        setApplications(prev => prev.map(app => 
-            app.id === applicationId 
-                ? { ...app, status: 'closed_lost' as const }
-                : app
-        ));
+    const handleMarkClosedLost = async (applicationId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            
+            await axios.put(`${config.backendUrl}userApplications/${applicationId}`, {
+                status: 'closed_lost'
+            }, {
+                headers: { 'x-auth-token': token }
+            });
+            
+            setApplications(prev => prev.map(app => 
+                app._id === applicationId 
+                    ? { ...app, status: 'closed_lost' as const }
+                    : app
+            ));
+        } catch (err) {
+            console.error('Error updating application status:', err);
+        }
     };
 
-    const handleFollowUp = (conversation: Conversation) => {
-        // In dev mode, create a mailto link with pre-filled content
-        const newsletterInfo = {
-            name: "Tech Weekly",
-            topic: "Technology and Innovation",
-            audienceSize: "15,000",
-            engagementRate: "12%"
-        };
+    const handleFollowUp = (item: Conversation | SponsorApplication) => {
+        // Get user's newsletter info from localStorage
+        const userNewsletter = localStorage.getItem('userNewsletter') || 'My Newsletter';
         
-        const subject = `Follow-up: Newsletter Sponsorship Opportunity - ${conversation.sponsorName}`;
+        const subject = `Follow-up: Newsletter Sponsorship Opportunity - ${item.sponsorName}`;
         const body = `Hi there,
 
 I hope this email finds you well. I wanted to follow up on my previous outreach regarding a potential newsletter sponsorship opportunity.
 
-About Tech Weekly:
-- 15,000+ engaged subscribers
-- 12% average open rate
-- Focus: Technology and Innovation
-- Weekly publication every Tuesday
+About ${userNewsletter}:
+- We have a growing community of engaged readers
+- Our audience is interested in [your industry/niche]
+- We're looking for partners who can provide value to our readers
 
 I believe your brand would be a great fit for our audience. Would you be interested in discussing a potential partnership?
 
@@ -478,17 +516,22 @@ I'd love to schedule a brief call to discuss how we can work together.
 
 Best regards,
 [Your Name]
-Tech Weekly Newsletter`;
+${userNewsletter}`;
 
-        const mailtoLink = `mailto:${conversation.sponsorName.toLowerCase().replace(/\s+/g, '')}@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        // Use the contact email from the application or conversation
+        const contactEmail = 'contactEmail' in item ? item.contactEmail : `${item.sponsorName.toLowerCase().replace(/\s+/g, '')}@example.com`;
+        const mailtoLink = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         window.open(mailtoLink);
         
-        // Mark follow-up as sent
-        setConversations(prev => prev.map(conv => 
-            conv.id === conversation.id 
-                ? { ...conv, followUpNeeded: false, lastContactDate: new Date().toISOString() }
-                : conv
-        ));
+        // Update the last contact date
+        if ('_id' in item) {
+            // This is a conversation
+            setConversations(prev => prev.map(conv => 
+                conv._id === item._id 
+                    ? { ...conv, followUpNeeded: false, lastContactDate: new Date().toISOString() }
+                    : conv
+            ));
+        }
     };
 
     if (loading) {
@@ -592,7 +635,7 @@ Tech Weekly Newsletter`;
                             <div className="table-col">Actions</div>
                         </div>
                         {applications.map((app) => (
-                            <div key={app.id} className="table-row">
+                            <div key={app._id} className="table-row">
                                 <div className="table-col">
                                     <div className="sponsor-name">{app.sponsorName}</div>
                                     <div className="sponsor-email">{app.contactEmail}</div>
@@ -610,13 +653,24 @@ Tech Weekly Newsletter`;
                                 </div>
                                 <div className="table-col actions-col">
                                     {app.status === 'pending' && (
-                                        <button 
-                                            className="action-btn response-btn"
-                                            onClick={() => handleMarkResponse(app.id)}
-                                        >
-                                            <FontAwesomeIcon icon={faReply} />
-                                            Mark Responded
-                                        </button>
+                                        <div className="action-buttons">
+                                            <button 
+                                                className="action-btn response-btn"
+                                                onClick={() => handleMarkResponse(app._id)}
+                                            >
+                                                <FontAwesomeIcon icon={faReply} />
+                                                Mark Responded
+                                            </button>
+                                            {needsFollowUp(app) && (
+                                                <button 
+                                                    className="action-btn follow-up-btn"
+                                                    onClick={() => handleFollowUp(app)}
+                                                >
+                                                    <FontAwesomeIcon icon={faEnvelope} />
+                                                    Resend
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
                                     {app.status === 'responded' && (
                                         <div className="action-buttons">
@@ -629,7 +683,7 @@ Tech Weekly Newsletter`;
                                             </button>
                                             <button 
                                                 className="action-btn danger-btn"
-                                                onClick={() => handleMarkClosedLost(app.id)}
+                                                onClick={() => handleMarkClosedLost(app._id)}
                                             >
                                                 <FontAwesomeIcon icon={faTimes} />
                                                 Lost
@@ -647,7 +701,7 @@ Tech Weekly Newsletter`;
                     <h3>Active Conversations</h3>
                     <div className="conversations-list">
                         {conversations.map((conv) => (
-                            <div key={conv.id} className="conversation-item">
+                            <div key={conv._id} className="conversation-item">
                                 <div className="conversation-info">
                                     <div className="conversation-name">{conv.sponsorName}</div>
                                     <div className="conversation-date">

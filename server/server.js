@@ -1,6 +1,7 @@
 const app = require('./index.js');
 const config = require('config');
 const logger = require('./startup/logging');
+const { cleanupExpiredTokens } = require('./scripts/cleanupTokens');
 
 /*
 TODO:
@@ -19,4 +20,22 @@ if (!process.env.JWT_PRIVATE_KEY) {
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
     logger.info(`Listening on port ${port}...`);
+    
+    // Schedule token cleanup to run every 24 hours
+    setInterval(async () => {
+        try {
+            await cleanupExpiredTokens();
+        } catch (error) {
+            logger.error('Error during scheduled token cleanup:', error);
+        }
+    }, 24 * 60 * 60 * 1000); // 24 hours
+    
+    // Run initial cleanup after 1 minute (to allow DB connection to establish)
+    setTimeout(async () => {
+        try {
+            await cleanupExpiredTokens();
+        } catch (error) {
+            logger.error('Error during initial token cleanup:', error);
+        }
+    }, 60 * 1000); // 1 minute
 });

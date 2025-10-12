@@ -40,6 +40,8 @@ import AuthHeader from './components/common/AuthHeader';
 // Other
 import axios from 'axios';
 import config from './config';
+import tokenManager from './utils/tokenManager';
+import apiClient from './utils/axiosInterceptor';
 import ChangePasswordFinal from './pages/ChangePasswordFinal';
 import NavMenu from './components/common/NavMenu';
 
@@ -120,11 +122,11 @@ function App() {
   const [user, setUser] = useState<User>({
     email: (isLocalDev && !isDevLogout) ? "dev@localhost.com" : "",
     isAdmin: (isLocalDev && !isDevLogout) ? true : false,
-    subscription: (isLocalDev && !isDevLogout) ? "pro" : null,
+    subscription: (isLocalDev && !isDevLogout) ? "premium" : null,
     stripeCustomerId: (isLocalDev && !isDevLogout) ? "dev_customer_id" : "",
     billing: (isLocalDev && !isDevLogout) ? {
       status: 'active',
-      monthlyCharge: 79,
+      monthlyCharge: 20,
       currency: 'usd',
       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -173,11 +175,11 @@ function App() {
       return;
     }
 
-    // Get user profile information
-    const token = localStorage.getItem('token');
-    if (!token || isTokenExpired(token)) {
-      console.log('Token expired or missing, clearing authentication');
-      localStorage.removeItem('token');
+    // Get user profile information using the new token manager
+    const accessToken = await tokenManager.getValidAccessToken();
+    if (!accessToken) {
+      console.log('No valid access token available, clearing authentication');
+      tokenManager.clearTokens();
       setUserAuth(false);
       setUser({
         email: "",
@@ -190,17 +192,15 @@ function App() {
       return;
     }
 
-    await axios.get(`${config.backendUrl}users/me`, {
-      headers: {
-        'x-auth-token': token
-      }
-    }).then((res) => {
+    try {
+      const res = await apiClient.get(`${config.backendUrl}users/me`);
       setUser(res.data);
-    }).catch((err) => {
+    } catch (err) {
+      console.error('Error fetching user info:', err);
       // If we get a 401/403, the token might be invalid
-      if (err.response?.status === 401 || err.response?.status === 403) {
+      if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
         console.log('Token invalid, clearing authentication');
-        localStorage.removeItem('token');
+        tokenManager.clearTokens();
         setUserAuth(false);
         setUser({
           email: "",
@@ -211,7 +211,7 @@ function App() {
           newsletterInfo: null,
         });
       }
-    })
+    }
   }, [isLocalDev]);
 
   // Consolidated initialization effect
@@ -229,14 +229,14 @@ function App() {
         // Always fetch database info first (public route, no auth required)
         await getDbInfo();
 
-        // Check authentication
-        const token = localStorage.getItem('token');
-        if (token && !isTokenExpired(token)) {
+        // Check authentication using token manager
+        const accessToken = await tokenManager.getValidAccessToken();
+        if (accessToken) {
           setUserAuth(true);
           await getUserInfo();
-        } else if (token && isTokenExpired(token)) {
-          console.log('Token expired, clearing authentication');
-          localStorage.removeItem('token');
+        } else {
+          console.log('No valid access token, clearing authentication');
+          tokenManager.clearTokens();
           setUserAuth(false);
           setUser({
             email: "",
@@ -266,11 +266,11 @@ function App() {
   // Periodic token validation (every 5 minutes)
   useEffect(() => {
     if (!isLocalDev && userAuth) {
-      const interval = setInterval(() => {
-        const token = localStorage.getItem('token');
-        if (token && isTokenExpired(token)) {
-          console.log('Token expired during periodic check, clearing authentication');
-          localStorage.removeItem('token');
+      const interval = setInterval(async () => {
+        const accessToken = await tokenManager.getValidAccessToken();
+        if (!accessToken) {
+          console.log('No valid access token during periodic check, clearing authentication');
+          tokenManager.clearTokens();
           setUserAuth(false);
           setUser({
             email: "",

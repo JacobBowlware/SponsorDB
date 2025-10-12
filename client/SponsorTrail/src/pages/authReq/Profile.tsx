@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import config from '../../config';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import tokenManager from '../../utils/tokenManager';
 import { 
     faCreditCard, 
     faSignOutAlt, 
@@ -101,7 +102,7 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                             <div className="profile-field">
                                 <label>Plan</label>
                                 <div className="profile-value">
-                                    {user.subscription === 'pro' ? 'Pro Plan' : 'Basic Plan'} - ${user.billing.monthlyCharge}/{user.billing.currency?.toUpperCase() || 'USD'} per month
+                                    Premium Plan - ${user.billing.monthlyCharge}/{user.billing.currency?.toUpperCase() || 'USD'} per month
                                 </div>
                             </div>
                             <div className="profile-field">
@@ -263,8 +264,8 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                             </Link>
                             <button 
                                 className="btn profile-btn profile-btn--danger" 
-                                onClick={() => {
-                                    localStorage.removeItem('token');
+                                onClick={async () => {
+                                    await tokenManager.logout();
                                     // In development mode, set a flag to prevent auto-auth
                                     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                                         localStorage.setItem('dev_logout', 'true');

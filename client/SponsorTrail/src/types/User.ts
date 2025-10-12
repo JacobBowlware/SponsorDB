@@ -84,7 +84,7 @@ export interface SponsorInteraction {
 export interface User {
   email: string;
   isAdmin: boolean;
-  subscription: 'basic' | 'pro' | 'none' | null;
+  subscription: 'premium' | 'none' | null;
   stripeCustomerId: string;
   billing: BillingInfo | null;
   newsletterInfo: NewsletterInfo | null;

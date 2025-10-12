@@ -1,18 +1,22 @@
 import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import tokenManager from '../utils/tokenManager';
 
 const AuthCallback = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
     useEffect(() => {
-        const token = searchParams.get('token');
-        if (token) {
-            localStorage.setItem('token', token);
+        const accessToken = searchParams.get('accessToken');
+        const refreshToken = searchParams.get('refreshToken');
+        
+        if (accessToken && refreshToken) {
+            // Store both tokens using the token manager
+            tokenManager.storeTokens(accessToken, refreshToken);
             // Redirect to sponsors page (or wherever you want authenticated users to go)
             window.location.href = '/sponsors';
         } else {
-            // If no token, redirect to login
+            // If no tokens, redirect to login
             navigate('/login');
         }
     }, [searchParams, navigate]);

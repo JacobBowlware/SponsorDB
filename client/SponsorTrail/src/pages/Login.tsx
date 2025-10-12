@@ -4,6 +4,7 @@ import { validateProperty } from "../components/common/WebJoi";
 import axios from "axios";
 import config from '../config';
 import GoogleLoginButton from "../components/common/GoogleLoginButton";
+import tokenManager from '../utils/tokenManager';
 
 interface LoginProps {
     userAuth: boolean;
@@ -38,8 +39,10 @@ const Login = ({ userAuth, isSubscribed }: LoginProps) => {
             email: email.toLowerCase(),
             password: password
         }).then((res) => {
-            localStorage.setItem('token', res.headers['x-auth-token']);
-            if (res.data.subscription && res.data.subscription !== 'none') {
+            // Store both access and refresh tokens
+            tokenManager.storeTokens(res.data.accessToken, res.data.refreshToken);
+            
+            if (res.data.user.subscription && res.data.user.subscription !== 'none') {
                 window.location.href = '/sponsors';
                 return;
             }

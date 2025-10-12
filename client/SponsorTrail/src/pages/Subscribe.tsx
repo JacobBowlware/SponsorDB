@@ -13,7 +13,7 @@ interface SubscribeProps {
 }
 
 const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => {
-    const [loading, setLoading] = useState<{ basic: boolean; pro: boolean }>({ basic: false, pro: false });
+    const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -34,13 +34,13 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
         }
     }, [userAuth, isSubscribed, subscription, navigate]);
 
-    const handlePlanSelect = async (plan: string) => {
-        setLoading(prev => ({ ...prev, [plan]: true }));
+    const handleSubscribe = async () => {
+        setLoading(true);
         setError('');
 
         try {
-            trackButtonClick('plan_select', 'subscribe', { plan });
-            trackUserJourney('plan_selected', 2, { plan });
+            trackButtonClick('subscribe', 'subscribe');
+            trackUserJourney('subscribe_selected', 2);
 
             const token = localStorage.getItem('token');
             if (!token) {
@@ -48,9 +48,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                 return;
             }
 
-            const response = await axios.post(`${config.backendUrl}users/checkout`, {
-                plan: plan
-            }, {
+            const response = await axios.post(`${config.backendUrl}users/checkout`, {}, {
                 headers: {
                     'x-auth-token': token
                 }
@@ -68,9 +66,9 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
         } catch (error: any) {
             console.error('Error creating checkout session:', error);
             setError(error.response?.data || 'Error creating checkout session. Please try again.');
-            trackUserJourney('checkout_error', 3, { plan, error: error.message });
+            trackUserJourney('checkout_error', 3, { error: error.message });
         } finally {
-            setLoading(prev => ({ ...prev, [plan]: false }));
+            setLoading(false);
         }
     };
 
@@ -91,13 +89,13 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                         </div>
 
                         <div className="subscribe-cards">
-                            <div className="home__pricing-card">
+                            <div className="home__pricing-card home__pricing-card--featured">
                                 <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
                                 <div className="home__pricing-card__header">
-                                    <h3 className="home__pricing-card__title">Basic</h3>
+                                    <h3 className="home__pricing-card__title">Premium Access</h3>
                                     <div className="home__pricing-card__price">
                                         <span className="home__pricing-card__currency">$</span>
-                                        <span className="home__pricing-card__amount">29</span>
+                                        <span className="home__pricing-card__amount">20</span>
                                         <span className="home__pricing-card__period">/month</span>
                                     </div>
                                 </div>
@@ -123,58 +121,22 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
                                         <span>Sponsor response rate data</span>
                                     </div>
-                                </div>
-                                
-                                <button 
-                                    className="home__pricing-card__cta-button" 
-                                    onClick={() => handlePlanSelect('basic')}
-                                    disabled={loading.basic || loading.pro}
-                                >
-                                    {loading.basic ? 'Processing...' : 'Start 2-Week Free Trial'}
-                                </button>
-                            </div>
-
-                            <div className="home__pricing-card home__pricing-card--featured">
-                                <div className="home__pricing-card__badge">Most Popular</div>
-                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
-                                <div className="home__pricing-card__header">
-                                    <h3 className="home__pricing-card__title">Pro</h3>
-                                    <div className="home__pricing-card__price">
-                                        <span className="home__pricing-card__currency">$</span>
-                                        <span className="home__pricing-card__amount">79</span>
-                                        <span className="home__pricing-card__period">/month</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="home__pricing-card__benefits">
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Everything in Basic</span>
-                                    </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
                                         <span>Smart sponsor matching based on your newsletter</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Priority access to new sponsors</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
                                         <span>Advanced filtering by industry & budget</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Detailed sponsor contact history</span>
                                     </div>
                                 </div>
                                 
                                 <button 
                                     className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" 
-                                    onClick={() => handlePlanSelect('pro')}
-                                    disabled={loading.basic || loading.pro}
+                                    onClick={handleSubscribe}
+                                    disabled={loading}
                                 >
-                                    {loading.pro ? 'Processing...' : 'Start 2-Week Free Trial'}
+                                    {loading ? 'Processing...' : 'Start 2-Week Free Trial'}
                                 </button>
                             </div>
                         </div>

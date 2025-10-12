@@ -122,10 +122,16 @@ const SponsorTable: React.FC<SponsorTableProps> = ({ sponsors, isSample = false 
                                 <FontAwesomeIcon icon={faExternalLink} />
                                 View
                             </button>
-                            {sponsor.sponsorEmail && (
+                            {(sponsor.sponsorEmail || sponsor.sponsorApplication) && (
                                 <button 
                                     className="sponsor-action-btn sponsor-apply-btn"
-                                    onClick={() => window.open(`mailto:${sponsor.sponsorEmail}`)}
+                                    onClick={() => {
+                                        if (sponsor.sponsorEmail) {
+                                            window.open(`mailto:${sponsor.sponsorEmail}`);
+                                        } else if (sponsor.sponsorApplication) {
+                                            window.open(sponsor.sponsorApplication, '_blank');
+                                        }
+                                    }}
                                 >
                                     <FontAwesomeIcon icon={faHandshake} />
                                     Apply

@@ -83,23 +83,68 @@ class NewsletterScraper:
                         logger.info(f"Sponsor analyzer returned {len(sponsors)} sponsors for this section")
                         
                         for sponsor in sponsors:
-                            # Check if sponsor already exists
+                            # 1. VALIDATION: Check if domain is denied
+                            if self.db.is_domain_denied(sponsor['rootDomain']):
+                                logger.debug(f"Domain is denied: {sponsor['rootDomain']}")
+                                continue
+                            
+                            # 2. VALIDATION: Check for self-reference (newsletter advertising itself)
+                            newsletter_domain = self.sponsor_analyzer._extract_newsletter_domain(newsletter_name)
+                            if newsletter_domain and sponsor['rootDomain'].lower() == newsletter_domain.lower():
+                                logger.debug(f"Rejecting self-reference: {sponsor['rootDomain']} matches newsletter domain {newsletter_domain}")
+                                continue
+                            
+                            # 3. VALIDATION: Check if sponsor already exists
                             existing = self.db.get_sponsor_by_domain(sponsor['rootDomain'])
                             if existing:
-                                logger.debug(f"Sponsor already exists: {sponsor['rootDomain']}")
+                                # If existing sponsor has no contact info, try to enrich it
+                                if existing.get('contactMethod') == 'none' and sponsor.get('contactMethod') != 'none':
+                                    logger.info(f"Enriching existing sponsor with contact info: {sponsor['rootDomain']}")
+                                    try:
+                                        # Update existing record with new contact info
+                                        update_data = {
+                                            'sponsorEmail': sponsor.get('sponsorEmail'),
+                                            'sponsorApplication': sponsor.get('sponsorApplication'),
+                                            'contactMethod': sponsor.get('contactMethod'),
+                                            'lastAnalyzed': datetime.utcnow()
+                                        }
+                                        self.db.update_sponsor(str(existing['_id']), update_data)
+                                        logger.info(f"✅ ENRICHED EXISTING SPONSOR: {sponsor['sponsorName']}")
+                                    except Exception as e:
+                                        logger.error(f"❌ FAILED TO ENRICH SPONSOR: {sponsor['sponsorName']} - Error: {e}")
+                                else:
+                                    logger.debug(f"Sponsor already exists with contact info: {sponsor['rootDomain']}")
+                                continue
+                            
+                            # 4. VALIDATION: Mandatory contact info requirement
+                            if sponsor.get('contactMethod') == 'none':
+                                logger.debug(f"Rejecting sponsor with no contact info: {sponsor['sponsorName']}")
+                                continue
+                            
+                            # 5. VALIDATION: Must have either email or application
+                            if not sponsor.get('sponsorEmail') and not sponsor.get('sponsorApplication'):
+                                logger.debug(f"Rejecting sponsor with no contact method: {sponsor['sponsorName']}")
+                                continue
+                            
+                            # 6. VALIDATION: Must have estimated subscribers
+                            if not sponsor.get('estimatedSubscribers') or sponsor.get('estimatedSubscribers', 0) <= 0:
+                                logger.debug(f"Rejecting sponsor with no subscriber estimate: {sponsor['sponsorName']}")
                                 continue
                             
                             # Add confidence and processing status from section
                             sponsor['confidence'] = confidence
                             sponsor['processing_status'] = status
                             
-                            # Set analysis status based on confidence
-                            if status == 'complete':
+                            # Set analysis status based on contact info
+                            if sponsor.get('sponsorEmail') and sponsor.get('sponsorApplication'):
                                 sponsor['analysisStatus'] = 'complete'
-                            elif status == 'needs_review':
-                                sponsor['analysisStatus'] = 'manual_review_required'
-                            else:
-                                sponsor['analysisStatus'] = 'pending'
+                                sponsor['confidence'] = max(sponsor.get('confidence', 0), 0.9)
+                            elif sponsor.get('sponsorEmail'):
+                                sponsor['analysisStatus'] = 'complete'
+                                sponsor['confidence'] = max(sponsor.get('confidence', 0), 0.8)
+                            elif sponsor.get('sponsorApplication'):
+                                sponsor['analysisStatus'] = 'complete'
+                                sponsor['confidence'] = max(sponsor.get('confidence', 0), 0.7)
                             
                             # Optional: Use GPT for final analysis
                             if self.sponsor_analyzer.openai_client:
