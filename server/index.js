@@ -1,22 +1,27 @@
 const express = require('express');
-const cors = require('cors');
 const app = express();
 
-// Configure CORS
-const corsOptions = {
-    origin: [
-        'https://sponsor-db.com',
-        'http://localhost:3000'
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
-    exposedHeaders: ['x-auth-token'],
-    optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
-// Apply CORS middleware
-app.use(cors(corsOptions));
+// Simple CORS middleware without external dependency
+app.use((req, res, next) => {
+    const allowedOrigins = ['https://sponsor-db.com', 'http://localhost:3000'];
+    const origin = req.headers.origin;
+    
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token');
+    res.setHeader('Access-Control-Expose-Headers', 'x-auth-token');
+    
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+    
+    next();
+});
 
 require('./startup/routes')(app);
 require('./startup/db')();
