@@ -1584,10 +1584,34 @@ router.get('/test-sponsor-count', [auth, admin], async (req, res) => {
         const totalCount = await Sponsor.countDocuments({});
         const sampleSponsors = await Sponsor.find({}).limit(5).select('sponsorName status analysisStatus');
         
+        // Check status distribution
+        const statusCounts = await Sponsor.aggregate([
+            {
+                $group: {
+                    _id: { status: '$status', analysisStatus: '$analysisStatus' },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { count: -1 } }
+        ]);
+        
+        // Check how many have contact info
+        const withContactInfo = await Sponsor.countDocuments({
+            $or: [
+                { sponsorEmail: { $exists: true, $ne: '', $ne: null } },
+                { sponsorApplication: { $exists: true, $ne: '', $ne: null } },
+                { affiliateSignupLink: { $exists: true, $ne: '', $ne: null } },
+                { businessContact: { $exists: true, $ne: '', $ne: null } }
+            ]
+        });
+        
         res.json({
             success: true,
             totalCount: totalCount,
-            sampleSponsors: sampleSponsors
+            sampleSponsors: sampleSponsors,
+            statusDistribution: statusCounts,
+            withContactInfo: withContactInfo,
+            withoutContactInfo: totalCount - withContactInfo
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
