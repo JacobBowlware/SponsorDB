@@ -54,9 +54,9 @@ const sponsorSchema = new mongoose.Schema({
         enum: ['email', 'application', 'both', 'none'],
         default: 'none'
     },
-    analysisStatus: {
+    status: {
         type: String,
-        enum: ['complete', 'manual_review_required', 'pending'],
+        enum: ['pending', 'approved'],
         default: 'pending'
     },
     dateAdded: {
@@ -126,7 +126,7 @@ const validateSponsor = (sponsor) => {
         sponsorApplication: Joi.string().allow(''),
         businessContact: Joi.string().max(500).allow(''),
         contactMethod: Joi.string().valid('email', 'application', 'both', 'none'),
-        analysisStatus: Joi.string().valid('complete', 'manual_review_required', 'pending'),
+        status: Joi.string().valid('pending', 'approved'),
         dateAdded: Joi.date(),
         viewedBy: Joi.array().items(Joi.string()),
         appliedBy: Joi.array().items(Joi.string()),

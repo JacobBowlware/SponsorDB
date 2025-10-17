@@ -41,9 +41,8 @@ interface Sponsor {
     businessContact?: string;
     contactMethod: 'email' | 'application' | 'both' | 'none';
     confidence: number;
-    analysisStatus: 'complete' | 'manual_review_required' | 'pending';
     dateAdded: string;
-    status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
+    status: 'pending' | 'approved';
     // Affiliate program fields
     isAffiliateProgram?: boolean;
     affiliateSignupLink?: string;
@@ -83,6 +82,8 @@ const Admin = () => {
     const [isPerformingIndividualAction, setIsPerformingIndividualAction] = useState(false);
     const [isConsolidating, setIsConsolidating] = useState(false);
     const [consolidationResults, setConsolidationResults] = useState<any>(null);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportResults, setExportResults] = useState<any>(null);
     const [showAllSponsors, setShowAllSponsors] = useState(false);
     
     // Edit modal state
@@ -91,10 +92,10 @@ const Admin = () => {
     // Status filter options
     const STATUS_FILTERS = [
         { key: 'all', label: 'All Sponsors', icon: faDatabase, color: '#6B7280' },
-        { key: 'complete', label: 'Complete', icon: faCheckCircle, color: '#10B981' },
-        { key: 'pending_with_contact', label: 'Pending with Contact', icon: faClock, color: '#F59E0B' },
-        { key: 'pending_without_contact', label: 'Pending without Contact', icon: faTimes, color: '#EF4444' },
-        { key: 'complete_missing_contact', label: 'Complete Missing Contact', icon: faExclamationTriangle, color: '#8B5CF6' }
+        { key: 'approved', label: 'Approved', icon: faCheckCircle, color: '#10B981' },
+        { key: 'pending', label: 'Pending', icon: faClock, color: '#F59E0B' },
+        { key: 'with_contact', label: 'With Contact Info', icon: faEnvelope, color: '#3B82F6' },
+        { key: 'no_contact', label: 'No Contact Info', icon: faTimes, color: '#EF4444' }
     ];
 
     // Fetch dashboard data
@@ -118,7 +119,7 @@ const Admin = () => {
                 sortBy,
                 sortOrder,
                 search: searchTerm,
-                status: statusFilter
+                status: statusFilter === 'all' ? '' : statusFilter
             });
             
             // Fetch data
@@ -133,7 +134,17 @@ const Admin = () => {
                 addedThisWeek: statsRes.data.scrapedThisWeek,
                 lastScraperRun: new Date().toLocaleString()
             });
-            setSponsors(sponsorsRes.data.sponsors);
+            
+            // Apply client-side filtering for contact-based filters
+            let filteredSponsors = sponsorsRes.data.sponsors;
+            
+            if (statusFilter === 'with_contact') {
+                filteredSponsors = filteredSponsors.filter((sponsor: Sponsor) => hasContactInfo(sponsor));
+            } else if (statusFilter === 'no_contact') {
+                filteredSponsors = filteredSponsors.filter((sponsor: Sponsor) => !hasContactInfo(sponsor));
+            }
+            
+            setSponsors(filteredSponsors);
         } catch (err: any) {
             console.error('Error fetching dashboard data:', err);
             setError('Failed to load dashboard data');
@@ -194,6 +205,21 @@ const Admin = () => {
         }
     };
 
+    // Test sponsor count
+    const handleTestCount = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${config.backendUrl}admin/test-sponsor-count`, {
+                headers: { 'x-auth-token': token }
+            });
+
+            console.log('Sponsor count test:', response.data);
+            alert(`Total sponsors in database: ${response.data.totalCount}\nSample: ${JSON.stringify(response.data.sampleSponsors, null, 2)}`);
+        } catch (err: any) {
+            console.error('Error testing sponsor count:', err);
+            setError('Failed to test sponsor count');
+        }
+    };
 
     // Handle bulk actions
     const handleBulkAction = async (action: string) => {
@@ -382,20 +408,28 @@ const Admin = () => {
     // Get status badge info
     const getStatusBadge = (sponsor: Sponsor) => {
         if (sponsor.status === 'approved') {
-            return { text: 'Complete', color: '#28a745', icon: faCheckCircle };
-        } else if (sponsor.status === 'rejected') {
-            return { text: 'Rejected', color: '#dc3545', icon: faTimes };
-        } else if (sponsor.analysisStatus === 'manual_review_required') {
-            return { text: 'Manual Review', color: '#ffc107', icon: faExclamationTriangle };
+            return { text: 'Approved', color: '#28a745', icon: faCheckCircle };
         } else {
             return { text: 'Pending', color: '#6c757d', icon: faClock };
         }
+    };
+
+    // Helper function to check if sponsor has contact info (matches consolidation script logic)
+    const hasContactInfo = (sponsor: Sponsor) => {
+        const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+        const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+        const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
+        const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+        
+        return hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
     };
 
     // Get contact info display
     const getContactDisplay = (sponsor: Sponsor) => {
         const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim();
         const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim();
+        const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim();
+        const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim();
         
         if (hasEmail && hasApplication) {
             return (
@@ -426,6 +460,22 @@ const Admin = () => {
                     <a href={sponsor.sponsorApplication} target="_blank" rel="noopener noreferrer">
                         Application
                     </a>
+                </div>
+            );
+        } else if (hasAffiliateLink) {
+            return (
+                <div className="contact-item">
+                    <FontAwesomeIcon icon={faLink} />
+                    <a href={sponsor.affiliateSignupLink} target="_blank" rel="noopener noreferrer">
+                        Affiliate Program
+                    </a>
+                </div>
+            );
+        } else if (hasBusinessContact) {
+            return (
+                <div className="contact-item">
+                    <FontAwesomeIcon icon={faLink} />
+                    <span>{sponsor.businessContact}</span>
                 </div>
             );
         } else {
@@ -468,6 +518,13 @@ const Admin = () => {
                         >
                             <FontAwesomeIcon icon={isConsolidating ? faSpinner : faDatabase} spin={isConsolidating} />
                             {isConsolidating ? 'Consolidating...' : 'Consolidate Data'}
+                        </button>
+                        <button 
+                            className="btn btn-info"
+                            onClick={handleTestCount}
+                        >
+                            <FontAwesomeIcon icon={faSearch} />
+                            Test Count
                         </button>
                         <button 
                             className="btn btn-primary"
@@ -513,7 +570,7 @@ const Admin = () => {
                             <FontAwesomeIcon icon={faCheckCircle} />
                         </div>
                         <div className="stat-content">
-                            <h3>{sponsors.filter(s => s.contactMethod && s.contactMethod !== 'none').length}</h3>
+                            <h3>{sponsors.filter(s => hasContactInfo(s)).length}</h3>
                             <p>With Contact Info</p>
                         </div>
                     </div>
@@ -523,7 +580,7 @@ const Admin = () => {
                             <FontAwesomeIcon icon={faExclamationTriangle} />
                         </div>
                         <div className="stat-content">
-                            <h3>{sponsors.filter(s => !s.contactMethod || s.contactMethod === 'none').length}</h3>
+                            <h3>{sponsors.filter(s => !hasContactInfo(s)).length}</h3>
                             <p>Need Contact Info</p>
                         </div>
                     </div>
@@ -783,13 +840,13 @@ const Admin = () => {
                                         >
                                             <FontAwesomeIcon icon={faEdit} />
                                         </button>
-                                        {sponsor.status === 'pending' || sponsor.analysisStatus === 'pending' ? (
+                                        {sponsor.status === 'pending' ? (
                                             <>
                                                 <button 
                                                     className="btn btn-sm btn-success"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        console.log('Admin: Approve button clicked for sponsor:', sponsor._id, sponsor.sponsorName, 'Status:', sponsor.status, 'Analysis Status:', sponsor.analysisStatus);
+                                                        console.log('Admin: Approve button clicked for sponsor:', sponsor._id, sponsor.sponsorName, 'Status:', sponsor.status, 'Analysis Status:', sponsor.status);
                                                         handleSponsorAction(sponsor._id, 'approve');
                                                     }}
                                                     disabled={isPerformingIndividualAction}

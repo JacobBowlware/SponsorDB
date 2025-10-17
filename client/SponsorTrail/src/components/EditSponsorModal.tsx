@@ -16,9 +16,8 @@ interface Sponsor {
     businessContact?: string;
     contactMethod: 'email' | 'application' | 'both' | 'none';
     confidence: number;
-    analysisStatus: 'complete' | 'manual_review_required' | 'pending';
     dateAdded: string;
-    status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
+    status: 'pending' | 'approved';
     // Affiliate program fields
     isAffiliateProgram?: boolean;
     affiliateSignupLink?: string;
@@ -229,24 +228,11 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
                             <div className="edit-modal__field">
                                 <label>Status</label>
                                 <select
-                                    value={editedSponsor.status || 'pending'}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, status: e.target.value as 'pending' | 'approved' | 'rejected' | 'reviewed'})}
+                                    value={editedSponsor.status}
+                                    onChange={(e) => setEditedSponsor({...editedSponsor, status: e.target.value as 'pending' | 'approved'})}
                                 >
                                     <option value="pending">Pending</option>
                                     <option value="approved">Approved</option>
-                                    <option value="rejected">Rejected</option>
-                                    <option value="reviewed">Reviewed</option>
-                                </select>
-                            </div>
-                            <div className="edit-modal__field">
-                                <label>Analysis Status</label>
-                                <select
-                                    value={editedSponsor.analysisStatus}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, analysisStatus: e.target.value as 'complete' | 'manual_review_required' | 'pending'})}
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="manual_review_required">Manual Review Required</option>
-                                    <option value="complete">Complete</option>
                                 </select>
                             </div>
                             <div className="edit-modal__field">

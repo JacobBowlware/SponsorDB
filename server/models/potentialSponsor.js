@@ -66,10 +66,10 @@ const potentialSponsorSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    analysisStatus: {
+    status: {
         type: String,
-        enum: ['complete', 'manual_review_required', 'pending'],
-        default: 'complete'
+        enum: ['pending', 'approved'],
+        default: 'pending'
     },
     sponsorshipEvidence: {
         type: String,
@@ -102,7 +102,7 @@ const validatePotentialSponsor = (sponsor) => {
         estimatedSubscribers: Joi.number(),
         subscriberReasoning: Joi.string(),
         enrichmentNotes: Joi.string(),
-        analysisStatus: Joi.string().valid('complete', 'manual_review_required', 'pending'),
+        status: Joi.string().valid('pending', 'approved'),
         sponsorshipEvidence: Joi.string(),
         dateAdded: Joi.date(),
         lastAnalyzed: Joi.date()

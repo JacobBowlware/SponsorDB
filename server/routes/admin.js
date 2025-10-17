@@ -438,38 +438,17 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
             }
         }
         
-        // Apply status filter (simplified)
-        if (status !== 'all') {
-            const hasContactInfoQuery = {
-                $or: [
-                    { sponsorEmail: { $exists: true, $ne: '', $ne: null } },
-                    { sponsorApplication: { $exists: true, $ne: '', $ne: null } },
-                    { affiliateSignupLink: { $exists: true, $ne: '', $ne: null } },
-                    { businessContact: { $exists: true, $ne: '', $ne: null } }
-                ]
-            };
-            const noContactInfoQuery = {
-                $and: [
-                    { $or: [{ sponsorEmail: { $exists: false } }, { sponsorEmail: { $eq: '' } }, { sponsorEmail: { $eq: null } }] },
-                    { $or: [{ sponsorApplication: { $exists: false } }, { sponsorApplication: { $eq: '' } }, { sponsorApplication: { $eq: null } }] },
-                    { $or: [{ affiliateSignupLink: { $exists: false } }, { affiliateSignupLink: { $eq: '' } }, { affiliateSignupLink: { $eq: null } }] },
-                    { $or: [{ businessContact: { $exists: false } }, { businessContact: { $eq: '' } }, { businessContact: { $eq: null } }] }
-                ]
-            };
-
+        // Apply status filter (updated for new status system)
+        if (status !== 'all' && status !== '') {
             switch (status) {
-                case 'complete': // Approved sponsors with contact info
-                    query.$and = [{ status: 'approved' }, hasContactInfoQuery];
+                case 'approved':
+                    query.status = 'approved';
                     break;
-                case 'pending_with_contact': // Pending but has contact info
-                    query.$and = [{ status: 'pending' }, hasContactInfoQuery];
+                case 'pending':
+                    query.status = 'pending';
                     break;
-                case 'pending_without_contact': // Pending and no contact info
-                    query.$and = [{ status: 'pending' }, noContactInfoQuery];
-                    break;
-                case 'complete_missing_contact': // Approved but no contact info (data quality issue)
-                    query.$and = [{ status: 'approved' }, noContactInfoQuery];
-                    break;
+                // Note: 'with_contact' and 'no_contact' filters are handled client-side
+                // since they require complex contact info detection logic
             }
         }
         
@@ -496,7 +475,6 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
             console.log('Sample sponsor statuses:', sponsors.slice(0, 3).map(s => ({ 
                 name: s.sponsorName, 
                 status: s.status, 
-                analysisStatus: s.analysisStatus,
                 hasEmail: !!s.sponsorEmail,
                 hasApplication: !!s.sponsorApplication,
                 hasAffiliateLink: !!s.affiliateSignupLink,
