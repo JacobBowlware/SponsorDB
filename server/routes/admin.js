@@ -402,19 +402,13 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
         
         const skip = (page - 1) * limit;
         
-        // Build query for potential sponsors
-        let potentialQuery = {};
-        let sponsorQuery = {};
+        // Only query the main Sponsor collection (Test > Sponsors in MongoDB)
+        let query = {};
         
         // Apply search filter
         if (search) {
             const searchRegex = { $regex: search, $options: 'i' };
-            potentialQuery.$or = [
-                { sponsorName: searchRegex },
-                { newsletterSponsored: searchRegex },
-                { rootDomain: searchRegex }
-            ];
-            sponsorQuery.$or = [
+            query.$or = [
                 { sponsorName: searchRegex },
                 { newsletterSponsored: searchRegex },
                 { rootDomain: searchRegex }
@@ -425,118 +419,90 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
         if (filter !== 'all') {
             switch (filter) {
                 case 'high':
-                    potentialQuery.confidence = { $gte: 85 };
+                    query.confidence = { $gte: 85 };
                     break;
                 case 'medium':
-                    potentialQuery.confidence = { $gte: 70, $lt: 85 };
+                    query.confidence = { $gte: 70, $lt: 85 };
                     break;
                 case 'low':
-                    potentialQuery.confidence = { $lt: 70 };
+                    query.confidence = { $lt: 70 };
                     break;
                 case 'has-contact':
-                    potentialQuery.businessContact = { $exists: true, $ne: '' };
-                    sponsorQuery.businessContact = { $exists: true, $ne: '' };
+                    query.$or = [
+                        { sponsorEmail: { $exists: true, $ne: '', $ne: null } },
+                        { sponsorApplication: { $exists: true, $ne: '', $ne: null } },
+                        { affiliateSignupLink: { $exists: true, $ne: '', $ne: null } },
+                        { businessContact: { $exists: true, $ne: '', $ne: null } }
+                    ];
                     break;
             }
         }
         
-        // Apply status filter
+        // Apply status filter (simplified)
         if (status !== 'all') {
+            const hasContactInfoQuery = {
+                $or: [
+                    { sponsorEmail: { $exists: true, $ne: '', $ne: null } },
+                    { sponsorApplication: { $exists: true, $ne: '', $ne: null } },
+                    { affiliateSignupLink: { $exists: true, $ne: '', $ne: null } },
+                    { businessContact: { $exists: true, $ne: '', $ne: null } }
+                ]
+            };
+            const noContactInfoQuery = {
+                $and: [
+                    { $or: [{ sponsorEmail: { $exists: false } }, { sponsorEmail: { $eq: '' } }, { sponsorEmail: { $eq: null } }] },
+                    { $or: [{ sponsorApplication: { $exists: false } }, { sponsorApplication: { $eq: '' } }, { sponsorApplication: { $eq: null } }] },
+                    { $or: [{ affiliateSignupLink: { $exists: false } }, { affiliateSignupLink: { $eq: '' } }, { affiliateSignupLink: { $eq: null } }] },
+                    { $or: [{ businessContact: { $exists: false } }, { businessContact: { $eq: '' } }, { businessContact: { $eq: null } }] }
+                ]
+            };
+
             switch (status) {
-                case 'pending':
-                    // Sponsors without contact info
-                    potentialQuery.analysisStatus = 'pending';
-                    sponsorQuery.analysisStatus = 'pending';
+                case 'complete': // Approved sponsors with contact info
+                    query.$and = [{ status: 'approved' }, hasContactInfoQuery];
                     break;
-                case 'complete':
-                    // Sponsors with contact info
-                    potentialQuery.analysisStatus = 'complete';
-                    sponsorQuery.analysisStatus = 'complete';
+                case 'pending_with_contact': // Pending but has contact info
+                    query.$and = [{ status: 'pending' }, hasContactInfoQuery];
                     break;
-                case 'manual_review_required':
-                    // Sponsors requiring manual review
-                    potentialQuery.analysisStatus = 'manual_review_required';
-                    sponsorQuery.analysisStatus = 'manual_review_required';
+                case 'pending_without_contact': // Pending and no contact info
+                    query.$and = [{ status: 'pending' }, noContactInfoQuery];
+                    break;
+                case 'complete_missing_contact': // Approved but no contact info (data quality issue)
+                    query.$and = [{ status: 'approved' }, noContactInfoQuery];
                     break;
             }
         }
         
         // Apply affiliate program filter
         if (affiliateOnly === 'true') {
-            // Only show affiliate programs
-            potentialQuery.isAffiliateProgram = true;
-            sponsorQuery.isAffiliateProgram = true;
+            query.isAffiliateProgram = true;
         }
-        // Note: No else clause - by default, show ALL sponsors (both affiliate and non-affiliate)
         
         // Build sort object
         const sort = {};
         sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
         
-        let sponsors = [];
-        let total = 0;
+        // Query only the main Sponsor collection
+        const sponsors = await Sponsor.find(query)
+            .sort(sort)
+            .skip(skip)
+            .limit(parseInt(limit));
         
-        if (status === 'all' || status === 'pending' || status === 'complete' || status === 'manual_review_required') {
-            // Get potential sponsors
-            const potentialSponsors = await PotentialSponsor.find(potentialQuery)
-                .sort(sort);
-            
-            const potentialWithStatus = potentialSponsors.map(sponsor => ({
-                ...sponsor.toObject(),
-                status: 'pending',  // Potential sponsors are always pending
-                analysisStatus: sponsor.analysisStatus || 'pending'
-            }));
-            
-            sponsors = [...sponsors, ...potentialWithStatus];
-            total += await PotentialSponsor.countDocuments(potentialQuery);
+        const total = await Sponsor.countDocuments(query);
+        
+        // Debug logging
+        console.log(`Admin query for status '${status}': Found ${sponsors.length} sponsors`);
+        if (sponsors.length > 0) {
+            console.log('Sample sponsor statuses:', sponsors.slice(0, 3).map(s => ({ 
+                name: s.sponsorName, 
+                status: s.status, 
+                analysisStatus: s.analysisStatus,
+                hasEmail: !!s.sponsorEmail,
+                hasApplication: !!s.sponsorApplication,
+                hasAffiliateLink: !!s.affiliateSignupLink,
+                hasBusinessContact: !!s.businessContact
+            })));
         }
-        
-        if (status === 'all' || status === 'complete' || status === 'pending' || status === 'manual_review_required') {
-            // Get approved sponsors
-            const approvedSponsors = await Sponsor.find(sponsorQuery)
-                .sort(sort);
-            
-            const approvedWithStatus = approvedSponsors.map(sponsor => ({
-                ...sponsor.toObject(),
-                status: sponsor.status || 'approved',  // Use the actual status field, default to 'approved'
-                analysisStatus: sponsor.analysisStatus || 'complete'
-            }));
-            
-            sponsors = [...sponsors, ...approvedWithStatus];
-            total += await Sponsor.countDocuments(sponsorQuery);
-        }
-        
-        // Sort combined results properly
-        sponsors.sort((a, b) => {
-            let aVal = a[sortBy];
-            let bVal = b[sortBy];
-            
-            // Handle different data types
-            if (sortBy === 'dateAdded') {
-                aVal = new Date(aVal);
-                bVal = new Date(bVal);
-            } else if (sortBy === 'subscriberCount') {
-                aVal = aVal || 0;
-                bVal = bVal || 0;
-            } else if (typeof aVal === 'string' && typeof bVal === 'string') {
-                aVal = aVal.toLowerCase();
-                bVal = bVal.toLowerCase();
-            }
-            
-            if (aVal === null || aVal === undefined) return 1;
-            if (bVal === null || bVal === undefined) return -1;
-            
-            if (sortOrder === 'asc') {
-                return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-            } else {
-                return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
-            }
-        });
-        
-        // Apply pagination after sorting
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + parseInt(limit);
-        sponsors = sponsors.slice(startIndex, endIndex);
         
         res.status(200).json({
             sponsors,
@@ -1285,6 +1251,464 @@ router.delete('/denied-domains/:domainId', [auth, admin], async (req, res) => {
     } catch (error) {
         console.error('Error removing denied domain:', error);
         res.status(500).json({ error: 'Error removing denied domain' });
+    }
+});
+
+// Fix sponsor statuses based on contact information
+router.post('/fix-sponsor-statuses', [auth, admin], async (req, res) => {
+    try {
+        console.log('🔧 Starting sponsor status fix...');
+        
+        // Helper function to check if sponsor has contact info
+        const hasContactInfo = (sponsor) => {
+            const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+            const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+            const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
+            const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+            
+            return hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
+        };
+
+        // Helper function to determine correct status
+        const determineStatus = (sponsor) => {
+            const hasContact = hasContactInfo(sponsor);
+            
+            // Handle old analysisStatus field - convert to new status system
+            let isApproved = false;
+            if (sponsor.status === 'approved') {
+                isApproved = true;
+            } else if (sponsor.analysisStatus === 'complete') {
+                isApproved = true;
+            } else if (sponsor.analysisStatus === 'manual_review_required') {
+                // Convert manual_review_required to pending
+                isApproved = false;
+            } else {
+                isApproved = false;
+            }
+            
+            if (isApproved) {
+                return { status: 'approved' };
+            } else {
+                return { status: 'pending' };
+            }
+        };
+
+        const results = {
+            potentialSponsors: { processed: 0, updated: 0, errors: 0 },
+            sponsors: { processed: 0, updated: 0, errors: 0 },
+            details: []
+        };
+
+        // Fix PotentialSponsor collection
+        console.log('📋 Processing PotentialSponsor collection...');
+        const potentialSponsors = await PotentialSponsor.find({});
+        results.potentialSponsors.processed = potentialSponsors.length;
+        
+        for (const sponsor of potentialSponsors) {
+            try {
+                const newStatus = determineStatus(sponsor);
+                
+                // Only update if status needs to change
+                if (sponsor.status !== newStatus.status) {
+                    await PotentialSponsor.updateOne(
+                        { _id: sponsor._id },
+                        { 
+                            $set: { 
+                                status: newStatus.status
+                            },
+                            $unset: { analysisStatus: 1 } // Remove old analysisStatus field
+                        }
+                    );
+                    results.potentialSponsors.updated++;
+                    results.details.push(`Updated potential sponsor: ${sponsor.sponsorName} -> ${newStatus.status}`);
+                }
+            } catch (error) {
+                results.potentialSponsors.errors++;
+                results.details.push(`Error updating potential sponsor ${sponsor.sponsorName}: ${error.message}`);
+            }
+        }
+        
+        // Fix Sponsor collection
+        console.log('📋 Processing Sponsor collection...');
+        const sponsors = await Sponsor.find({});
+        results.sponsors.processed = sponsors.length;
+        
+        for (const sponsor of sponsors) {
+            try {
+                const newStatus = determineStatus(sponsor);
+                
+                // Only update if status needs to change
+                if (sponsor.status !== newStatus.status) {
+                    await Sponsor.updateOne(
+                        { _id: sponsor._id },
+                        { 
+                            $set: { 
+                                status: newStatus.status
+                            },
+                            $unset: { analysisStatus: 1 } // Remove old analysisStatus field
+                        }
+                    );
+                    results.sponsors.updated++;
+                    results.details.push(`Updated sponsor: ${sponsor.sponsorName} -> ${newStatus.status}`);
+                }
+            } catch (error) {
+                results.sponsors.errors++;
+                results.details.push(`Error updating sponsor ${sponsor.sponsorName}: ${error.message}`);
+            }
+        }
+        
+        console.log('🎉 Status fix completed!');
+        console.log(`📊 PotentialSponsor: ${results.potentialSponsors.updated} updated`);
+        console.log(`📊 Sponsor: ${results.sponsors.updated} updated`);
+        console.log(`📊 Total: ${results.potentialSponsors.updated + results.sponsors.updated} sponsors updated`);
+        
+        res.json({
+            success: true,
+            message: 'Sponsor statuses fixed successfully',
+            results: {
+                totalUpdated: results.potentialSponsors.updated + results.sponsors.updated,
+                potentialSponsors: results.potentialSponsors,
+                sponsors: results.sponsors,
+                details: results.details.slice(0, 20) // Limit details to first 20 for response size
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fixing sponsor statuses:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Error fixing sponsor statuses',
+            message: error.message 
+        });
+    }
+});
+
+// Consolidate all sponsor data into consistent model
+router.post('/consolidate-sponsors', [auth, admin], async (req, res) => {
+    try {
+        console.log('🔄 Starting comprehensive sponsor consolidation...');
+        
+        // Helper function to check if sponsor has contact info
+        const hasContactInfo = (sponsor) => {
+            const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+            const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+            const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
+            const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+            
+            return hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
+        };
+
+        // Helper function to determine if sponsor is affiliate
+        const isAffiliateSponsor = (sponsor) => {
+            const hasAffiliateTag = sponsor.tags && (
+                sponsor.tags.some(tag => tag.toLowerCase().includes('affiliate')) ||
+                (typeof sponsor.tags === 'string' && sponsor.tags.toLowerCase().includes('affiliate'))
+            );
+            
+            const hasAffiliateContact = sponsor.businessContact && 
+                (sponsor.businessContact.includes('affiliate') || 
+                 sponsor.businessContact.includes('partner') ||
+                 sponsor.businessContact.includes('ref.') ||
+                 sponsor.businessContact.includes('utm_'));
+            
+            return hasAffiliateTag || hasAffiliateContact;
+        };
+
+        // Helper function to determine correct status
+        const determineStatus = (sponsor) => {
+            const hasContact = hasContactInfo(sponsor);
+            
+            // Handle old analysisStatus field - convert to new status system
+            let isApproved = false;
+            if (sponsor.status === 'approved') {
+                isApproved = true;
+            } else if (sponsor.analysisStatus === 'complete') {
+                isApproved = true;
+            } else if (sponsor.analysisStatus === 'manual_review_required') {
+                // Convert manual_review_required to pending
+                isApproved = false;
+            } else {
+                isApproved = false;
+            }
+            
+            if (isApproved) {
+                return { status: 'approved' };
+            } else {
+                return { status: 'pending' };
+            }
+        };
+
+        // Helper function to extract affiliate info
+        const extractAffiliateInfo = (sponsor) => {
+            if (!sponsor.businessContact) return null;
+            
+            const businessContact = sponsor.businessContact.trim();
+            if (businessContact === '') return null;
+            
+            return {
+                isAffiliateProgram: true,
+                affiliateSignupLink: businessContact,
+                commissionInfo: 'Commission rates, terms, etc.'
+            };
+        };
+
+        // Helper function to normalize tags
+        const normalizeTags = (tags) => {
+            if (!tags) return [];
+            
+            if (Array.isArray(tags)) {
+                return tags.filter(tag => tag && tag.trim() !== '');
+            }
+            
+            if (typeof tags === 'string') {
+                return tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+            }
+            
+            return [];
+        };
+
+        const results = {
+            potentialSponsors: { processed: 0, consolidated: 0, errors: 0 },
+            sponsors: { processed: 0, consolidated: 0, errors: 0 },
+            details: []
+        };
+
+        // Process ONLY the main Sponsors collection (Test > Sponsors in MongoDB)
+        console.log('📋 Processing Sponsors collection...');
+        const sponsors = await Sponsor.find({});
+        results.sponsors.processed = sponsors.length;
+        results.potentialSponsors.processed = 0; // Not using this collection
+        
+        console.log(`Found ${sponsors.length} sponsors in the main collection`);
+        console.log('First few sponsor names:', sponsors.slice(0, 5).map(s => s.sponsorName));
+        console.log('Sample sponsor status:', sponsors.slice(0, 3).map(s => ({ name: s.sponsorName, status: s.status, analysisStatus: s.analysisStatus })));
+        
+        console.log(`Starting to process ${sponsors.length} sponsors...`);
+        
+        for (let i = 0; i < sponsors.length; i++) {
+            const sponsor = sponsors[i];
+            try {
+                console.log(`Processing ${i + 1}/${sponsors.length}: ${sponsor.sponsorName}`);
+                
+                const isAffiliate = isAffiliateSponsor(sponsor);
+                const affiliateInfo = isAffiliate ? extractAffiliateInfo(sponsor) : null;
+                const newStatus = determineStatus(sponsor);
+                const normalizedTags = normalizeTags(sponsor.tags);
+                
+                const consolidatedData = {
+                    // Basic info
+                    sponsorName: sponsor.sponsorName || '',
+                    sponsorLink: sponsor.sponsorLink || '',
+                    rootDomain: sponsor.rootDomain || '',
+                    newsletterSponsored: sponsor.newsletterSponsored || '',
+                    subscriberCount: sponsor.subscriberCount || 0,
+                    dateAdded: sponsor.dateAdded || new Date().toISOString(),
+                    
+                    // Contact info
+                    sponsorEmail: sponsor.sponsorEmail || '',
+                    sponsorApplication: sponsor.sponsorApplication || '',
+                    contactMethod: sponsor.contactMethod || 'none',
+                    businessContact: sponsor.businessContact || '',
+                    
+                    // Affiliate info - ensure boolean values
+                    isAffiliateProgram: Boolean(isAffiliate),
+                    affiliateSignupLink: affiliateInfo?.affiliateSignupLink || '',
+                    commissionInfo: affiliateInfo?.commissionInfo || '',
+                    
+                    // Status and classification
+                    status: newStatus.status,
+                    confidence: sponsor.confidence || 0,
+                    tags: normalizedTags,
+                    
+                    // User interaction data (preserve existing)
+                    userViewDates: sponsor.userViewDates || [],
+                    viewedBy: sponsor.viewedBy || [],
+                    appliedBy: sponsor.appliedBy || [],
+                    userApplyDates: sponsor.userApplyDates || [],
+                    
+                    // Metadata
+                    consolidatedAt: new Date()
+                };
+                
+                await Sponsor.updateOne(
+                    { _id: sponsor._id },
+                    { 
+                        $set: consolidatedData,
+                        $unset: { analysisStatus: 1 } // Remove old analysisStatus field
+                    }
+                );
+                
+                results.sponsors.consolidated++;
+                results.details.push(`Consolidated sponsor: ${sponsor.sponsorName} -> ${consolidatedData.status} (Affiliate: ${consolidatedData.isAffiliateProgram})`);
+                
+                // Log every 50 sponsors
+                if ((i + 1) % 50 === 0) {
+                    console.log(`Processed ${i + 1}/${sponsors.length} sponsors so far...`);
+                }
+            } catch (error) {
+                results.sponsors.errors++;
+                results.details.push(`Error consolidating sponsor ${sponsor.sponsorName}: ${error.message}`);
+                console.error(`Error processing ${sponsor.sponsorName}:`, error);
+            }
+        }
+        
+        console.log('🎉 Consolidation completed!');
+        console.log(`📊 PotentialSponsor: ${results.potentialSponsors.consolidated} consolidated`);
+        console.log(`📊 Sponsor: ${results.sponsors.consolidated} consolidated`);
+        console.log(`📊 Total: ${results.potentialSponsors.consolidated + results.sponsors.consolidated} sponsors consolidated`);
+        
+        res.json({
+            success: true,
+            message: 'Sponsor data consolidated successfully',
+            results: {
+                totalConsolidated: results.potentialSponsors.consolidated + results.sponsors.consolidated,
+                potentialSponsors: results.potentialSponsors,
+                sponsors: results.sponsors,
+                details: results.details.slice(0, 30) // Limit details for response size
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error consolidating sponsors:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Error consolidating sponsor data',
+            message: error.message 
+        });
+    }
+});
+
+// Simple test endpoint to check sponsor count
+router.get('/test-sponsor-count', [auth, admin], async (req, res) => {
+    try {
+        const totalCount = await Sponsor.countDocuments({});
+        const sampleSponsors = await Sponsor.find({}).limit(5).select('sponsorName status analysisStatus');
+        
+        res.json({
+            success: true,
+            totalCount: totalCount,
+            sampleSponsors: sampleSponsors
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Export all sponsor data for debugging
+router.get('/export-sponsor-data', [auth, admin], async (req, res) => {
+    try {
+        console.log('📊 Exporting all sponsor data...');
+        
+        // Get all sponsors from both collections
+        const sponsors = await Sponsor.find({});
+        const potentialSponsors = await PotentialSponsor.find({});
+        
+        console.log(`Found ${sponsors.length} sponsors in Sponsor collection`);
+        console.log(`Found ${potentialSponsors.length} sponsors in PotentialSponsor collection`);
+        console.log(`Total: ${sponsors.length + potentialSponsors.length} sponsors`);
+        
+        // Create export data
+        const exportData = {
+            timestamp: new Date().toISOString(),
+            summary: {
+                totalSponsors: sponsors.length + potentialSponsors.length,
+                approvedSponsors: sponsors.length,
+                potentialSponsors: potentialSponsors.length
+            },
+            sponsors: sponsors.map(sponsor => ({
+                collection: 'Sponsor',
+                _id: sponsor._id,
+                sponsorName: sponsor.sponsorName,
+                status: sponsor.status,
+                analysisStatus: sponsor.analysisStatus,
+                sponsorEmail: sponsor.sponsorEmail,
+                sponsorApplication: sponsor.sponsorApplication,
+                businessContact: sponsor.businessContact,
+                affiliateSignupLink: sponsor.affiliateSignupLink,
+                isAffiliateProgram: sponsor.isAffiliateProgram,
+                contactMethod: sponsor.contactMethod,
+                tags: sponsor.tags,
+                newsletterSponsored: sponsor.newsletterSponsored,
+                subscriberCount: sponsor.subscriberCount,
+                dateAdded: sponsor.dateAdded,
+                confidence: sponsor.confidence
+            })),
+            potentialSponsors: potentialSponsors.map(sponsor => ({
+                collection: 'PotentialSponsor',
+                _id: sponsor._id,
+                sponsorName: sponsor.sponsorName,
+                status: sponsor.status,
+                analysisStatus: sponsor.analysisStatus,
+                sponsorEmail: sponsor.sponsorEmail,
+                sponsorApplication: sponsor.sponsorApplication,
+                businessContact: sponsor.businessContact,
+                affiliateSignupLink: sponsor.affiliateSignupLink,
+                isAffiliateProgram: sponsor.isAffiliateProgram,
+                contactMethod: sponsor.contactMethod,
+                tags: sponsor.tags,
+                newsletterSponsored: sponsor.newsletterSponsored,
+                subscriberCount: sponsor.subscriberCount,
+                dateAdded: sponsor.dateAdded,
+                confidence: sponsor.confidence
+            }))
+        };
+        
+        // Analyze status distribution
+        const statusCounts = {};
+        [...sponsors, ...potentialSponsors].forEach(sponsor => {
+            const status = sponsor.status || 'missing_status';
+            const analysisStatus = sponsor.analysisStatus || 'missing_analysis';
+            const key = `${status}/${analysisStatus}`;
+            statusCounts[key] = (statusCounts[key] || 0) + 1;
+        });
+        
+        // Analyze contact info
+        let withContactInfo = 0;
+        let withoutContactInfo = 0;
+        
+        [...sponsors, ...potentialSponsors].forEach(sponsor => {
+            const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+            const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+            const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
+            const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+            
+            if (hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact) {
+                withContactInfo++;
+            } else {
+                withoutContactInfo++;
+            }
+        });
+        
+        // Analyze affiliate programs
+        let affiliatePrograms = 0;
+        [...sponsors, ...potentialSponsors].forEach(sponsor => {
+            if (sponsor.isAffiliateProgram) {
+                affiliatePrograms++;
+            }
+        });
+        
+        const analysis = {
+            statusDistribution: statusCounts,
+            contactInfo: {
+                withContactInfo,
+                withoutContactInfo
+            },
+            affiliatePrograms
+        };
+        
+        res.json({
+            success: true,
+            data: exportData,
+            analysis: analysis
+        });
+        
+    } catch (error) {
+        console.error('❌ Error exporting sponsor data:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Error exporting sponsor data',
+            message: error.message 
+        });
     }
 });
 
