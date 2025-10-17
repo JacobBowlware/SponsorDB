@@ -1162,6 +1162,15 @@ router.post('/deny-domain', [auth, admin], async (req, res) => {
             return res.status(400).json({ error: 'Root domain is required' });
         }
         
+        // Check if domain is already denied
+        const existingDeniedDomain = await DeniedDomain.findOne({ rootDomain: rootDomain.toLowerCase() });
+        if (existingDeniedDomain) {
+            return res.status(400).json({ 
+                error: 'Domain is already in the denied list',
+                deniedDomain: existingDeniedDomain
+            });
+        }
+        
         // Add to denied domains list
         const deniedDomain = new DeniedDomain({
             rootDomain: rootDomain.toLowerCase(),
