@@ -1597,4 +1597,79 @@
     .affiliate-toggle-info {
         margin-left: 0;
     }
+}
+
+/* Status Filter Styles */
+.status-filters-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.status-filters-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--var-color-text);
+    border-bottom: 2px solid var(--var-color-accent);
+    padding-bottom: 0.5rem;
+}
+
+.status-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.status-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.status-filter-btn:hover {
+    border-color: var(--status-color);
+    background: rgba(var(--status-color), 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-filter-btn.active {
+    border-color: var(--status-color);
+    background: var(--status-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(var(--status-color), 0.3);
+}
+
+.status-filter-btn.active svg {
+    color: white;
+}
+
+.status-filter-btn svg {
+    color: var(--status-color);
+    font-size: 1rem;
+}
+
+/* Mobile responsiveness for status filters */
+@media (max-width: 768px) {
+    .status-filters-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .status-filter-btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+    }
 } 

@@ -21,6 +21,7 @@ interface Sponsor {
     sponsorApplication?: string;
     contactMethod?: 'email' | 'application' | 'both' | 'none';
     analysisStatus?: 'complete' | 'manual_review_required' | 'pending';
+    status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
     dateAdded: string;
     isViewed?: boolean;
     isApplied?: boolean;
@@ -52,6 +53,7 @@ interface PaidSponsorTableProps {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     showAffiliatePrograms?: boolean;
+    statusFilter?: string;
     user?: {
         email: string;
         newsletterInfo?: {
@@ -225,7 +227,7 @@ const SAMPLE_SPONSORS: Sponsor[] = [
     }
 ];
 
-const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateAdded', sortOrder = 'desc', showAffiliatePrograms = false, user }) => {
+const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateAdded', sortOrder = 'desc', showAffiliatePrograms = false, statusFilter = 'all', user }) => {
     const navigate = useNavigate();
     const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
     const [displayedSponsors, setDisplayedSponsors] = useState<Sponsor[]>([]);
@@ -310,21 +312,56 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         fetchAllSponsors();
     }, [showAffiliatePrograms]); // Refetch when affiliate toggle changes
 
+    // Helper function to determine sponsor status
+    const getSponsorStatus = (sponsor: Sponsor) => {
+        const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+        const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+        const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
+        const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+        const hasContactInfo = hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
+        
+        const isApproved = sponsor.status === 'approved' || sponsor.analysisStatus === 'complete';
+        
+        if (isApproved && hasContactInfo) {
+            return 'complete';
+        } else if (!isApproved && hasContactInfo) {
+            return 'pending_with_contact';
+        } else if (!isApproved && !hasContactInfo) {
+            return 'pending_without_contact';
+        } else if (isApproved && !hasContactInfo) {
+            return 'complete_missing_contact';
+        }
+        
+        return 'pending_without_contact'; // Default fallback
+    };
+
     const filteredSponsors = useMemo(() => {
         let filtered = allSponsors;
         
+        // Apply status filter first
+        if (statusFilter && statusFilter !== 'all') {
+            filtered = filtered.filter(sponsor => {
+                const sponsorStatus = getSponsorStatus(sponsor);
+                return sponsorStatus === statusFilter;
+            });
+        }
+        
         // Filter out sponsors without contact info (only show sponsors with email or application)
-        filtered = filtered.filter(sponsor => {
-            // Check new contact fields first
-            const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
-            const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
-            
-            // Also check the legacy businessContact field
-            const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
-            
-            // Only show sponsors that have at least one contact method
-            return hasEmail || hasApplication || hasBusinessContact;
-        });
+        // This is now conditional based on status filter
+        if (statusFilter === 'all' || statusFilter === 'complete' || statusFilter === 'pending_with_contact') {
+            filtered = filtered.filter(sponsor => {
+                // Check new contact fields first
+                const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
+                const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
+                const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
+                
+                // Also check the legacy businessContact field
+                const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
+                
+                // Only show sponsors that have at least one contact method
+                return hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
+            });
+        }
         
         // Apply affiliate filter if showAffiliatePrograms is true
         if (showAffiliatePrograms) {
@@ -372,7 +409,7 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         }
         
         return filtered;
-    }, [allSponsors, activeFilter, searchQuery, showAffiliatePrograms]);
+    }, [allSponsors, activeFilter, searchQuery, showAffiliatePrograms, statusFilter]);
 
     const sortedSponsors = [...filteredSponsors].sort((a, b) => {
         if (sortBy === 'subscriberCount') {

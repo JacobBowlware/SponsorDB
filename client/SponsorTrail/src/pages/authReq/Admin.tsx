@@ -19,7 +19,9 @@ import {
     faTrash,
     faCheck,
     faTimes as faTimesIcon,
-    faEdit
+    faEdit,
+    faList,
+    faDatabase
 } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import config from '../../config';
@@ -79,11 +81,21 @@ const Admin = () => {
     const [isRunningScraper, setIsRunningScraper] = useState(false);
     const [isPerformingBulkAction, setIsPerformingBulkAction] = useState(false);
     const [isPerformingIndividualAction, setIsPerformingIndividualAction] = useState(false);
-    const [isRunningMigration, setIsRunningMigration] = useState(false);
-    const [migrationResults, setMigrationResults] = useState<any>(null);
+    const [isConsolidating, setIsConsolidating] = useState(false);
+    const [consolidationResults, setConsolidationResults] = useState<any>(null);
+    const [showAllSponsors, setShowAllSponsors] = useState(false);
     
     // Edit modal state
     const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
+
+    // Status filter options
+    const STATUS_FILTERS = [
+        { key: 'all', label: 'All Sponsors', icon: faDatabase, color: '#6B7280' },
+        { key: 'complete', label: 'Complete', icon: faCheckCircle, color: '#10B981' },
+        { key: 'pending_with_contact', label: 'Pending with Contact', icon: faClock, color: '#F59E0B' },
+        { key: 'pending_without_contact', label: 'Pending without Contact', icon: faTimes, color: '#EF4444' },
+        { key: 'complete_missing_contact', label: 'Complete Missing Contact', icon: faExclamationTriangle, color: '#8B5CF6' }
+    ];
 
     // Fetch dashboard data
     const fetchData = useCallback(async () => {
@@ -101,8 +113,8 @@ const Admin = () => {
             
             // Build query parameters
             const queryParams = new URLSearchParams({
-                page: currentPage.toString(),
-                limit: '50',
+                page: showAllSponsors ? '1' : currentPage.toString(),
+                limit: showAllSponsors ? '1000' : '200',
                 sortBy,
                 sortOrder,
                 search: searchTerm,
@@ -128,7 +140,7 @@ const Admin = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, sortBy, sortOrder, searchTerm, statusFilter]);
+    }, [currentPage, sortBy, sortOrder, searchTerm, statusFilter, showAllSponsors]);
 
     // Initial load
     useEffect(() => {
@@ -157,28 +169,28 @@ const Admin = () => {
         }
     };
 
-    // Run migration
-    const handleRunMigration = async () => {
+    // Consolidate sponsor data
+    const handleConsolidate = async () => {
         try {
-            setIsRunningMigration(true);
+            setIsConsolidating(true);
             setError(null);
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${config.backendUrl}admin/migrate-affiliate-sponsors`, {}, {
+            const response = await axios.post(`${config.backendUrl}admin/consolidate-sponsors`, {}, {
                 headers: { 'x-auth-token': token }
             });
             
-            setMigrationResults(response.data.results);
-            console.log('Affiliate migration completed:', response.data);
+            setConsolidationResults(response.data.results);
+            console.log('Consolidation completed:', response.data);
             
-            // Refresh data after migration
+            // Refresh data after consolidation
             setTimeout(() => {
                 fetchData();
             }, 1000);
         } catch (err: any) {
-            console.error('Error running affiliate migration:', err);
-            setError('Failed to run affiliate migration');
+            console.error('Error consolidating sponsors:', err);
+            setError('Failed to npm run sponsor data');
         } finally {
-            setIsRunningMigration(false);
+            setIsConsolidating(false);
         }
     };
 
@@ -449,16 +461,13 @@ const Admin = () => {
                         <p className="admin-subtitle">Manage sponsors, review pending entries, and monitor system activity</p>
                     </div>
                     <div className="admin-actions">
-                        <h1>
-                            THIS BUTTON IS CHANGED?
-                        </h1>
                         <button 
-                            className="btn btn-warning"
-                            onClick={handleRunMigration}
-                            disabled={isRunningMigration}
+                            className="btn btn-success"
+                            onClick={handleConsolidate}
+                            disabled={isConsolidating}
                         >
-                            <FontAwesomeIcon icon={isRunningMigration ? faSpinner : faLink} spin={isRunningMigration} />
-                            {isRunningMigration ? 'Migrating...' : 'Migrate Affiliates'}
+                            <FontAwesomeIcon icon={isConsolidating ? faSpinner : faDatabase} spin={isConsolidating} />
+                            {isConsolidating ? 'Consolidating...' : 'Consolidate Data'}
                         </button>
                         <button 
                             className="btn btn-primary"
@@ -467,6 +476,13 @@ const Admin = () => {
                         >
                             <FontAwesomeIcon icon={isRunningScraper ? faSpinner : faRobot} spin={isRunningScraper} />
                             {isRunningScraper ? 'Running...' : 'Run Scraper'}
+                        </button>
+                        <button 
+                            className={`btn ${showAllSponsors ? 'btn-success' : 'btn-secondary'}`}
+                            onClick={() => setShowAllSponsors(!showAllSponsors)}
+                        >
+                            <FontAwesomeIcon icon={faList} />
+                            {showAllSponsors ? 'Show Paginated' : 'Show All Sponsors'}
                         </button>
                         <button 
                             className="btn btn-secondary"
@@ -563,16 +579,20 @@ const Admin = () => {
                 </div>
                 
                 <div className="filter-group">
-                    <label>Status</label>
-                    <select 
-                        value={statusFilter} 
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                        <option value="all">All Statuses</option>
-                        <option value="pending">Need Contact Info</option>
-                        <option value="complete">With Contact Info</option>
-                        <option value="manual_review_required">Manual Review Required</option>
-                    </select>
+                    <label>Status Filter</label>
+                    <div className="status-filter-buttons">
+                        {STATUS_FILTERS.map((status) => (
+                            <button
+                                key={status.key}
+                                className={`status-filter-btn ${statusFilter === status.key ? 'active' : ''}`}
+                                onClick={() => setStatusFilter(status.key)}
+                                style={{ '--status-color': status.color } as React.CSSProperties}
+                            >
+                                <FontAwesomeIcon icon={status.icon} />
+                                <span>{status.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 
                 <div className="filter-group">
@@ -818,33 +838,31 @@ const Admin = () => {
                 )}
             </div>
 
-            {/* Migration Results */}
-            {migrationResults && (
+            {/* Consolidation Results */}
+            {consolidationResults && (
                 <div className="migration-results">
-                    <h3>Affiliate Migration Results</h3>
+                    <h3>Data Consolidation Results</h3>
                     <div className="migration-stats">
                         <div className="migration-stat">
-                            <strong>Total Processed:</strong> {migrationResults.totalProcessed} sponsors
+                            <strong>Total Consolidated:</strong> {consolidationResults.totalConsolidated} sponsors
                         </div>
                         <div className="migration-stat">
-                            <strong>Successfully Migrated:</strong> {migrationResults.migratedCount} sponsors
+                            <strong>Potential Sponsors:</strong> {consolidationResults.potentialSponsors.consolidated} consolidated
                         </div>
                         <div className="migration-stat">
-                            <strong>Skipped:</strong> {migrationResults.skippedCount} sponsors
+                            <strong>Approved Sponsors:</strong> {consolidationResults.sponsors.consolidated} consolidated
                         </div>
                         <div className="migration-stat">
-                            <strong>Errors:</strong> {migrationResults.errors} errors
+                            <strong>Errors:</strong> {consolidationResults.potentialSponsors.errors + consolidationResults.sponsors.errors} errors
                         </div>
                     </div>
-                    {migrationResults.details && migrationResults.details.length > 0 && (
+                    {consolidationResults.details && consolidationResults.details.length > 0 && (
                         <div style={{ marginTop: '16px' }}>
-                            <h4>Migration Details:</h4>
+                            <h4>Consolidation Details:</h4>
                             <div style={{ maxHeight: '200px', overflowY: 'auto', fontSize: '12px' }}>
-                                {migrationResults.details.map((detail: any, index: number) => (
-                                    <div key={index} style={{ marginBottom: '4px', padding: '4px', background: '#f0f9ff', borderRadius: '4px' }}>
-                                        <strong>{detail.sponsor}:</strong> {detail.action}
-                                        {detail.value && <span> - {detail.value}</span>}
-                                        {detail.error && <span style={{ color: '#dc2626' }}> - Error: {detail.error}</span>}
+                                {consolidationResults.details.map((detail: any, index: number) => (
+                                    <div key={index} style={{ marginBottom: '4px', padding: '4px', background: '#f0fdf4', borderRadius: '4px' }}>
+                                        {detail}
                                     </div>
                                 ))}
                             </div>
@@ -852,13 +870,12 @@ const Admin = () => {
                     )}
                     <button 
                         className="btn btn-sm btn-secondary"
-                        onClick={() => setMigrationResults(null)}
+                        onClick={() => setConsolidationResults(null)}
                     >
                         Dismiss
                     </button>
                 </div>
             )}
-
 
             {/* Error Display */}
             {error && (

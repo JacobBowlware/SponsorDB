@@ -93,6 +93,15 @@ const FILTER_CATEGORIES = [
     { key: 'lifestyle', label: 'Lifestyle', icon: faGlobe, color: '#EC4899' }
 ];
 
+// Status filter options
+const STATUS_FILTERS = [
+    { key: 'all', label: 'All Sponsors', icon: faDatabase, color: '#6B7280' },
+    { key: 'complete', label: 'Complete', icon: faCheckCircle, color: '#10B981' },
+    { key: 'pending_with_contact', label: 'Pending with Contact', icon: faClock, color: '#F59E0B' },
+    { key: 'pending_without_contact', label: 'Pending without Contact', icon: faTimes, color: '#EF4444' },
+    { key: 'complete_missing_contact', label: 'Complete Missing Contact', icon: faInfoCircle, color: '#8B5CF6' }
+];
+
 const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: SponsorsProps) => {
     const [error, setError] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -101,6 +110,7 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
     const [sortBy, setSortBy] = useState('dateAdded');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [showAffiliatePrograms, setShowAffiliatePrograms] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('all');
     
     // Convert subscription to boolean for backward compatibility
     const hasSubscription = Boolean(isSubscribed);
@@ -208,6 +218,24 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
                                 </div>
                             </div>
                             
+                            {/* Status Filter Row */}
+                            <div className="status-filters-section">
+                                <h4 className="status-filters-title">Filter by Status</h4>
+                                <div className="status-filters-grid">
+                                    {STATUS_FILTERS.map((status) => (
+                                        <button
+                                            key={status.key}
+                                            className={`status-filter-btn ${statusFilter === status.key ? 'active' : ''}`}
+                                            onClick={() => setStatusFilter(status.key)}
+                                            style={{ '--status-color': status.color } as React.CSSProperties}
+                                        >
+                                            <FontAwesomeIcon icon={status.icon} />
+                                            <span>{status.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            
                             {/* Sorting Row */}
                             <div className="sorting-section">
                                 <div className="sorting-options">
@@ -287,6 +315,7 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
                                 sortOrder={sortOrder}
                                 user={user}
                                 showAffiliatePrograms={showAffiliatePrograms}
+                                statusFilter={statusFilter}
                             />
                         </div>
                     </div>
