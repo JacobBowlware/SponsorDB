@@ -116,10 +116,11 @@ class NewsletterScraper:
                                     logger.debug(f"Sponsor already exists with contact info: {sponsor['rootDomain']}")
                                 continue
                             
-                            # 4. VALIDATION: Mandatory contact info requirement
-                            if sponsor.get('contactMethod') == 'none':
-                                logger.debug(f"Rejecting sponsor with no contact info: {sponsor['sponsorName']}")
-                                continue
+                            # 4. VALIDATION: Mandatory contact info requirement - RELAXED
+                            # Allow pending sponsors without contact info to be saved
+                            # if sponsor.get('contactMethod') == 'none':
+                            #     logger.debug(f"Rejecting sponsor with no contact info: {sponsor['sponsorName']}")
+                            #     continue
                             
                             # 5. VALIDATION: Must have either email or application
                             if not sponsor.get('sponsorEmail') and not sponsor.get('sponsorApplication'):
@@ -207,12 +208,12 @@ class NewsletterScraper:
         """Start the scheduled scraper"""
         logger.info("Starting newsletter scraper scheduler")
         
-        # Schedule hourly scraping
+        # Schedule every 30 minutes scraping
         self.scheduler.add_job(
             func=self.run_scraping_cycle,
-            trigger=IntervalTrigger(hours=1),
-            id='hourly_scraping',
-            name='Hourly Newsletter Scraping',
+            trigger=IntervalTrigger(minutes=30),
+            id='half_hourly_scraping',
+            name='Half-Hourly Newsletter Scraping',
             replace_existing=True
         )
         

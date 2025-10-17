@@ -13,11 +13,17 @@ interface Sponsor {
     subscriberCount: number;
     sponsorEmail?: string;
     sponsorApplication?: string;
+    businessContact?: string;
     contactMethod: 'email' | 'application' | 'both' | 'none';
     confidence: number;
     analysisStatus: 'complete' | 'manual_review_required' | 'pending';
     dateAdded: string;
     status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
+    // Affiliate program fields
+    isAffiliateProgram?: boolean;
+    affiliateSignupLink?: string;
+    commissionInfo?: string;
+    interestedUsers?: string[];
 }
 
 interface EditSponsorModalProps {
@@ -55,8 +61,13 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        console.log('EditSponsorModal: Form submitted');
+        console.log('EditSponsorModal: editedSponsor:', editedSponsor);
         if (validateForm()) {
+            console.log('EditSponsorModal: Validation passed, calling onSave');
             onSave(editedSponsor);
+        } else {
+            console.log('EditSponsorModal: Validation failed');
         }
     };
 

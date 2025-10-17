@@ -5,12 +5,10 @@ import {
     faClock, 
     faCheckCircle,
     faTimes,
-    faDownload,
     faSearch,
     faSort,
     faSortUp,
     faSortDown,
-    faEye,
     faExclamationTriangle,
     faSpinner,
     faRobot,
@@ -19,8 +17,6 @@ import {
     faEnvelope,
     faLink,
     faTrash,
-    faCalendarAlt,
-    faFilter,
     faCheck,
     faTimes as faTimesIcon,
     faEdit
@@ -40,11 +36,17 @@ interface Sponsor {
     subscriberCount: number;
     sponsorEmail?: string;
     sponsorApplication?: string;
+    businessContact?: string;
     contactMethod: 'email' | 'application' | 'both' | 'none';
     confidence: number;
     analysisStatus: 'complete' | 'manual_review_required' | 'pending';
     dateAdded: string;
     status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
+    // Affiliate program fields
+    isAffiliateProgram?: boolean;
+    affiliateSignupLink?: string;
+    commissionInfo?: string;
+    interestedUsers?: string[];
 }
 
 interface DashboardStats {
@@ -76,12 +78,12 @@ const Admin = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isRunningScraper, setIsRunningScraper] = useState(false);
     const [isPerformingBulkAction, setIsPerformingBulkAction] = useState(false);
+    const [isPerformingIndividualAction, setIsPerformingIndividualAction] = useState(false);
     const [isRunningMigration, setIsRunningMigration] = useState(false);
     const [migrationResults, setMigrationResults] = useState<any>(null);
     
     // Edit modal state
     const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
 
     // Fetch dashboard data
     const fetchData = useCallback(async () => {
@@ -120,7 +122,7 @@ const Admin = () => {
                 lastScraperRun: new Date().toLocaleString()
             });
             setSponsors(sponsorsRes.data.sponsors);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error fetching dashboard data:', err);
             setError('Failed to load dashboard data');
         } finally {
@@ -147,7 +149,7 @@ const Admin = () => {
                     fetchData();
                 }, 2000);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error running scraper:', err);
             setError('Failed to run scraper');
         } finally {
@@ -161,24 +163,25 @@ const Admin = () => {
             setIsRunningMigration(true);
             setError(null);
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${config.backendUrl}admin/migrate-sponsor-status`, {}, {
+            const response = await axios.post(`${config.backendUrl}admin/migrate-affiliate-sponsors`, {}, {
                 headers: { 'x-auth-token': token }
             });
             
             setMigrationResults(response.data.results);
-            console.log('Migration completed:', response.data);
+            console.log('Affiliate migration completed:', response.data);
             
             // Refresh data after migration
             setTimeout(() => {
                 fetchData();
             }, 1000);
-        } catch (err) {
-            console.error('Error running migration:', err);
-            setError('Failed to run migration');
+        } catch (err: any) {
+            console.error('Error running affiliate migration:', err);
+            setError('Failed to run affiliate migration');
         } finally {
             setIsRunningMigration(false);
         }
     };
+
 
     // Handle bulk actions
     const handleBulkAction = async (action: string) => {
@@ -209,7 +212,7 @@ const Admin = () => {
             
             setSelectedSponsors([]);
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error performing bulk action:', err);
             setError(`Failed to ${action} sponsors`);
         } finally {
@@ -219,8 +222,14 @@ const Admin = () => {
 
     // Handle individual sponsor actions
     const handleSponsorAction = async (sponsorId: string, action: string) => {
+        console.log('Admin: handleSponsorAction called with:', { sponsorId, action });
+        console.log('Admin: Current sponsors state:', sponsors.length, 'sponsors loaded');
+        
         try {
+            setIsPerformingIndividualAction(true);
             const token = localStorage.getItem('token');
+            console.log('Admin: Token available:', !!token);
+            console.log('Admin: Making API call for individual sponsor action:', action);
             
             if (action === 'reject') {
                 // For reject action, show confirmation dialog
@@ -231,6 +240,7 @@ const Admin = () => {
                     );
                     
                     if (!confirmed) {
+                        setIsPerformingIndividualAction(false);
                         return;
                     }
                     
@@ -252,18 +262,34 @@ const Admin = () => {
                 }
             } else {
                 // For other actions, use the existing bulk action
-                await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
+                console.log('Admin: Calling bulk-action API with:', { action, sponsorIds: [sponsorId] });
+                console.log('Admin: API endpoint:', `${config.backendUrl}admin/sponsors/bulk-action`);
+                
+                const response = await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
                     action,
                     sponsorIds: [sponsorId]
                 }, {
                     headers: { 'x-auth-token': token }
                 });
+                
+                console.log('Admin: API response:', response.status, response.data);
             }
             
+            console.log('Admin: Action completed, refreshing data...');
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             console.error(`Error ${action}ing sponsor:`, err);
-            setError(`Failed to ${action} sponsor`);
+            console.error('Admin: Full error details:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                action,
+                sponsorId
+            });
+            setError(`Failed to ${action} sponsor: ${err.message}`);
+        } finally {
+            console.log('Admin: Setting isPerformingIndividualAction to false');
+            setIsPerformingIndividualAction(false);
         }
     };
 
@@ -274,9 +300,10 @@ const Admin = () => {
 
     // Handle save sponsor
     const handleSaveSponsor = async (updatedSponsor: Sponsor) => {
+        console.log('Admin: handleSaveSponsor called with:', updatedSponsor);
         try {
-            setIsSaving(true);
             const token = localStorage.getItem('token');
+            console.log('Admin: Making API call to update sponsor');
             
             const response = await axios.put(`${config.backendUrl}sponsors/${updatedSponsor._id}`, {
                 sponsorName: updatedSponsor.sponsorName,
@@ -299,11 +326,9 @@ const Admin = () => {
                 ));
                 setEditingSponsor(null);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error saving sponsor:', err);
             setError('Failed to save sponsor changes');
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -341,27 +366,6 @@ const Admin = () => {
         );
     };
 
-    // Export CSV
-    const handleExportCSV = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${config.backendUrl}admin/export/csv?type=pending`, {
-                headers: { 'x-auth-token': token },
-                responseType: 'blob'
-            });
-            
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'sponsors.csv');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (err) {
-            console.error('Error exporting CSV:', err);
-            setError('Failed to export CSV');
-        }
-    };
 
     // Get status badge info
     const getStatusBadge = (sponsor: Sponsor) => {
@@ -445,13 +449,16 @@ const Admin = () => {
                         <p className="admin-subtitle">Manage sponsors, review pending entries, and monitor system activity</p>
                     </div>
                     <div className="admin-actions">
+                        <h1>
+                            THIS BUTTON IS CHANGED?
+                        </h1>
                         <button 
                             className="btn btn-warning"
                             onClick={handleRunMigration}
                             disabled={isRunningMigration}
                         >
-                            <FontAwesomeIcon icon={isRunningMigration ? faSpinner : faDownload} spin={isRunningMigration} />
-                            {isRunningMigration ? 'Migrating...' : 'Run Migration'}
+                            <FontAwesomeIcon icon={isRunningMigration ? faSpinner : faLink} spin={isRunningMigration} />
+                            {isRunningMigration ? 'Migrating...' : 'Migrate Affiliates'}
                         </button>
                         <button 
                             className="btn btn-primary"
@@ -756,17 +763,19 @@ const Admin = () => {
                                         >
                                             <FontAwesomeIcon icon={faEdit} />
                                         </button>
-                                        {sponsor.status === 'pending' ? (
+                                        {sponsor.status === 'pending' || sponsor.analysisStatus === 'pending' ? (
                                             <>
                                                 <button 
                                                     className="btn btn-sm btn-success"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        console.log('Admin: Approve button clicked for sponsor:', sponsor._id, sponsor.sponsorName, 'Status:', sponsor.status, 'Analysis Status:', sponsor.analysisStatus);
                                                         handleSponsorAction(sponsor._id, 'approve');
                                                     }}
+                                                    disabled={isPerformingIndividualAction}
                                                     title="Approve"
                                                 >
-                                                    <FontAwesomeIcon icon={faCheck} />
+                                                    <FontAwesomeIcon icon={isPerformingIndividualAction ? faSpinner : faCheck} spin={isPerformingIndividualAction} />
                                                 </button>
                                                 <button 
                                                     className="btn btn-sm btn-danger"
@@ -774,9 +783,10 @@ const Admin = () => {
                                                         e.stopPropagation();
                                                         handleSponsorAction(sponsor._id, 'reject');
                                                     }}
+                                                    disabled={isPerformingIndividualAction}
                                                     title="Reject"
                                                 >
-                                                    <FontAwesomeIcon icon={faTimesIcon} />
+                                                    <FontAwesomeIcon icon={isPerformingIndividualAction ? faSpinner : faTimesIcon} spin={isPerformingIndividualAction} />
                                                 </button>
                                             </>
                                         ) : (
@@ -786,9 +796,10 @@ const Admin = () => {
                                                     e.stopPropagation();
                                                     handleSponsorAction(sponsor._id, 'delete');
                                                 }}
+                                                disabled={isPerformingIndividualAction}
                                                 title="Remove from Database"
                                             >
-                                                <FontAwesomeIcon icon={faTrash} />
+                                                <FontAwesomeIcon icon={isPerformingIndividualAction ? faSpinner : faTrash} spin={isPerformingIndividualAction} />
                                             </button>
                                         )}
                                     </td>
@@ -810,21 +821,35 @@ const Admin = () => {
             {/* Migration Results */}
             {migrationResults && (
                 <div className="migration-results">
-                    <h3>Migration Results</h3>
+                    <h3>Affiliate Migration Results</h3>
                     <div className="migration-stats">
                         <div className="migration-stat">
                             <strong>Total Processed:</strong> {migrationResults.totalProcessed} sponsors
                         </div>
                         <div className="migration-stat">
-                            <strong>Updated to Complete:</strong> {migrationResults.updatedToComplete} sponsors
+                            <strong>Successfully Migrated:</strong> {migrationResults.migratedCount} sponsors
                         </div>
                         <div className="migration-stat">
-                            <strong>Updated to Pending:</strong> {migrationResults.updatedToPending} sponsors
+                            <strong>Skipped:</strong> {migrationResults.skippedCount} sponsors
                         </div>
                         <div className="migration-stat">
                             <strong>Errors:</strong> {migrationResults.errors} errors
                         </div>
                     </div>
+                    {migrationResults.details && migrationResults.details.length > 0 && (
+                        <div style={{ marginTop: '16px' }}>
+                            <h4>Migration Details:</h4>
+                            <div style={{ maxHeight: '200px', overflowY: 'auto', fontSize: '12px' }}>
+                                {migrationResults.details.map((detail: any, index: number) => (
+                                    <div key={index} style={{ marginBottom: '4px', padding: '4px', background: '#f0f9ff', borderRadius: '4px' }}>
+                                        <strong>{detail.sponsor}:</strong> {detail.action}
+                                        {detail.value && <span> - {detail.value}</span>}
+                                        {detail.error && <span style={{ color: '#dc2626' }}> - Error: {detail.error}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <button 
                         className="btn btn-sm btn-secondary"
                         onClick={() => setMigrationResults(null)}
@@ -833,6 +858,7 @@ const Admin = () => {
                     </button>
                 </div>
             )}
+
 
             {/* Error Display */}
             {error && (

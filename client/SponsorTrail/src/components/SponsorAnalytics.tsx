@@ -22,6 +22,11 @@ interface Sponsor {
     businessContact: string;
     dateAdded: string;
     appliedBy?: string[];
+    // Affiliate program fields
+    isAffiliateProgram?: boolean;
+    affiliateSignupLink?: string;
+    commissionInfo?: string;
+    interestedUsers?: string[];
 }
 
 interface SponsorAnalyticsProps {

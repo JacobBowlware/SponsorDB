@@ -44,14 +44,50 @@ const saveToAirtable = async (sponsor) => {
 // Get all sponsors
 router.get('/', auth, async (req, res) => {
     try {
-        // Fetch all sponsors with contact info and include whether the current user has viewed/applied to them
-        const sponsors = await Sponsor.find({
+        // Build query based on affiliate filter
+        let query = {
             $or: [
                 { sponsorEmail: { $exists: true, $ne: '' } },
                 { sponsorApplication: { $exists: true, $ne: '' } },
                 { businessContact: { $exists: true, $ne: '' } }
             ]
-        });
+        };
+        
+        // Add affiliate filter if requested
+        if (req.query.affiliateOnly === 'true') {
+            console.log('🔍 Backend: Filtering for affiliate sponsors only');
+            const affiliateQuery = {
+                $and: [
+                    {
+                        $or: [
+                            { sponsorEmail: { $exists: true, $ne: '' } },
+                            { sponsorApplication: { $exists: true, $ne: '' } },
+                            { businessContact: { $exists: true, $ne: '' } }
+                        ]
+                    },
+                    {
+                        $or: [
+                            { isAffiliateProgram: true },
+                            { tags: { $in: ['Affiliate'] } }
+                        ]
+                    }
+                ]
+            };
+            query = affiliateQuery;
+            console.log('🔍 Backend: Affiliate query created');
+        }
+        
+        // Fetch all sponsors with contact info and include whether the current user has viewed/applied to them
+        const sponsors = await Sponsor.find(query);
+        console.log(`🔍 Backend: Found ${sponsors.length} sponsors`);
+        
+        if (req.query.affiliateOnly === 'true') {
+            console.log('🔍 Backend: Affiliate sponsors found:');
+            sponsors.forEach(sponsor => {
+                console.log(`  - ${sponsor.sponsorName}: isAffiliateProgram=${sponsor.isAffiliateProgram}, tags=${JSON.stringify(sponsor.tags)}`);
+            });
+        }
+        
         const sponsorsWithStatus = sponsors.map(sponsor => {
             const sponsorObj = sponsor.toObject();
             const isViewed = sponsor.viewedBy.includes(req.user._id);
@@ -99,7 +135,7 @@ router.get('/db-info', async (req, res) => {
         });
         const newsletterCount = newsletters.length;
 
-        // Get last updated date (from last sponsor with contact info added)
+        // Get last updated date (from most recently added sponsor with contact info)
         const lastSponsor = await Sponsor.find({
             $or: [
                 { sponsorEmail: { $exists: true, $ne: '' } },
@@ -107,7 +143,21 @@ router.get('/db-info', async (req, res) => {
                 { businessContact: { $exists: true, $ne: '' } }
             ]
         }).sort({ _id: -1 }).limit(1);
-        const lastUpdated = lastSponsor[0] ? lastSponsor[0].dateAdded : null;
+        
+        // Use _id timestamp if dateAdded is not available or is old
+        let lastUpdated = null;
+        if (lastSponsor[0]) {
+            const sponsor = lastSponsor[0];
+            const idTimestamp = new Date(parseInt(sponsor._id.toString().substring(0, 8), 16) * 1000);
+            const dateAdded = sponsor.dateAdded ? new Date(sponsor.dateAdded) : null;
+            
+            // Use the more recent date between _id timestamp and dateAdded
+            if (dateAdded && dateAdded > idTimestamp) {
+                lastUpdated = dateAdded;
+            } else {
+                lastUpdated = idTimestamp;
+            }
+        }
 
         res.status(200).send({ "sponsors": sponsorCount, "newsletters": newsletterCount, "lastUpdated": lastUpdated });
     }

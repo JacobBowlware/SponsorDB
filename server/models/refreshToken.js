@@ -81,11 +81,10 @@ refreshTokenSchema.statics.revokeAllForUser = function(userId) {
     );
 };
 
-// Find valid token for user
-refreshTokenSchema.statics.findValidToken = function(token, userId) {
+// Find valid token (token should be unique, so no need for userId)
+refreshTokenSchema.statics.findValidToken = function(token) {
     return this.findOne({
         token: token,
-        userId: userId,
         isRevoked: false,
         expiresAt: { $gt: new Date() }
     });

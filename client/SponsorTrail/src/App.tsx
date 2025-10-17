@@ -415,9 +415,9 @@ function App() {
         />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
         {/* Subscriber Routes - Protected by authentication AND subscription */}
-        {userAuth && isSubscribed && <Route path="/sponsors/" element={<Sponsors isSubscribed={user.subscription} sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} />} />}
+        {userAuth && isSubscribed && <Route path="/sponsors/" element={<Sponsors isSubscribed={user.subscription} sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} user={user} />} />}
         {userAuth && !isSubscribed && <Route path="/sponsors/" element={<div className="web-page"><div className="subscription-required"><h2>Subscription Required</h2><p>Please subscribe to access our sponsor database.</p><Link to="/subscribe" className="btn btn-primary">Subscribe Now</Link></div></div>} />}
-        {userAuth && <Route path="/analytics/" element={<Analytics isSubscribed={isSubscribed} />} />}
+        {userAuth && <Route path="/analytics/" element={<Analytics isSubscribed={isSubscribed} user={user} />} />}
         {/* Admin Routes */}
         {userAuth && user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

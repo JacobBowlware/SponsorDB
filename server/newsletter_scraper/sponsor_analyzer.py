@@ -5,8 +5,8 @@ from typing import List, Dict, Optional, Tuple
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from config import (
-    EXCLUDED_DOMAINS, NON_SPONSOR_COMPANIES, 
-    TAGS, BUSINESS_EMAIL_PATTERNS
+    EXCLUDED_DOMAINS, NON_SPONSOR_COMPANIES, KNOWN_SPONSORS,
+    TAGS, BUSINESS_EMAIL_PATTERNS, AFFILIATE_INDICATORS
 )
 
 logger = logging.getLogger(__name__)
@@ -72,6 +72,11 @@ class SponsorAnalyzer:
             if newsletter_domain and root_domain.lower() == newsletter_domain.lower():
                 logger.info(f"REJECTED: Self-reference - {root_domain} matches {newsletter_domain}")
                 return None
+            
+            # 2b. CHECK FOR NEWSLETTER SELF-PROMOTION PATTERNS
+            if self._is_newsletter_self_promotion(root_domain, context):
+                logger.info(f"REJECTED: Newsletter self-promotion - {root_domain}")
+                return None
             logger.info(f"✓ Passed self-reference check")
             
             # 3. REQUIRE MINIMUM TEXT CONTEXT
@@ -115,7 +120,7 @@ class SponsorAnalyzer:
             }
             
             # Try to get additional info from the website
-            additional_info = self._scrape_website_info(link, root_domain)
+            additional_info = self._scrape_website_info(link, root_domain, newsletter_name)
             if additional_info:
                 sponsor_data.update(additional_info)
             
@@ -131,6 +136,25 @@ class SponsorAnalyzer:
             estimated_subscribers = self._estimate_subscriber_count(context, newsletter_name)
             sponsor_data['estimatedSubscribers'] = estimated_subscribers['count']
             sponsor_data['subscriberReasoning'] = estimated_subscribers['reasoning']
+            
+            # 9. AFFILIATE PROGRAM DETECTION
+            is_affiliate = self._detect_affiliate_program(sponsor_data, context)
+            if is_affiliate:
+                sponsor_data['isAffiliateProgram'] = True
+                logger.info(f"Affiliate program detected for: {company_name}")
+            
+            # 10. AUTOMATIC TAG ASSIGNMENT
+            assigned_tags = self._assign_tags_ai(sponsor_data)
+            
+            # 11. ENSURE AFFILIATE TAG IS ADDED FOR AFFILIATE PROGRAMS
+            if is_affiliate and 'Affiliate' not in assigned_tags:
+                assigned_tags.append('Affiliate')
+                # Keep only 3 tags maximum
+                assigned_tags = assigned_tags[:3]
+                logger.info(f"Added Affiliate tag for affiliate program: {company_name}")
+            
+            sponsor_data['tags'] = assigned_tags
+            logger.info(f"Final assigned tags: {assigned_tags}")
             
             logger.info(f"Successfully analyzed sponsor: {company_name} ({root_domain})")
             return sponsor_data
@@ -348,12 +372,13 @@ class SponsorAnalyzer:
             r'^\d+$',  # Just numbers
             r'^[^a-zA-Z]+$',  # No letters
             r'.*\[.*\].*',  # Contains brackets like [12]
-            r'^(click|read|learn|view|see|watch|listen)',  # CTA phrases
+            r'^(click|read|learn|view|see|watch|listen|get|try|visit|sign|start)',  # CTA phrases
             r'(here|more|now|today)$',  # Generic endings
             r'(oops|error|javascript|telegram|opt out)',  # Error messages
             r'^\W+$',  # Just punctuation
             r'.*→.*',  # Arrow characters
             r'^\d+\s*(st|nd|rd|th)',  # Addresses
+            r'^(get|try|visit|sign|start|learn|read|click|view|see|watch|listen)$',  # Single action words
         ]
         
         name_lower = name.lower()
@@ -411,13 +436,21 @@ class SponsorAnalyzer:
         
         # Common patterns for company names before links
         patterns = [
+            r'(?:sponsored by|brought to you by|presented by|partnered with)\s+([A-Z][a-zA-Z\s&]+)',
+            r'partner:\s*([A-Z][a-zA-Z\s&]+)',
             r'([A-Z][a-zA-Z\s&]+?)\s+(?:is|offers|provides|helps|makes|creates|builds)',
             r'([A-Z][a-zA-Z\s&]+?)\s+(?:sponsors|partners?|presents)',
-            r'(?:sponsored by|brought to you by|presented by|partnered with)\s+([A-Z][a-zA-Z\s&]+)',
-            r'([A-Z][a-zA-Z\s&]+?)\s+(?:try|get|start|learn|visit)',
-            # CHANGED: Added pattern for "Partner: Company Name" format
-            r'partner:\s*([A-Z][a-zA-Z\s&]+)',
+            # More specific patterns to avoid matching "Get" from "Get started"
+            r'([A-Z][a-zA-Z\s&]{3,}?)\s+(?:try|start|learn|visit|sign up)',
         ]
+        
+        # Additional patterns for common sponsor formats
+        additional_patterns = [
+            r'([A-Z][a-zA-Z\s&]+?)\s+(?:makes it easy|helps|empowers|enables)',
+            r'([A-Z][a-zA-Z\s&]+?)\s+(?:is the|are the|has the)',
+        ]
+        
+        patterns.extend(additional_patterns)
         
         for pattern in patterns:
             match = re.search(pattern, before_link, re.IGNORECASE)
@@ -481,11 +514,86 @@ class SponsorAnalyzer:
         
         return False
     
+    def _is_newsletter_self_promotion(self, domain: str, context: str) -> bool:
+        """Check if this is a newsletter advertising its own sponsorship opportunities"""
+        domain_lower = domain.lower()
+        context_lower = context.lower()
+        
+        # Check for newsletter self-promotion patterns
+        self_promotion_patterns = [
+            r'advertise\s+with\s+us',
+            r'sponsor\s+our\s+newsletter',
+            r'advertising\s+opportunities',
+            r'media\s+kit',
+            r'partnership\s+opportunities',
+            r'reach\s+over\s+\d+\s+million',
+            r'get\s+your\s+brand\s+in\s+front',
+            r'newsletter\s+advertising',
+            r'sponsor\s+this\s+newsletter',
+            r'advertise\s+in\s+our\s+newsletter',
+            r'newsletter\s+sponsorship',
+            r'brand\s+in\s+front\s+of\s+developers',
+            r'copywriting\s+services\s+and\s+campaign',
+            r'customer\s+success\s+manager',
+            r'guarantee\s+your\s+campaign',
+            r'newsletter\s+best\s+practices',
+            r'audiences\s+case\s+studies'
+        ]
+        
+        # Check if context contains newsletter self-promotion language
+        for pattern in self_promotion_patterns:
+            if re.search(pattern, context_lower):
+                logger.debug(f"Newsletter self-promotion pattern detected: {pattern}")
+                return True
+        
+        # Check for common newsletter advertising domains
+        newsletter_ad_domains = [
+            'tldr.tech', 'tldrnewsletter.com', 'stackedmarketer.com',
+            'thehustle.co', 'morningbrew.com', 'marketingbrew.com'
+        ]
+        
+        for ad_domain in newsletter_ad_domains:
+            if ad_domain in domain_lower:
+                logger.debug(f"Newsletter advertising domain detected: {ad_domain}")
+                return True
+        
+        return False
+
+    def _is_newsletter_sponsor_page(self, application_url: str, newsletter_name: str, sponsor_domain: str) -> bool:
+        """Check if this is the newsletter's 'sponsor us' page instead of the sponsor company's page"""
+        if not application_url:
+            return False
+        
+        # Extract domain from application URL
+        app_domain = urlparse(application_url).netloc.lower()
+        
+        # Get newsletter domain
+        newsletter_domain = self._extract_newsletter_domain(newsletter_name)
+        
+        # If application URL is on the NEWSLETTER'S domain, it's wrong
+        if newsletter_domain and newsletter_domain.lower() in app_domain:
+            logger.debug(f"Application URL is on newsletter domain - rejecting: {application_url}")
+            return True
+        
+        # If application URL is NOT on the sponsor's domain, it's suspicious
+        if sponsor_domain.lower() not in app_domain:
+            logger.debug(f"Application URL is not on sponsor domain - potential issue: {application_url} vs {sponsor_domain}")
+            return True
+        
+        return False
+    
     def _is_legitimate_company(self, company_name: str, domain: str, url: str) -> bool:
         """Check if this is a legitimate business that could sponsor newsletters"""
         domain_lower = domain.lower()
         url_lower = url.lower()
         name_lower = company_name.lower()
+        
+        # Check whitelist first - known legitimate sponsors
+        for known_sponsor in KNOWN_SPONSORS:
+            if (known_sponsor.lower() in domain_lower or 
+                known_sponsor.lower() in name_lower):
+                logger.debug(f"Whitelist match: {known_sponsor} - {domain}")
+                return True
         
         # Must not be clearly a blog/content site (relaxed check)
         if self._is_clearly_content_site(domain, url, name_lower):
@@ -648,7 +756,7 @@ class SponsorAnalyzer:
                 'reasoning': 'Conservative default estimate - 5K subscribers'
             }
     
-    def _scrape_website_info(self, url: str, domain: str) -> Optional[Dict]:
+    def _scrape_website_info(self, url: str, domain: str, newsletter_name: str = None) -> Optional[Dict]:
         """Scrape additional information from the website"""
         try:
             # Only scrape if we have a reasonable URL
@@ -685,7 +793,12 @@ class SponsorAnalyzer:
             if contact_email:
                 info['sponsorEmail'] = contact_email
             if application_url:
-                info['sponsorApplication'] = application_url
+                # Validate it's not the newsletter's sponsor page
+                if newsletter_name and self._is_newsletter_sponsor_page(application_url, newsletter_name, domain):
+                    logger.info(f"Rejecting application URL - it's the newsletter's sponsor page, not the company's: {application_url}")
+                    application_url = None
+                else:
+                    info['sponsorApplication'] = application_url
             
             # Determine contact method and confidence
             if contact_email and application_url:
@@ -752,6 +865,13 @@ class SponsorAnalyzer:
         for pattern in email_patterns:
             matches = re.findall(pattern, text)
             for email in matches:
+                # Clean up the email - remove any extra text that got concatenated
+                email = email.strip()
+                
+                # Validate email format more strictly
+                if not self._is_valid_email(email):
+                    continue
+                    
                 email_lower = email.lower()
                 # Check if it's a business contact email
                 if any(business_pattern in email_lower for business_pattern in BUSINESS_EMAIL_PATTERNS):
@@ -761,6 +881,23 @@ class SponsorAnalyzer:
                     return email
         
         return None
+    
+    def _is_valid_email(self, email: str) -> bool:
+        """Validate email format more strictly"""
+        if not email or len(email) < 5:
+            return False
+            
+        # Check for malformed emails (contains extra text)
+        if len(email) > 100:  # Emails shouldn't be this long
+            return False
+            
+        # Check for common concatenation issues
+        if any(word in email.lower() for word in ['documentation', 'get', 'try', 'visit', 'click', 'read']):
+            return False
+            
+        # Basic email validation
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return bool(re.match(email_pattern, email))
     
     def _find_contact_links(self, soup: BeautifulSoup) -> List[str]:
         """Find contact/about page links"""
@@ -849,14 +986,25 @@ class SponsorAnalyzer:
             Company: {sponsor_data.get('sponsorName', 'Unknown')}
             Website: {sponsor_data.get('sponsorLink', 'N/A')}
             Domain: {sponsor_data.get('rootDomain', 'N/A')}
+            Description: {sponsor_data.get('extractedDescription', 'N/A')}
+            Title: {sponsor_data.get('extractedTitle', 'N/A')}
+            
+            Available tags: {', '.join(TAGS)}
             
             Please provide:
             1. A clean, professional company name
             2. What type of business this is (Technology, Finance, etc.)
             3. Whether this appears to be a legitimate business that could sponsor newsletters
-            4. Any relevant tags or categories
+            4. Whether this is an affiliate program (look for referral/commission language)
+            5. 1-3 relevant tags from the available list above
             
-            Respond in JSON format with: companyName, businessType, isLegitimate, tags
+            Rules for tags:
+            - Select 1-3 tags that best describe this company's business
+            - Choose from the exact tag names provided above
+            - If it's an affiliate program, always include "Affiliate" as one of the tags
+            - Be specific and accurate - don't guess
+            
+            Respond in JSON format with: companyName, businessType, isLegitimate, isAffiliateProgram, tags
             """
             
             response = self.openai_client.chat.completions.create(
@@ -881,7 +1029,18 @@ class SponsorAnalyzer:
                 if 'businessType' in gpt_data:
                     sponsor_data['businessType'] = gpt_data['businessType']
                 if 'tags' in gpt_data and isinstance(gpt_data['tags'], list):
-                    sponsor_data['tags'] = gpt_data['tags'][:5]  # Limit to 5 tags
+                    # Validate tags are in the allowed list
+                    valid_tags = [tag for tag in gpt_data['tags'] if tag in TAGS]
+                    sponsor_data['tags'] = valid_tags[:3]  # Limit to 3 tags
+                if 'isAffiliateProgram' in gpt_data:
+                    sponsor_data['isAffiliateProgram'] = gpt_data['isAffiliateProgram']
+                    # If GPT detected affiliate program, ensure Affiliate tag is included
+                    if gpt_data['isAffiliateProgram'] and 'Affiliate' not in sponsor_data.get('tags', []):
+                        if 'tags' not in sponsor_data:
+                            sponsor_data['tags'] = []
+                        sponsor_data['tags'].append('Affiliate')
+                        # Keep only 3 tags maximum
+                        sponsor_data['tags'] = sponsor_data['tags'][:3]
                 if 'isLegitimate' in gpt_data:
                     if not gpt_data['isLegitimate']:
                         sponsor_data['analysisStatus'] = 'rejected'
@@ -896,3 +1055,191 @@ class SponsorAnalyzer:
         except Exception as e:
             logger.error(f"GPT analysis failed: {e}")
             return sponsor_data
+    
+    def _detect_affiliate_program(self, sponsor_data: Dict, context: str) -> bool:
+        """Detect if this is an affiliate program based on context and website content"""
+        try:
+            # Check context for affiliate indicators
+            context_upper = context.upper()
+            affiliate_found = any(indicator in context_upper for indicator in AFFILIATE_INDICATORS)
+            
+            if affiliate_found:
+                logger.info(f"Affiliate program detected in context for: {sponsor_data.get('sponsorName', 'Unknown')}")
+                return True
+            
+            # Check website content if available
+            if sponsor_data.get('sponsorLink'):
+                website_content = self._scrape_website_for_affiliate_indicators(sponsor_data['sponsorLink'])
+                if website_content:
+                    affiliate_found = any(indicator in website_content.upper() for indicator in AFFILIATE_INDICATORS)
+                    if affiliate_found:
+                        logger.info(f"Affiliate program detected on website for: {sponsor_data.get('sponsorName', 'Unknown')}")
+                        return True
+            
+            return False
+            
+        except Exception as e:
+            logger.warning(f"Failed to detect affiliate program: {e}")
+            return False
+    
+    def _scrape_website_for_affiliate_indicators(self, url: str) -> Optional[str]:
+        """Scrape website content to look for affiliate program indicators"""
+        try:
+            if not url.startswith(('http://', 'https://')):
+                return None
+            
+            response = requests.get(url, timeout=5, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Extract text content
+            text_content = soup.get_text()
+            
+            # Look for affiliate-related pages
+            affiliate_pages = ['/affiliate', '/referral', '/partner', '/affiliates', '/referrals', '/partners']
+            for page in affiliate_pages:
+                if page in url.lower():
+                    return text_content
+            
+            # Check for affiliate links in the page
+            for link in soup.find_all('a', href=True):
+                href = link['href'].lower()
+                if any(page in href for page in affiliate_pages):
+                    return text_content
+            
+            return text_content
+            
+        except Exception as e:
+            logger.debug(f"Failed to scrape website for affiliate indicators {url}: {e}")
+            return None
+    
+    def _assign_tags_ai(self, sponsor_data: Dict) -> List[str]:
+        """Use AI to assign 1-3 relevant tags to the sponsor"""
+        if not self.openai_client:
+            logger.warning("OpenAI client not available for tag assignment")
+            return self._assign_tags_fallback(sponsor_data)
+        
+        try:
+            # Create a prompt for tag assignment
+            prompt = f"""
+            Analyze this sponsor and assign 1-3 relevant tags from the following list:
+            
+            Available tags: {', '.join(TAGS)}
+            
+            Sponsor Information:
+            - Company: {sponsor_data.get('sponsorName', 'Unknown')}
+            - Website: {sponsor_data.get('sponsorLink', 'N/A')}
+            - Domain: {sponsor_data.get('rootDomain', 'N/A')}
+            - Description: {sponsor_data.get('extractedDescription', 'N/A')}
+            - Title: {sponsor_data.get('extractedTitle', 'N/A')}
+            
+            Rules:
+            1. Select 1-3 tags that best describe this company's business
+            2. Choose from the exact tag names provided above
+            3. If it's an affiliate program, always include "Affiliate" as one of the tags
+            4. Be specific and accurate - don't guess
+            5. Return only the tag names separated by commas
+            
+            Respond with just the tag names (e.g., "Technology, Software, AI")
+            """
+            
+            response = self.openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=100,
+                temperature=0.3
+            )
+            
+            # Parse the response
+            gpt_response = response.choices[0].message.content.strip()
+            logger.info(f"GPT tag assignment response: {gpt_response}")
+            
+            # Extract tags from response
+            assigned_tags = []
+            for tag in gpt_response.split(','):
+                tag = tag.strip()
+                if tag in TAGS:
+                    assigned_tags.append(tag)
+                else:
+                    logger.warning(f"Invalid tag from GPT: {tag}")
+            
+            # Ensure we have at least one tag
+            if not assigned_tags:
+                assigned_tags = self._assign_tags_fallback(sponsor_data)
+            
+            # Limit to 3 tags maximum
+            assigned_tags = assigned_tags[:3]
+            
+            logger.info(f"Assigned tags: {assigned_tags}")
+            return assigned_tags
+            
+        except Exception as e:
+            logger.error(f"AI tag assignment failed: {e}")
+            return self._assign_tags_fallback(sponsor_data)
+    
+    def _assign_tags_fallback(self, sponsor_data: Dict) -> List[str]:
+        """Fallback tag assignment using keyword matching"""
+        try:
+            assigned_tags = []
+            
+            # Get text to analyze
+            text_to_analyze = ""
+            if sponsor_data.get('extractedDescription'):
+                text_to_analyze += sponsor_data['extractedDescription'] + " "
+            if sponsor_data.get('extractedTitle'):
+                text_to_analyze += sponsor_data['extractedTitle'] + " "
+            if sponsor_data.get('sponsorName'):
+                text_to_analyze += sponsor_data['sponsorName'] + " "
+            
+            text_lower = text_to_analyze.lower()
+            
+            # Check for affiliate indicators first
+            if any(indicator.lower() in text_lower for indicator in AFFILIATE_INDICATORS):
+                assigned_tags.append('Affiliate')
+            
+            # Define keyword mappings for tags
+            tag_keywords = {
+                'Technology': ['tech', 'software', 'app', 'platform', 'api', 'cloud', 'saas', 'digital', 'data', 'ai', 'artificial intelligence'],
+                'Finance': ['finance', 'financial', 'banking', 'payment', 'fintech', 'crypto', 'cryptocurrency', 'investment', 'trading', 'money'],
+                'Health': ['health', 'healthcare', 'medical', 'fitness', 'wellness', 'mental health', 'therapy', 'doctor', 'clinic', 'hospital'],
+                'Education': ['education', 'learning', 'course', 'training', 'school', 'university', 'academy', 'tutorial', 'study', 'teach'],
+                'Marketing': ['marketing', 'advertising', 'promotion', 'brand', 'campaign', 'social media', 'seo', 'content', 'growth'],
+                'Ecommerce': ['ecommerce', 'e-commerce', 'shop', 'store', 'retail', 'selling', 'marketplace', 'commerce', 'buy', 'sell'],
+                'Business': ['business', 'enterprise', 'corporate', 'company', 'organization', 'management', 'productivity', 'workflow'],
+                'Entertainment': ['entertainment', 'gaming', 'music', 'video', 'streaming', 'media', 'fun', 'game', 'play', 'watch'],
+                'Travel': ['travel', 'trip', 'vacation', 'hotel', 'flight', 'booking', 'tourism', 'destination', 'journey'],
+                'Lifestyle': ['lifestyle', 'life', 'personal', 'home', 'family', 'daily', 'routine', 'living', 'wellness'],
+                'Fashion': ['fashion', 'clothing', 'style', 'apparel', 'wear', 'dress', 'outfit', 'trend', 'beauty'],
+                'Food': ['food', 'restaurant', 'cooking', 'recipe', 'dining', 'meal', 'kitchen', 'chef', 'culinary'],
+                'Sports': ['sports', 'fitness', 'athletic', 'exercise', 'workout', 'gym', 'team', 'player', 'game'],
+                'AI': ['ai', 'artificial intelligence', 'machine learning', 'ml', 'neural', 'automation', 'bot', 'intelligent'],
+                'Productivity': ['productivity', 'efficiency', 'organization', 'task', 'project', 'management', 'workflow', 'tools'],
+                'Software': ['software', 'app', 'application', 'program', 'tool', 'platform', 'system', 'development']
+            }
+            
+            # Score each tag based on keyword matches
+            tag_scores = {}
+            for tag, keywords in tag_keywords.items():
+                score = sum(1 for keyword in keywords if keyword in text_lower)
+                if score > 0:
+                    tag_scores[tag] = score
+            
+            # Sort by score and take remaining slots (up to 3 total)
+            sorted_tags = sorted(tag_scores.items(), key=lambda x: x[1], reverse=True)
+            remaining_slots = 3 - len(assigned_tags)
+            additional_tags = [tag for tag, score in sorted_tags[:remaining_slots]]
+            assigned_tags.extend(additional_tags)
+            
+            # If no tags found, assign "Other"
+            if not assigned_tags:
+                assigned_tags = ['Other']
+            
+            logger.info(f"Fallback tag assignment: {assigned_tags}")
+            return assigned_tags
+            
+        except Exception as e:
+            logger.error(f"Fallback tag assignment failed: {e}")
+            return ['Other']

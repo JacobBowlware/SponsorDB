@@ -28,7 +28,7 @@ if EMAIL_PASSWORD:
 OPENAI_API_KEY = os.getenv('sponsorDB_openAIKey')  # This matches your Heroku config
 
 # Scraping Configuration
-MAX_EMAILS_PER_RUN = int(os.getenv('MAX_EMAILS_PER_RUN', '5'))  # Much smaller limit for testing
+MAX_EMAILS_PER_RUN = int(os.getenv('MAX_EMAILS_PER_RUN', '30'))  # Increased for higher volume processing
 CONFIDENCE_THRESHOLD = float(os.getenv('CONFIDENCE_THRESHOLD', '0.3'))  # Much more lenient for detection
 MIN_SPONSOR_INDICATORS = int(os.getenv('MIN_SPONSOR_INDICATORS', '2'))  # Reduced from 5 to 2
 MIN_SPONSOR_SECTION_MARKERS = int(os.getenv('MIN_SPONSOR_SECTION_MARKERS', '1'))  # Reduced from 4 to 1
@@ -105,36 +105,28 @@ BUSINESS_EMAIL_PATTERNS = [
     'media@'
 ]
 
-# Excluded Domains - Comprehensive list of non-sponsor sites
+# Excluded Domains - Focus on non-sponsor content sites only
 EXCLUDED_DOMAINS = [
-    # Social Media Platforms
+    # Social Media Platforms (definitely not sponsors)
     'facebook.com', 'twitter.com', 'x.com', 'linkedin.com', 'instagram.com',
     'youtube.com', 'tiktok.com', 'reddit.com', 'pinterest.com', 'threads.net',
     
-    # Newsletter Platforms & Content Sites
-    'substack.com', 'ghost.io', 'wordpress.com', 'blogspot.com',
-    'beehiiv.com', 'mailchimp.com', 'convertkit.com', 'buttondown.email',
-    'getpocket.com', 'pocket.com', 'feedly.com', 'inoreader.com',
-    'medium.com',  # News/content site
-    
-    # News & Blog Sites (from your examples)
-    'socialmediatoday.com', 'searchengineland.com', 'webflow.com',
-    'thehustle.co', 'theinformation.com', 'interestingengineering.com',
-    'thedailyupside.com', 'pernasresearch.com', 'doraverse.com',
-    
-    # Newsletter Platforms & Tools
-    'stackedmarketer.com', 'tldrnewsletter.com', 'neatprompts.com',
-    'joinsuperhuman.io', 'akiflow.com', 'modal.com', 'gojiberries.io',
-    'scale.com', 'vaneck.com',
-    
-    # Generic Content Sites
+    # Generic Content/Blog Sites (not B2B sponsors)
     'wikipedia.org', 'github.com', 'stackoverflow.com', 'quora.com',
-    'producthunt.com', 'hackernews.com', 'techcrunch.com', 'venturebeat.com',
-    'forbes.com', 'bloomberg.com', 'reuters.com', 'cnn.com', 'bbc.com',
+    'producthunt.com', 'hackernews.com', 'medium.com',
     
-    # CDN & Infrastructure
+    # News Sites (not typically sponsors)
+    'techcrunch.com', 'venturebeat.com', 'forbes.com', 'bloomberg.com', 
+    'reuters.com', 'cnn.com', 'bbc.com',
+    
+    # CDN & Infrastructure (not sponsors)
     'cdn.com', 'cloudfront.net', 'amazonaws.com', 'googleusercontent.com',
-    'github.io', 'netlify.app', 'vercel.app', 'herokuapp.com'
+    'github.io', 'netlify.app', 'vercel.app', 'herokuapp.com',
+    
+    # Newsletter self-promotion (newsletter advertising itself)
+    'stackedmarketer.com', 'tldrnewsletter.com', 'neatprompts.com',
+    'thehustle.co', 'interestingengineering.com', 'thedailyupside.com',
+    'pernasresearch.com', 'doraverse.com', 'tldr.tech'
 ]
 
 # Tags (matching your existing emailMonitor.js setup)
@@ -143,14 +135,33 @@ TAGS = [
     "Social", "Sports", "Finance", "Business", "Retail", "Marketing", 
     "Education", "Entertainment", "Travel", "Lifestyle", "Fashion", "Beauty", 
     "Food", "Music", "Art", "Politics", "Social", "Ecommerce", "Mental Health", 
-    "AI", "Other"
+    "AI", "Affiliate", "Other"
 ]
 
-# Non-sponsor companies (matching your existing setup)
+# Affiliate Program Detection Keywords
+AFFILIATE_INDICATORS = [
+    'AFFILIATE LINK', 'REFERRAL LINK', 'AFFILIATE PROGRAM', 'REFERRAL PROGRAM',
+    'COMMISSION', 'REFERRAL BONUS', 'AFFILIATE COMMISSION', 'REFERRAL REWARD',
+    'PARTNER PROGRAM', 'AFFILIATE PARTNER', 'REFERRAL CODE', 'AFFILIATE CODE',
+    'EARN COMMISSION', 'GET PAID', 'REFERRAL EARNINGS', 'AFFILIATE EARNINGS',
+    'SIGN UP WITH CODE', 'USE REFERRAL', 'JOIN AFFILIATE', 'BECOME AFFILIATE',
+    'AFFILIATE MARKETING', 'REFERRAL MARKETING', 'PARTNER EARNINGS',
+    'AFFILIATE REWARDS', 'REFERRAL REWARDS', 'COMMISSION RATE',
+    'AFFILIATE DISCOUNT', 'REFERRAL DISCOUNT', 'PARTNER DISCOUNT'
+]
+
+# Non-sponsor companies (only major tech giants that don't typically sponsor newsletters)
 NON_SPONSOR_COMPANIES = [
-    'openai', 'chatgpt', 'gpt', 'google', 'microsoft', 'facebook', 'twitter',
-    'linkedin', 'instagram', 'youtube', 'tiktok', 'apple', 'amazon', 'meta',
-    'anthropic', 'claude', 'gemini', 'bard', 'bing', 'github'
+    'google', 'microsoft', 'facebook', 'twitter', 'linkedin', 'instagram', 
+    'youtube', 'tiktok', 'apple', 'amazon', 'meta', 'github'
+]
+
+# Known legitimate sponsors (whitelist to ensure they pass validation)
+KNOWN_SPONSORS = [
+    'stripe', 'notion', 'hubspot', 'mailchimp', 'paddle', 'linear', 'datadog', 
+    'webflow', 'zapier', 'airtable', 'figma', 'slack', 'discord', 'canva',
+    'shopify', 'squarespace', 'wix', 'bubble', 'retool', 'supabase', 'vercel',
+    'netlify', 'planetscale', 'railway', 'render', 'fly.io', 'doppler'
 ]
 
 # Logging Configuration

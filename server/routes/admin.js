@@ -10,6 +10,149 @@ const admin = require('../middleware/admin');
 const { spawn } = require('child_process');
 const path = require('path');
 
+// Migration endpoint to migrate affiliate sponsors
+router.post('/migrate-affiliate-sponsors', [auth, admin], async (req, res) => {
+    try {
+        console.log('🔄 Starting affiliate sponsors migration...');
+        
+        const results = {
+            totalProcessed: 0,
+            migratedCount: 0,
+            skippedCount: 0,
+            errors: 0,
+            details: []
+        };
+
+        // Find all sponsors with "Affiliate" in their tags
+        const affiliateSponsors = await Sponsor.find({
+            tags: { $in: ['Affiliate'] }
+        });
+        
+        console.log(`📊 Found ${affiliateSponsors.length} sponsors with "Affiliate" tag`);
+        results.totalProcessed = affiliateSponsors.length;
+        
+        if (affiliateSponsors.length === 0) {
+            console.log('✅ No affiliate sponsors found to migrate');
+            return res.status(200).json({
+                success: true,
+                message: 'No affiliate sponsors found to migrate',
+                results
+            });
+        }
+        
+        for (const sponsor of affiliateSponsors) {
+            try {
+                console.log(`Processing: ${sponsor.sponsorName}`);
+                
+                const updateFields = {
+                    isAffiliateProgram: true
+                };
+                
+                // Check if businessContact exists and is a URL
+                if (sponsor.businessContact && sponsor.businessContact.trim() !== '') {
+                    const businessContact = sponsor.businessContact.trim();
+                    
+                    // Check if it's a URL
+                    const isUrl = (string) => {
+                        try {
+                            new URL(string);
+                            return true;
+                        } catch (_) {
+                            return false;
+                        }
+                    };
+                    
+                    if (isUrl(businessContact)) {
+                        // Move to affiliateSignupLink
+                        updateFields.affiliateSignupLink = businessContact;
+                        console.log(`  📎 Moved businessContact to affiliateSignupLink: ${businessContact}`);
+                        results.details.push({
+                            sponsor: sponsor.sponsorName,
+                            action: 'moved_businessContact_to_affiliateSignupLink',
+                            value: businessContact
+                        });
+                    } else if (businessContact.includes('@')) {
+                        // It's an email, move to sponsorEmail if not already set
+                        if (!sponsor.sponsorEmail) {
+                            updateFields.sponsorEmail = businessContact;
+                            console.log(`  📧 Moved businessContact email to sponsorEmail: ${businessContact}`);
+                            results.details.push({
+                                sponsor: sponsor.sponsorName,
+                                action: 'moved_businessContact_email_to_sponsorEmail',
+                                value: businessContact
+                            });
+                        } else {
+                            console.log(`  📧 Keeping businessContact as email: ${businessContact}`);
+                            results.details.push({
+                                sponsor: sponsor.sponsorName,
+                                action: 'kept_businessContact_as_email',
+                                value: businessContact
+                            });
+                        }
+                    } else {
+                        // Keep as businessContact if it's not a URL or email
+                        console.log(`  📝 Keeping businessContact as is: ${businessContact}`);
+                        results.details.push({
+                            sponsor: sponsor.sponsorName,
+                            action: 'kept_businessContact_as_is',
+                            value: businessContact
+                        });
+                    }
+                }
+                
+                // Update the sponsor
+                const result = await Sponsor.findByIdAndUpdate(
+                    sponsor._id,
+                    { $set: updateFields },
+                    { new: true }
+                );
+                
+                if (result) {
+                    results.migratedCount++;
+                    console.log(`  ✅ Updated successfully\n`);
+                } else {
+                    results.skippedCount++;
+                    console.log(`  ⚠️  Failed to update\n`);
+                    results.details.push({
+                        sponsor: sponsor.sponsorName,
+                        action: 'failed_to_update',
+                        error: 'Database update failed'
+                    });
+                }
+                
+            } catch (error) {
+                results.errors++;
+                console.error(`❌ Error processing ${sponsor.sponsorName}:`, error);
+                results.details.push({
+                    sponsor: sponsor.sponsorName,
+                    action: 'error',
+                    error: error.message
+                });
+            }
+        }
+        
+        console.log('📈 Migration Summary:');
+        console.log(`  ✅ Successfully migrated: ${results.migratedCount} sponsors`);
+        console.log(`  ⚠️  Skipped: ${results.skippedCount} sponsors`);
+        console.log(`  ❌ Errors: ${results.errors} sponsors`);
+        console.log(`  📊 Total processed: ${results.totalProcessed} sponsors`);
+        
+        res.status(200).json({
+            success: true,
+            message: 'Affiliate sponsors migration completed',
+            results
+        });
+        
+    } catch (error) {
+        console.error('❌ Migration failed:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Migration failed',
+            error: error.message
+        });
+    }
+});
+
 // Migration endpoint to update sponsor analysis status
 router.post('/migrate-sponsor-status', [auth, admin], async (req, res) => {
     try {
@@ -255,7 +398,7 @@ router.get('/stats', [auth, admin], async (req, res) => {
 // Get all sponsors for admin (both pending and approved)
 router.get('/sponsors/all', [auth, admin], async (req, res) => {
     try {
-        const { page = 1, limit = 50, sortBy = 'dateAdded', sortOrder = 'desc', search = '', filter = 'all', status = 'all' } = req.query;
+        const { page = 1, limit = 50, sortBy = 'dateAdded', sortOrder = 'desc', search = '', filter = 'all', status = 'all', affiliateOnly = 'false' } = req.query;
         
         const skip = (page - 1) * limit;
         
@@ -318,6 +461,14 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
             }
         }
         
+        // Apply affiliate program filter
+        if (affiliateOnly === 'true') {
+            // Only show affiliate programs
+            potentialQuery.isAffiliateProgram = true;
+            sponsorQuery.isAffiliateProgram = true;
+        }
+        // Note: No else clause - by default, show ALL sponsors (both affiliate and non-affiliate)
+        
         // Build sort object
         const sort = {};
         sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
@@ -332,7 +483,7 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
             
             const potentialWithStatus = potentialSponsors.map(sponsor => ({
                 ...sponsor.toObject(),
-                status: sponsor.analysisStatus || 'pending',
+                status: 'pending',  // Potential sponsors are always pending
                 analysisStatus: sponsor.analysisStatus || 'pending'
             }));
             
@@ -347,8 +498,8 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
             
             const approvedWithStatus = approvedSponsors.map(sponsor => ({
                 ...sponsor.toObject(),
-                status: sponsor.analysisStatus || 'complete',
-                analysisStatus: 'complete'
+                status: sponsor.status || 'approved',  // Use the actual status field, default to 'approved'
+                analysisStatus: sponsor.analysisStatus || 'complete'
             }));
             
             sponsors = [...sponsors, ...approvedWithStatus];
@@ -470,7 +621,10 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
     try {
         const { action, sponsorIds } = req.body;
         
+        console.log('Admin bulk-action: Received request:', { action, sponsorIds, count: sponsorIds?.length });
+        
         if (!action || !sponsorIds || !Array.isArray(sponsorIds)) {
+            console.log('Admin bulk-action: Invalid request data');
             return res.status(400).json({ error: 'Invalid request data' });
         }
         
@@ -492,26 +646,65 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
         
         switch (action) {
             case 'approve':
-                // Move sponsors from potential to approved
-                const sponsorsToApprove = await PotentialSponsor.find({ _id: { $in: objectIds } });
+                console.log('Admin bulk-action: Processing approve action for', objectIds.length, 'sponsors');
                 
-                // Create approved sponsors
-                const approvedSponsors = sponsorsToApprove.map(sponsor => ({
-                    sponsorName: sponsor.sponsorName,
-                    sponsorLink: sponsor.sponsorLink,
-                    rootDomain: sponsor.rootDomain,
-                    tags: sponsor.tags,
-                    newsletterSponsored: sponsor.newsletterSponsored,
-                    subscriberCount: sponsor.subscriberCount,
-                    businessContact: sponsor.businessContact
-                }));
+                // Check both collections for sponsors to approve
+                const [potentialSponsorsToApprove, alreadyApprovedSponsors] = await Promise.all([
+                    PotentialSponsor.find({ _id: { $in: objectIds } }),
+                    Sponsor.find({ _id: { $in: objectIds } })
+                ]);
                 
-                await Sponsor.insertMany(approvedSponsors);
+                console.log('Admin bulk-action: Found', potentialSponsorsToApprove.length, 'potential sponsors to approve');
+                console.log('Admin bulk-action: Found', alreadyApprovedSponsors.length, 'already approved sponsors');
                 
-                // Delete from potential sponsors
-                await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
+                if (potentialSponsorsToApprove.length === 0 && alreadyApprovedSponsors.length === 0) {
+                    console.log('Admin bulk-action: No sponsors found to approve in either collection');
+                    return res.status(404).json({ error: 'No sponsors found to approve' });
+                }
                 
-                result = { message: `Approved ${objectIds.length} sponsors` };
+                let approvedCount = 0;
+                
+                // Process potential sponsors (move to approved)
+                if (potentialSponsorsToApprove.length > 0) {
+                    const approvedSponsors = potentialSponsorsToApprove.map(sponsor => ({
+                        sponsorName: sponsor.sponsorName,
+                        sponsorLink: sponsor.sponsorLink,
+                        rootDomain: sponsor.rootDomain,
+                        tags: sponsor.tags,
+                        newsletterSponsored: sponsor.newsletterSponsored,
+                        subscriberCount: sponsor.subscriberCount,
+                        businessContact: sponsor.businessContact,
+                        sponsorEmail: sponsor.sponsorEmail || '',
+                        sponsorApplication: sponsor.sponsorApplication || '',
+                        contactMethod: sponsor.contactMethod || 'none',
+                        isAffiliateProgram: sponsor.isAffiliateProgram || false,
+                        affiliateSignupLink: sponsor.affiliateSignupLink || '',
+                        commissionInfo: sponsor.commissionInfo || '',
+                        status: 'approved',  // Set status to approved
+                        analysisStatus: 'complete'  // Set analysis status to complete
+                    }));
+                    
+                    console.log('Admin bulk-action: Inserting', approvedSponsors.length, 'sponsors into approved collection');
+                    await Sponsor.insertMany(approvedSponsors);
+                    
+                    console.log('Admin bulk-action: Deleting', potentialSponsorsToApprove.length, 'sponsors from potential collection');
+                    await PotentialSponsor.deleteMany({ _id: { $in: potentialSponsorsToApprove.map(s => s._id) } });
+                    
+                    approvedCount += potentialSponsorsToApprove.length;
+                }
+                
+                // Process already approved sponsors (just update status if needed)
+                if (alreadyApprovedSponsors.length > 0) {
+                    console.log('Admin bulk-action: Updating', alreadyApprovedSponsors.length, 'already approved sponsors');
+                    await Sponsor.updateMany(
+                        { _id: { $in: alreadyApprovedSponsors.map(s => s._id) } },
+                        { $set: { status: 'approved', analysisStatus: 'complete' } }
+                    );
+                    approvedCount += alreadyApprovedSponsors.length;
+                }
+                
+                result = { message: `Approved ${approvedCount} sponsors` };
+                console.log('Admin bulk-action: Approve action completed successfully');
                 break;
                 
             case 'reject':
@@ -576,10 +769,45 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                 return res.status(400).json({ error: 'Invalid action' });
         }
         
+        console.log('Admin bulk-action: Sending success response:', result);
         res.status(200).json(result);
     } catch (error) {
-        console.error('Error performing bulk action:', error);
+        console.error('Admin bulk-action: Error performing bulk action:', error);
+        console.error('Admin bulk-action: Error details:', {
+            message: error.message,
+            stack: error.stack,
+            action: req.body.action,
+            sponsorIds: req.body.sponsorIds
+        });
         res.status(500).json({ error: 'Error performing bulk action' });
+    }
+});
+
+// Mark affiliate program as interested
+router.post('/sponsors/:id/mark-interested', [auth, admin], async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+        
+        const sponsor = await Sponsor.findById(id);
+        if (!sponsor) {
+            return res.status(404).json({ error: 'Sponsor not found' });
+        }
+        
+        if (!sponsor.isAffiliateProgram) {
+            return res.status(400).json({ error: 'This is not an affiliate program' });
+        }
+        
+        // Add user to interested list if not already there
+        if (!sponsor.interestedUsers.includes(userId)) {
+            sponsor.interestedUsers.push(userId);
+            await sponsor.save();
+        }
+        
+        res.status(200).json({ message: 'Marked as interested' });
+    } catch (error) {
+        console.error('Error marking affiliate as interested:', error);
+        res.status(500).json({ error: 'Error marking as interested' });
     }
 });
 

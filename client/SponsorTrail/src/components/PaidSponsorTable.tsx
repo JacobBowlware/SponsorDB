@@ -4,7 +4,9 @@ import { faExternalLink, faSpinner, faExclamationTriangle, faSort, faSortUp, faS
 import axios from 'axios';
 import config from '../config';
 import { useNavigate } from 'react-router-dom';
+import AffiliateProgramsTable from './AffiliateProgramsTable';
 import '../css/PaidSponsorTable.css';
+import '../css/components/AffiliateProgramsTable.css';
 
 interface Sponsor {
     _id: string;
@@ -24,6 +26,11 @@ interface Sponsor {
     isApplied?: boolean;
     dateViewed?: string;
     dateApplied?: string;
+    // Affiliate program fields
+    isAffiliateProgram?: boolean;
+    affiliateSignupLink?: string;
+    commissionInfo?: string;
+    interestedUsers?: string[];
     __v?: number;
 }
 
@@ -44,6 +51,24 @@ interface PaidSponsorTableProps {
     searchQuery?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    showAffiliatePrograms?: boolean;
+    user?: {
+        email: string;
+        newsletterInfo?: {
+            name?: string;
+            topic?: string;
+            audience_size?: number;
+            engagement_rate?: number;
+            publishing_frequency?: string;
+            audience_demographics?: {
+                age_range?: string;
+                income_range?: string;
+                location?: string;
+                interests?: string[];
+                job_titles?: string[];
+            };
+        } | null;
+    };
 }
 
 // Define category mappings
@@ -165,10 +190,42 @@ const SAMPLE_SPONSORS: Sponsor[] = [
         dateAdded: '2024-03-01',
         isViewed: true,
         isApplied: false
+    },
+    {
+        _id: '9',
+        sponsorName: 'Amazon Associates',
+        sponsorLink: 'https://affiliate-program.amazon.com',
+        rootDomain: 'amazon.com',
+        tags: ['Affiliate', 'Ecommerce', 'Retail'],
+        newsletterSponsored: 'The Hustle',
+        subscriberCount: 1000000,
+        businessContact: 'https://affiliate-program.amazon.com/join',
+        isAffiliateProgram: true,
+        affiliateSignupLink: 'https://affiliate-program.amazon.com/join',
+        commissionInfo: 'Up to 10% commission on qualifying purchases',
+        dateAdded: '2024-03-20',
+        isViewed: false,
+        isApplied: false
+    },
+    {
+        _id: '10',
+        sponsorName: 'Shopify Partners',
+        sponsorLink: 'https://partners.shopify.com',
+        rootDomain: 'shopify.com',
+        tags: ['Affiliate', 'Ecommerce', 'Technology'],
+        newsletterSponsored: 'Morning Brew',
+        subscriberCount: 800000,
+        businessContact: 'https://partners.shopify.com/affiliates',
+        isAffiliateProgram: true,
+        affiliateSignupLink: 'https://partners.shopify.com/affiliates',
+        commissionInfo: 'Earn up to $2,000 per referral',
+        dateAdded: '2024-03-25',
+        isViewed: false,
+        isApplied: false
     }
 ];
 
-const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateAdded', sortOrder = 'desc' }) => {
+const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateAdded', sortOrder = 'desc', showAffiliatePrograms = false, user }) => {
     const navigate = useNavigate();
     const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
     const [displayedSponsors, setDisplayedSponsors] = useState<Sponsor[]>([]);
@@ -208,6 +265,9 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
             const response = await axios.get(`${config.backendUrl}sponsors`, {
                 headers: {
                     'x-auth-token': token
+                },
+                params: {
+                    affiliateOnly: showAffiliatePrograms.toString()
                 }
             });
             console.log('Client: Fetched sponsors from server:', response.data);
@@ -248,7 +308,7 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
 
     useEffect(() => {
         fetchAllSponsors();
-    }, []); // Only run once on mount
+    }, [showAffiliatePrograms]); // Refetch when affiliate toggle changes
 
     const filteredSponsors = useMemo(() => {
         let filtered = allSponsors;
@@ -265,6 +325,29 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
             // Only show sponsors that have at least one contact method
             return hasEmail || hasApplication || hasBusinessContact;
         });
+        
+        // Apply affiliate filter if showAffiliatePrograms is true
+        if (showAffiliatePrograms) {
+            console.log('🔍 Filtering for affiliate programs...');
+            console.log('Total sponsors before affiliate filter:', filtered.length);
+            
+            const affiliateSponsors = filtered.filter(sponsor => {
+                const isAffiliate = sponsor.isAffiliateProgram === true || 
+                                   (sponsor.tags && sponsor.tags.includes('Affiliate'));
+                
+                if (isAffiliate) {
+                    console.log('✅ Found affiliate sponsor:', sponsor.sponsorName, {
+                        isAffiliateProgram: sponsor.isAffiliateProgram,
+                        tags: sponsor.tags
+                    });
+                }
+                
+                return isAffiliate;
+            });
+            
+            console.log('Affiliate sponsors found:', affiliateSponsors.length);
+            filtered = affiliateSponsors;
+        }
         
         // Apply category filter - only filter if there are active filters
         if (activeFilter && activeFilter.trim() !== '') {
@@ -289,7 +372,7 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         }
         
         return filtered;
-    }, [allSponsors, activeFilter, searchQuery]);
+    }, [allSponsors, activeFilter, searchQuery, showAffiliatePrograms]);
 
     const sortedSponsors = [...filteredSponsors].sort((a, b) => {
         if (sortBy === 'subscriberCount') {
@@ -490,26 +573,52 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
     };
 
     const generateEmailTemplate = (sponsor: Sponsor) => {
-        // Get user's newsletter name from localStorage or use a default
-        const userNewsletter = localStorage.getItem('userNewsletter') || 'My Newsletter';
+        const newsletterName = user?.newsletterInfo?.name || 'My Newsletter';
+        const newsletterTopic = user?.newsletterInfo?.topic || 'your industry/niche';
+        const audienceSize = user?.newsletterInfo?.audience_size || 0;
+        const engagementRate = user?.newsletterInfo?.engagement_rate || 0;
+        const publishingFreq = user?.newsletterInfo?.publishing_frequency || 'weekly';
+        const demographics = user?.newsletterInfo?.audience_demographics;
         
-        const subject = `Partnership opportunity with ${userNewsletter}`;
+        // Build audience description
+        let audienceDescription = 'a growing community of engaged readers';
+        if (audienceSize > 0) {
+            audienceDescription = `${audienceSize.toLocaleString()} engaged subscribers`;
+        }
+        if (engagementRate > 0) {
+            audienceDescription += ` with a ${engagementRate}% engagement rate`;
+        }
+        
+        // Build demographic info
+        let demographicInfo = '';
+        if (demographics) {
+            const parts = [];
+            if (demographics.age_range) parts.push(`ages ${demographics.age_range}`);
+            if (demographics.income_range) parts.push(`${demographics.income_range} income`);
+            if (demographics.location) parts.push(demographics.location);
+            if (parts.length > 0) {
+                demographicInfo = `\n\nOur audience consists primarily of ${parts.join(', ')} readers.`;
+            }
+        }
+        
+        const subject = `Partnership Opportunity: ${newsletterName}`;
+        
+        // Shortened, more direct body
         const body = `Hi there,
 
-I hope this email finds you well. I'm reaching out from ${userNewsletter}, and I'd love to explore a potential partnership opportunity with ${sponsor.sponsorName}.
+I'm reaching out from ${newsletterName}, a ${publishingFreq} newsletter focused on ${newsletterTopic}.
 
-I noticed that ${sponsor.sponsorName} has sponsored other newsletters in the past, and I believe our audience would be a great fit for your products/services.
+I noticed ${sponsor.sponsorName} sponsors newsletters in this space, and I think our audience would be a great fit.
 
-About ${userNewsletter}:
-- We have a growing community of engaged readers
-- Our audience is interested in [your industry/niche]
-- We're looking for partners who can provide value to our readers
+Quick stats:
+- ${audienceDescription}
+- ${publishingFreq.charAt(0).toUpperCase() + publishingFreq.slice(1)} publication focused on ${newsletterTopic}${demographicInfo}
 
-Would you be interested in discussing potential sponsorship opportunities? I'd be happy to share more details about our audience and discuss how we can work together.
+Are you open to discussing a sponsorship? Happy to share our media kit and rates.
 
-Best regards,
+Best,
 [Your Name]
-${userNewsletter}`;
+${newsletterName}`;
 
         return {
             subject: encodeURIComponent(subject),
@@ -628,6 +737,16 @@ ${userNewsletter}`;
                     </div>
                 )}
             </div>
+        );
+    }
+
+    // Show affiliate programs table if toggle is on
+    if (showAffiliatePrograms) {
+        return (
+            <AffiliateProgramsTable 
+                onError={onError || (() => {})} 
+                user={user}
+            />
         );
     }
 

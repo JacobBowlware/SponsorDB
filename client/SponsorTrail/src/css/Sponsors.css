@@ -1510,4 +1510,91 @@
     font-size: 0.85rem;
     color: #666;
     font-weight: 500;
+}
+
+/* Affiliate Toggle Styles */
+.affiliate-toggle-section {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.affiliate-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.affiliate-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+}
+
+.affiliate-toggle-input {
+    display: none;
+}
+
+.affiliate-toggle-slider {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #d1d5db;
+    border-radius: 12px;
+    transition: background 0.3s ease;
+}
+
+.affiliate-toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.affiliate-toggle-input:checked + .affiliate-toggle-slider {
+    background: #3b82f6;
+}
+
+.affiliate-toggle-input:checked + .affiliate-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.affiliate-toggle-text {
+    font-size: 14px;
+}
+
+.affiliate-toggle-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.affiliate-toggle-info svg {
+    font-size: 10px;
+}
+
+@media (max-width: 768px) {
+    .affiliate-toggle-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .affiliate-toggle-info {
+        margin-left: 0;
+    }
 } 

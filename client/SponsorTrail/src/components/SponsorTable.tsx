@@ -10,8 +10,14 @@ interface Sponsor {
     subscriberCount: number;
     sponsorEmail?: string;
     sponsorApplication?: string;
+    businessContact?: string;
     contactMethod: 'email' | 'application' | 'both' | 'none';
     dateAdded: string;
+    // Affiliate program fields
+    isAffiliateProgram?: boolean;
+    affiliateSignupLink?: string;
+    commissionInfo?: string;
+    interestedUsers?: string[];
 }
 
 interface SponsorTableProps {

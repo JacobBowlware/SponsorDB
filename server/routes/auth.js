@@ -64,6 +64,9 @@ router.get('/google/callback',
             res.redirect(`${baseUrl}/auth-callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
         } catch (error) {
             console.error('Error generating tokens for Google OAuth:', error);
+            const baseUrl = process.env.NODE_ENV === 'production' 
+                ? 'https://sponsor-db.com'
+                : 'http://localhost:3000';
             res.redirect(`${baseUrl}/login?error=token_generation_failed`);
         }
     }

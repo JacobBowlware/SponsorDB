@@ -44,6 +44,11 @@ const sponsorSchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    businessContact: {
+        type: String,
+        required: false,
+        maxlength: 500
+    },
     contactMethod: {
         type: String,
         enum: ['email', 'application', 'both', 'none'],
@@ -85,6 +90,25 @@ const sponsorSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
+    }],
+    // Affiliate program fields
+    isAffiliateProgram: {
+        type: Boolean,
+        default: false
+    },
+    affiliateSignupLink: {
+        type: String,
+        required: false,
+        maxlength: 500
+    },
+    commissionInfo: {
+        type: String,
+        required: false,
+        maxlength: 500
+    },
+    interestedUsers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }]
 })
 
@@ -100,6 +124,7 @@ const validateSponsor = (sponsor) => {
         subscriberCount: Joi.number(),
         sponsorEmail: Joi.string().allow(''),
         sponsorApplication: Joi.string().allow(''),
+        businessContact: Joi.string().max(500).allow(''),
         contactMethod: Joi.string().valid('email', 'application', 'both', 'none'),
         analysisStatus: Joi.string().valid('complete', 'manual_review_required', 'pending'),
         dateAdded: Joi.date(),
@@ -112,7 +137,11 @@ const validateSponsor = (sponsor) => {
         userApplyDates: Joi.array().items(Joi.object({
             user: Joi.string().required(),
             dateApplied: Joi.date().default(Date.now)
-        }))
+        })),
+        isAffiliateProgram: Joi.boolean().default(false),
+        affiliateSignupLink: Joi.string().max(500).allow(''),
+        commissionInfo: Joi.string().max(500).allow(''),
+        interestedUsers: Joi.array().items(Joi.string())
     });
 
     return schema.validate(sponsor);

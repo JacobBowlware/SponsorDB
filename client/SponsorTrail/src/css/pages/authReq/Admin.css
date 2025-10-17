@@ -232,19 +232,19 @@
 
 .sponsor-table {
   width: 100%;
-  min-width: 1400px;
+  min-width: 1200px;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 .sponsor-table th {
   background: #f8fafc;
-  padding: 20px 16px;
+  padding: 12px 8px;
   text-align: left;
   font-weight: 600;
   color: #475569;
   border-bottom: 2px solid #e2e8f0;
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -252,16 +252,16 @@
   text-overflow: ellipsis;
 }
 
-/* Column widths */
-.sponsor-table th:nth-child(1) { width: 50px; } /* Checkbox */
-.sponsor-table th:nth-child(2) { width: 220px; } /* Sponsor Name */
-.sponsor-table th:nth-child(3) { width: 160px; } /* Domain */
-.sponsor-table th:nth-child(4) { width: 140px; } /* Email/Application */
-.sponsor-table th:nth-child(5) { width: 120px; } /* Status */
-.sponsor-table th:nth-child(6) { width: 200px; } /* Source */
-.sponsor-table th:nth-child(7) { width: 100px; } /* Audience */
-.sponsor-table th:nth-child(8) { width: 140px; } /* Added Date */
-.sponsor-table th:nth-child(9) { width: 120px; } /* Actions */
+/* Column widths - More compact layout */
+.sponsor-table th:nth-child(1) { width: 40px; } /* Checkbox */
+.sponsor-table th:nth-child(2) { width: 180px; } /* Sponsor Name */
+.sponsor-table th:nth-child(3) { width: 140px; } /* Domain */
+.sponsor-table th:nth-child(4) { width: 120px; } /* Email/Application */
+.sponsor-table th:nth-child(5) { width: 100px; } /* Status */
+.sponsor-table th:nth-child(6) { width: 160px; } /* Source */
+.sponsor-table th:nth-child(7) { width: 80px; } /* Audience */
+.sponsor-table th:nth-child(8) { width: 120px; } /* Added Date */
+.sponsor-table th:nth-child(9) { width: 160px; } /* Actions - More space */
 
 .sponsor-table th.sortable {
   cursor: pointer;
@@ -287,7 +287,7 @@
 }
 
 .sponsor-table td {
-  padding: 20px 16px;
+  padding: 12px 8px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
   white-space: nowrap;
@@ -296,15 +296,15 @@
 }
 
 /* Apply same column widths to table cells */
-.sponsor-table td:nth-child(1) { width: 50px; }
-.sponsor-table td:nth-child(2) { width: 220px; }
-.sponsor-table td:nth-child(3) { width: 160px; }
-.sponsor-table td:nth-child(4) { width: 140px; }
-.sponsor-table td:nth-child(5) { width: 120px; }
-.sponsor-table td:nth-child(6) { width: 200px; }
-.sponsor-table td:nth-child(7) { width: 100px; }
-.sponsor-table td:nth-child(8) { width: 140px; }
-.sponsor-table td:nth-child(9) { width: 120px; }
+.sponsor-table td:nth-child(1) { width: 40px; }
+.sponsor-table td:nth-child(2) { width: 180px; }
+.sponsor-table td:nth-child(3) { width: 140px; }
+.sponsor-table td:nth-child(4) { width: 120px; }
+.sponsor-table td:nth-child(5) { width: 100px; }
+.sponsor-table td:nth-child(6) { width: 160px; }
+.sponsor-table td:nth-child(7) { width: 80px; }
+.sponsor-table td:nth-child(8) { width: 120px; }
+.sponsor-table td:nth-child(9) { width: 160px; }
 
 .sponsor-table tr:hover {
   background: #f8fafc;
@@ -328,9 +328,9 @@
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   transition: all 0.2s ease;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .sponsor-name-link:hover {
@@ -351,35 +351,35 @@
 
 .domain {
   font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
-  font-size: 13px;
+  font-size: 11px;
   color: #64748b;
   background: #f1f5f9;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
   display: inline-block;
 }
 
 .contact-info {
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .contact-both {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: #475569;
 }
 
 .contact-item svg {
   color: #94a3b8;
-  font-size: 12px;
-  width: 14px;
+  font-size: 10px;
+  width: 12px;
 }
 
 .contact-item a {
@@ -395,38 +395,40 @@
 .no-contact {
   color: #94a3b8;
   font-style: italic;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 20px;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
   color: white;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .source {
   color: #64748b;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
 }
 
 .date {
   color: #64748b;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
 }
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
 }
 
 /* Buttons */
@@ -511,10 +513,24 @@
   box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
 }
 
+.btn-info {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.3);
+}
+
+.btn-info:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(6, 182, 212, 0.4);
+}
+
 .btn-sm {
-  padding: 8px 12px;
-  font-size: 12px;
-  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  min-width: 32px;
+  justify-content: center;
 }
 
 /* Empty State */
@@ -770,12 +786,12 @@
   }
   
   .sponsor-table {
-    font-size: 13px;
+    font-size: 11px;
     min-width: 1000px;
   }
   
   .sponsor-table th,
   .sponsor-table td {
-    padding: 12px 8px;
+    padding: 8px 6px;
   }
 }

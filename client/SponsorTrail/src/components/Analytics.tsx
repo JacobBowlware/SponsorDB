@@ -39,6 +39,11 @@ interface Sponsor {
     dateViewed?: string;
     dateApplied?: string;
     appliedBy?: string[];
+    // Affiliate program fields
+    isAffiliateProgram?: boolean;
+    affiliateSignupLink?: string;
+    commissionInfo?: string;
+    interestedUsers?: string[];
 }
 
 interface SponsorApplication {
@@ -275,9 +280,26 @@ const MOCK_SPONSORS: Sponsor[] = [
 
 interface AnalyticsProps {
     isSubscribed: boolean;
+    user?: {
+        email: string;
+        newsletterInfo?: {
+            name?: string;
+            topic?: string;
+            audience_size?: number;
+            engagement_rate?: number;
+            publishing_frequency?: string;
+            audience_demographics?: {
+                age_range?: string;
+                income_range?: string;
+                location?: string;
+                interests?: string[];
+                job_titles?: string[];
+            };
+        } | null;
+    };
 }
 
-const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed }) => {
+const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed, user }) => {
     const navigate = useNavigate();
     const [applications, setApplications] = useState<SponsorApplication[]>([]);
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -497,26 +519,49 @@ const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed }) => {
     };
 
     const handleFollowUp = (item: Conversation | SponsorApplication) => {
-        // Get user's newsletter info from localStorage
-        const userNewsletter = localStorage.getItem('userNewsletter') || 'My Newsletter';
+        // Get user's newsletter info from props or use defaults
+        const newsletterName = user?.newsletterInfo?.name || 'My Newsletter';
+        const newsletterTopic = user?.newsletterInfo?.topic || 'your industry/niche';
+        const audienceSize = user?.newsletterInfo?.audience_size || 0;
+        const engagementRate = user?.newsletterInfo?.engagement_rate || 0;
+        const publishingFreq = user?.newsletterInfo?.publishing_frequency || 'weekly';
+        const demographics = user?.newsletterInfo?.audience_demographics;
         
-        const subject = `Follow-up: Newsletter Sponsorship Opportunity - ${item.sponsorName}`;
+        // Build audience description
+        let audienceDescription = 'a growing community of engaged readers';
+        if (audienceSize > 0) {
+            audienceDescription = `${audienceSize.toLocaleString()} engaged subscribers`;
+        }
+        if (engagementRate > 0) {
+            audienceDescription += ` with a ${engagementRate}% engagement rate`;
+        }
+        
+        // Build demographic info
+        let demographicInfo = '';
+        if (demographics) {
+            const parts = [];
+            if (demographics.age_range) parts.push(`ages ${demographics.age_range}`);
+            if (demographics.income_range) parts.push(`${demographics.income_range} income`);
+            if (demographics.location) parts.push(demographics.location);
+            if (parts.length > 0) {
+                demographicInfo = `\n\nOur audience consists primarily of ${parts.join(', ')} readers.`;
+            }
+        }
+        
+        const subject = `Follow-up: Partnership Opportunity - ${newsletterName}`;
         const body = `Hi there,
 
-I hope this email finds you well. I wanted to follow up on my previous outreach regarding a potential newsletter sponsorship opportunity.
+I wanted to follow up on my previous outreach about a potential newsletter sponsorship opportunity.
 
-About ${userNewsletter}:
-- We have a growing community of engaged readers
-- Our audience is interested in [your industry/niche]
-- We're looking for partners who can provide value to our readers
+Quick reminder about ${newsletterName}:
+- ${audienceDescription}
+- ${publishingFreq.charAt(0).toUpperCase() + publishingFreq.slice(1)} publication focused on ${newsletterTopic}${demographicInfo}
 
-I believe your brand would be a great fit for our audience. Would you be interested in discussing a potential partnership?
+Are you still open to discussing a sponsorship? Happy to share our media kit and rates.
 
-I'd love to schedule a brief call to discuss how we can work together.
-
-Best regards,
+Best,
 [Your Name]
-${userNewsletter}`;
+${newsletterName}`;
 
         // Use the contact email from the application or conversation
         const contactEmail = 'contactEmail' in item ? item.contactEmail : `${item.sponsorName.toLowerCase().replace(/\s+/g, '')}@example.com`;

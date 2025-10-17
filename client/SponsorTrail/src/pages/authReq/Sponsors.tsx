@@ -35,6 +35,23 @@ interface SponsorsProps {
     newsletters: number;
     lastUpdated: string;
     isSubscribed: boolean | string | null;
+    user?: {
+        email: string;
+        newsletterInfo?: {
+            name?: string;
+            topic?: string;
+            audience_size?: number;
+            engagement_rate?: number;
+            publishing_frequency?: string;
+            audience_demographics?: {
+                age_range?: string;
+                income_range?: string;
+                location?: string;
+                interests?: string[];
+                job_titles?: string[];
+            };
+        } | null;
+    };
 }
 
 const stripeAPIKey = "pk_live_51MpGntBKPgChhmNg9wLgFqQICAjXSVAzaEMRKwXjuLQeZZhwghaiA7VDoG0Cov9uEnDGF9RlAKQkQ1xXPSooAX8D00Mp9uCFyO";
@@ -76,13 +93,14 @@ const FILTER_CATEGORIES = [
     { key: 'lifestyle', label: 'Lifestyle', icon: faGlobe, color: '#EC4899' }
 ];
 
-const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed }: SponsorsProps) => {
+const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: SponsorsProps) => {
     const [error, setError] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('dateAdded');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [showAffiliatePrograms, setShowAffiliatePrograms] = useState(false);
     
     // Convert subscription to boolean for backward compatibility
     const hasSubscription = Boolean(isSubscribed);
@@ -225,6 +243,28 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed }: Sponsors
                                     </button>
                                 </div>
                             </div>
+                            
+                            {/* Affiliate Programs Toggle */}
+                            <div className="affiliate-toggle-section">
+                                <div className="affiliate-toggle-container">
+                                    <label className="affiliate-toggle-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={showAffiliatePrograms}
+                                            onChange={(e) => setShowAffiliatePrograms(e.target.checked)}
+                                            className="affiliate-toggle-input"
+                                        />
+                                        <span className="affiliate-toggle-slider"></span>
+                                        <span className="affiliate-toggle-text">
+                                            Show Affiliate Programs
+                                        </span>
+                                    </label>
+                                    <div className="affiliate-toggle-info">
+                                        <FontAwesomeIcon icon={faInfoCircle} />
+                                        <span>Affiliate programs pay commissions instead of direct sponsorships</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -245,6 +285,8 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed }: Sponsors
                                 searchQuery={searchQuery}
                                 sortBy={sortBy}
                                 sortOrder={sortOrder}
+                                user={user}
+                                showAffiliatePrograms={showAffiliatePrograms}
                             />
                         </div>
                     </div>
