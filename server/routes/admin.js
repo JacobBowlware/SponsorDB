@@ -1261,7 +1261,8 @@ router.post('/fix-sponsor-statuses', [auth, admin], async (req, res) => {
                 // Convert manual_review_required to pending
                 isApproved = false;
             } else {
-                isApproved = false;
+                // NEW LOGIC: Auto-approve sponsors with contact info
+                isApproved = hasContact;
             }
             
             if (isApproved) {
@@ -1406,7 +1407,8 @@ router.post('/consolidate-sponsors', [auth, admin], async (req, res) => {
                 // Convert manual_review_required to pending
                 isApproved = false;
             } else {
-                isApproved = false;
+                // NEW LOGIC: Auto-approve sponsors with contact info
+                isApproved = hasContact;
             }
             
             if (isApproved) {
