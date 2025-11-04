@@ -17,26 +17,26 @@ const FAQAccordian = () => {
     return (
         <div className="faq-accordian__container">
             <AccordianItem
-                title="How does the AI-powered sponsor matching work?"
-                content="Our AI analyzes your newsletter's audience demographics, engagement rates, and content to match you with sponsors that are most likely to respond. We track response rates from similar newsletters to ensure you're reaching out to sponsors with proven success rates."
+                title="What do I get with my subscription?"
+                content="Your $20/month subscription gives you access to our database of 100+ verified newsletter sponsors. Each sponsor includes direct contact information (email or application link), company details, and tags to help you find the right sponsors for your newsletter. You also get email templates and basic analytics to track your outreach."
                 onPress={() => {
                     setAcc1Open(!acc1Open);
-                    handleFAQClick("How does the AI-powered sponsor matching work?", !acc1Open);
+                    handleFAQClick("What do I get with my subscription?", !acc1Open);
                 }}
                 isOpen={acc1Open}
             />
             <AccordianItem
-                title="What's the difference between Basic and Pro plans?"
-                content="Basic ($29/month) gives you access to 300+ verified sponsors, basic email templates, and simple analytics. Pro ($79/month) includes AI-powered matching, custom template generation, advanced response rate analytics, and revenue tracking to maximize your earnings."
+                title="How does sponsor matching work?"
+                content="After completing your newsletter onboarding, we'll show you sponsors that match your newsletter's topic and audience. We match sponsors based on their tags and the information you provide about your newsletter (topic, audience demographics, etc.). Complete your newsletter profile to unlock personalized sponsor recommendations."
                 onPress={() => {
                     setAcc2Open(!acc2Open);
-                    handleFAQClick("What's the difference between Basic and Pro plans?", !acc2Open);
+                    handleFAQClick("How does sponsor matching work?", !acc2Open);
                 }}
                 isOpen={acc2Open}
             />
             <AccordianItem
                 title="How much can I expect to earn from sponsorships?"
-                content="Earnings vary based on your audience size and engagement. Our users typically see 2-5x their monthly subscription cost in sponsorship revenue within the first month. The Pro plan's ROI tracking helps you optimize your outreach strategy for maximum earnings."
+                content="Earnings vary significantly based on your audience size, engagement rate, and niche. Newsletter creators typically charge anywhere from $50 to $5,000+ per sponsorship depending on these factors. Our database helps you find sponsors actively looking to work with newsletters like yours."
                 onPress={() => {
                     setAcc3Open(!acc3Open);
                     handleFAQClick("How much can I expect to earn from sponsorships?", !acc3Open);
@@ -44,11 +44,11 @@ const FAQAccordian = () => {
                 isOpen={acc3Open}
             />
             <AccordianItem
-                title="Do you provide email templates that actually work?"
-                content="Yes! Our templates are based on successful outreach campaigns from newsletter creators who've closed deals. Pro users get access to our AI template generator that creates personalized emails based on your audience and the specific sponsor you're targeting."
+                title="Do you provide email templates?"
+                content="Yes! We provide email templates that you can customize for your outreach. These templates are designed to help you introduce your newsletter and start a conversation with potential sponsors. You can personalize them with your newsletter details and audience information."
                 onPress={() => {
                     setAcc4Open(!acc4Open);
-                    handleFAQClick("Do you provide email templates that actually work?", !acc4Open);
+                    handleFAQClick("Do you provide email templates?", !acc4Open);
                 }}
                 isOpen={acc4Open}
             />

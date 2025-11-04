@@ -45,7 +45,7 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
         
         if (userAuth && isSubscribed) {
             trackNavigation('signup', 'sponsors', 'redirect_authenticated_subscribed');
-            navigate('/sponsors');
+            navigate('/subscribe');
         }
         else if (userAuth) {
             trackNavigation('signup', 'subscribe', 'redirect_authenticated_not_subscribed');
@@ -199,13 +199,13 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
                 audience_size: newsletterInfo.audience_size 
             });
             
-            navigate('/sponsors');
+            navigate('/subscribe');
         } catch (error) {
             console.error('Error saving newsletter info:', error);
             // Reset signup flow flag
             setIsInSignupFlow(false);
             // Still navigate to sponsors even if newsletter info fails to save
-            navigate('/sponsors');
+            navigate('/subscribe');
         }
     };
 

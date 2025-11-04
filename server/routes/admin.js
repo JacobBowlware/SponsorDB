@@ -4,11 +4,15 @@ const { PotentialSponsor } = require('../models/potentialSponsor');
 const { Sponsor } = require('../models/sponsor');
 const { DeniedSponsorLink } = require('../models/deniedSponsorLink');
 const { DeniedDomain } = require('../models/deniedDomain');
+const { Newsletter } = require('../models/newsletter');
+const { User } = require('../models/user');
 const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const { spawn } = require('child_process');
 const path = require('path');
+const sendEmail = require('../utils/sendEmail');
+const { renderWeeklySponsorsTemplate } = require('../utils/emailTemplate');
 
 // Migration endpoint to migrate affiliate sponsors
 router.post('/migrate-affiliate-sponsors', [auth, admin], async (req, res) => {
@@ -588,6 +592,8 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
             return res.status(400).json({ error: 'No valid sponsor IDs provided' });
         }
         
+        console.log(`Admin bulk-action: Converted ${objectIds.length} valid ObjectIds from ${sponsorIds.length} provided IDs`);
+        
         switch (action) {
             case 'approve':
                 console.log('Admin bulk-action: Processing approve action for', objectIds.length, 'sponsors');
@@ -651,36 +657,36 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                 console.log('Admin bulk-action: Approve action completed successfully');
                 break;
                 
-            case 'reject':
-                // Add domains to denied list and delete from potential
-                const sponsorsToReject = await PotentialSponsor.find({ _id: { $in: objectIds } });
+            case 'reject': {
+                // Find sponsors to reject
+                const sponsorsToReject = await Sponsor.find({ _id: { $in: objectIds } });
                 
-                // Add to denied domains list
-                const deniedDomains = sponsorsToReject
-                    .filter(sponsor => sponsor.rootDomain)
-                    .map(sponsor => ({
-                        rootDomain: sponsor.rootDomain.toLowerCase(),
-                        reason: 'Bulk rejected by admin',
-                        dateAdded: new Date(),
-                        addedBy: 'admin'
-                    }));
-                
-                if (deniedDomains.length > 0) {
-                    // Use upsert to avoid duplicates
-                    for (const domain of deniedDomains) {
-                        await DeniedDomain.findOneAndUpdate(
-                            { rootDomain: domain.rootDomain },
-                            domain,
-                            { upsert: true, new: true }
-                        );
+                // Extract domains and add to denied list (only if not already denied)
+                for (const sponsor of sponsorsToReject) {
+                    if (sponsor.rootDomain) {
+                        const rootDomain = sponsor.rootDomain.toLowerCase();
+                        
+                        // Check if domain is already denied
+                        const alreadyDenied = await DeniedDomain.findOne({ rootDomain });
+                        
+                        // Only add to denied list if not already there
+                        if (!alreadyDenied) {
+                            await DeniedDomain.create({
+                                rootDomain,
+                                reason: 'Bulk rejected by admin',
+                                dateAdded: new Date(),
+                                addedBy: 'admin'
+                            });
+                        }
                     }
                 }
                 
-                // Delete from potential sponsors
-                await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
+                // Delete from sponsors collection
+                const deletedResult = await Sponsor.deleteMany({ _id: { $in: objectIds } });
                 
-                result = { message: `Rejected ${objectIds.length} sponsors` };
+                result = { message: `Rejected ${deletedResult.deletedCount} sponsors` };
                 break;
+            }
                 
             case 'mark-complete':
                 // Update analysis status to complete for selected sponsors
@@ -699,7 +705,7 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                 result = { message: `Marked ${totalUpdated} sponsors as complete` };
                 break;
                 
-            case 'delete':
+            case 'delete': {
                 // Delete sponsors from both collections
                 const deletedFromPotential = await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
                 const deletedFromSponsors = await Sponsor.deleteMany({ _id: { $in: objectIds } });
@@ -708,6 +714,7 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                 
                 result = { message: `Deleted ${totalDeleted} sponsors` };
                 break;
+            }
                 
             default:
                 return res.status(400).json({ error: 'Invalid action' });
@@ -841,7 +848,7 @@ router.post('/scraper/run', [auth, admin], async (req, res) => {
                         env: {
                             ...process.env,
                             PYTHONPATH: path.join(__dirname, '../newsletter_scraper'),
-                            MAX_EMAILS_PER_RUN: '20'  // Override for admin runs
+                            MAX_EMAILS_PER_RUN: '75'  // Process 75 emails per admin run
                         }
                     });
                     pythonCommand = cmd;
@@ -1721,6 +1728,344 @@ router.get('/export-sponsor-data', [auth, admin], async (req, res) => {
             success: false,
             error: 'Error exporting sponsor data',
             message: error.message 
+        });
+    }
+});
+
+// ============================================
+// NEWSLETTER MANAGEMENT ROUTES
+// ============================================
+
+// Generate a new newsletter edition
+router.post('/newsletter/generate', [auth, admin], async (req, res) => {
+    try {
+        console.log('📧 Generating new newsletter edition...');
+        
+        // Fetch 3-4 sponsors where analysisStatus = 'complete'
+        // First try to find by analysisStatus, fallback to checking contact info
+        let sponsors = await Sponsor.find({
+            analysisStatus: 'complete',
+            status: 'approved'
+        })
+        .sort({ _id: -1 })
+        .limit(4);
+
+        // Fallback: if no results and analysisStatus doesn't exist in schema,
+        // use sponsors with contact info as proxy for 'complete' analysis
+        if (sponsors.length < 3) {
+            sponsors = await Sponsor.find({
+                $or: [
+                    { sponsorEmail: { $exists: true, $ne: '' } },
+                    { sponsorApplication: { $exists: true, $ne: '' } }
+                ],
+                status: 'approved'
+            })
+            .sort({ _id: -1 })
+            .limit(4);
+        }
+
+        if (sponsors.length < 3) {
+            return res.status(400).json({
+                success: false,
+                error: 'Not enough sponsors available. Need at least 3 sponsors with complete analysis.',
+                available: sponsors.length
+            });
+        }
+
+        // Create subject line with current date
+        const currentDate = new Date().toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric' 
+        });
+        const subject = `This week's new sponsors - ${currentDate}`;
+
+        // Create newsletter edition
+        const newsletter = new Newsletter({
+            subject: subject,
+            sponsors: sponsors.map(s => s._id),
+            status: 'draft',
+            createdAt: new Date()
+        });
+
+        await newsletter.save();
+
+        // Populate sponsors for response
+        await newsletter.populate('sponsors');
+
+        console.log(`✅ Newsletter edition created: ${newsletter._id}`);
+
+        res.status(201).json({
+            success: true,
+            newsletter: newsletter
+        });
+
+    } catch (error) {
+        console.error('❌ Error generating newsletter:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error generating newsletter',
+            message: error.message
+        });
+    }
+});
+
+// Update newsletter (subject and/or sponsors)
+router.put('/newsletter/update/:id', [auth, admin], async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { subject, sponsors } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid newsletter ID'
+            });
+        }
+
+        const newsletter = await Newsletter.findById(id);
+
+        if (!newsletter) {
+            return res.status(404).json({
+                success: false,
+                error: 'Newsletter not found'
+            });
+        }
+
+        if (newsletter.status === 'sent') {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot update a newsletter that has already been sent'
+            });
+        }
+
+        // Update fields if provided
+        if (subject) {
+            newsletter.subject = subject;
+        }
+
+        if (sponsors && Array.isArray(sponsors)) {
+            // Validate that all sponsor IDs are valid
+            const validSponsorIds = sponsors.filter(id => mongoose.Types.ObjectId.isValid(id));
+            if (validSponsorIds.length < 3) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'At least 3 valid sponsor IDs are required'
+                });
+            }
+            newsletter.sponsors = validSponsorIds;
+        }
+
+        await newsletter.save();
+        await newsletter.populate('sponsors');
+
+        console.log(`✅ Newsletter updated: ${newsletter._id}`);
+
+        res.json({
+            success: true,
+            newsletter: newsletter
+        });
+
+    } catch (error) {
+        console.error('❌ Error updating newsletter:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating newsletter',
+            message: error.message
+        });
+    }
+});
+
+// Send newsletter to all subscribers
+router.post('/newsletter/send/:id', [auth, admin], async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid newsletter ID'
+            });
+        }
+
+        const newsletter = await Newsletter.findById(id).populate('sponsors');
+
+        if (!newsletter) {
+            return res.status(404).json({
+                success: false,
+                error: 'Newsletter not found'
+            });
+        }
+
+        if (newsletter.status === 'sent') {
+            return res.status(400).json({
+                success: false,
+                error: 'Newsletter has already been sent'
+            });
+        }
+
+        if (newsletter.sponsors.length < 3) {
+            return res.status(400).json({
+                success: false,
+                error: 'Newsletter must have at least 3 sponsors before sending'
+            });
+        }
+
+        // Fetch all newsletter subscribers
+        // Check both: Users with newsletterOptIn = true AND NewsletterSubscriber collection
+        const { NewsletterSubscriber } = require('../models/newsletterSubscriber');
+        
+        // Get users who opted in
+        const subscribedUsers = await User.find({
+            newsletterOptIn: true
+        }).select('email name');
+
+        // Get non-user subscribers
+        const newsletterSubscribers = await NewsletterSubscriber.find({
+            isActive: true
+        }).select('email');
+
+        // Combine and deduplicate by email
+        const subscriberMap = new Map();
+        
+        subscribedUsers.forEach(user => {
+            subscriberMap.set(user.email.toLowerCase(), {
+                email: user.email,
+                name: user.name
+            });
+        });
+
+        newsletterSubscribers.forEach(subscriber => {
+            if (!subscriberMap.has(subscriber.email.toLowerCase())) {
+                subscriberMap.set(subscriber.email.toLowerCase(), {
+                    email: subscriber.email,
+                    name: null // Non-users don't have names
+                });
+            }
+        });
+
+        const subscribers = Array.from(subscriberMap.values());
+
+        if (subscribers.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No subscribers found to send newsletter to'
+            });
+        }
+
+        console.log(`📧 Sending newsletter to ${subscribers.length} subscribers...`);
+
+        // Prepare dashboard and unsubscribe links
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://sponsor-db.com';
+        const dashboardLink = `${frontendUrl}/sponsors`;
+        
+        // Send email to each subscriber
+        let sentCount = 0;
+        let failedCount = 0;
+
+        for (const subscriber of subscribers) {
+            try {
+                // Get subscriber's first name
+                const firstName = subscriber.name ? subscriber.name.split(' ')[0] : 'there';
+                
+                // Generate unsubscribe link (you may want to create a proper unsubscribe endpoint)
+                const unsubscribeLink = `${frontendUrl}/unsubscribe?email=${encodeURIComponent(subscriber.email)}`;
+
+                // Render HTML email template
+                const htmlContent = renderWeeklySponsorsTemplate({
+                    firstName: firstName,
+                    subject: newsletter.subject,
+                    sponsors: newsletter.sponsors,
+                    dashboardLink: dashboardLink,
+                    unsubscribeLink: unsubscribeLink
+                });
+
+                // Generate plain text fallback
+                const textContent = `Hi ${firstName},
+
+Here are some verified sponsors from SponsorDB this week:
+
+${newsletter.sponsors.map((sponsor, index) => {
+    const tags = sponsor.tags && sponsor.tags.length > 0 ? sponsor.tags.join(', ') : 'General';
+    const contact = sponsor.sponsorEmail 
+        ? `Email: ${sponsor.sponsorEmail}` 
+        : sponsor.sponsorApplication 
+            ? `Apply: ${sponsor.sponsorApplication}`
+            : '';
+    
+    return `
+━━━━━━━━━━━━━━━━
+${sponsor.sponsorName}
+${tags}
+${contact}
+View in dashboard: ${dashboardLink}`;
+}).join('\n')}
+
+Browse all 100+ sponsors: ${dashboardLink}
+
+Unsubscribe: ${unsubscribeLink}
+
+The SponsorDB Team`;
+
+                await sendEmail(
+                    subscriber.email,
+                    newsletter.subject,
+                    textContent,
+                    htmlContent
+                );
+                sentCount++;
+            } catch (emailError) {
+                console.error(`Failed to send email to ${subscriber.email}:`, emailError);
+                failedCount++;
+            }
+        }
+
+        // Update newsletter status
+        newsletter.status = 'sent';
+        newsletter.sentAt = new Date();
+        newsletter.recipientCount = sentCount;
+        await newsletter.save();
+
+        console.log(`✅ Newsletter sent: ${sentCount} successful, ${failedCount} failed`);
+
+        res.json({
+            success: true,
+            message: 'Newsletter sent successfully',
+            sentCount: sentCount,
+            failedCount: failedCount,
+            totalRecipients: subscribers.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error sending newsletter:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error sending newsletter',
+            message: error.message
+        });
+    }
+});
+
+// List all newsletters
+router.get('/newsletter/list', [auth, admin], async (req, res) => {
+    try {
+        const newsletters = await Newsletter.find({})
+            .populate('sponsors', 'sponsorName sponsorLink')
+            .sort({ createdAt: -1 })
+            .select('subject status createdAt sentAt recipientCount sponsors');
+
+        res.json({
+            success: true,
+            newsletters: newsletters,
+            count: newsletters.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error listing newsletters:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error listing newsletters',
+            message: error.message
         });
     }
 });

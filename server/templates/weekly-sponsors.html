@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{subject}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .sponsor-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .sponsor-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .sponsor-tags {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .sponsor-contact {
+            margin: 12px 0;
+            font-size: 14px;
+            color: #475569;
+        }
+        .sponsor-contact a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .sponsor-contact a:hover {
+            text-decoration: underline;
+        }
+        .dashboard-link {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 8px 16px;
+            background-color: #3b82f6;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .dashboard-link:hover {
+            background-color: #2563eb;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+        }
+        .footer a {
+            color: #64748b;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .divider {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 20px 0;
+            height: 0;
+        }
+        .divider-text {
+            text-align: center;
+            color: #cbd5e1;
+            font-family: monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1 style="margin: 0 0 10px 0; color: #1e293b; font-size: 24px;">Hi {firstName},</h1>
+            <p style="margin: 0; color: #64748b; font-size: 16px;">Here are some verified sponsors from SponsorDB this week:</p>
+        </div>
+
+        {sponsors}
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="{dashboardLink}" class="dashboard-link">Browse all 100+ sponsors in your dashboard</a>
+        </div>
+
+        <div class="footer">
+            <p style="margin: 5px 0;">
+                <a href="{unsubscribeLink}">Unsubscribe</a> | 
+                <a href="{dashboardLink}">Manage Preferences</a>
+            </p>
+            <p style="margin: 5px 0;">© SponsorDB</p>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -35,15 +35,16 @@ def run_scraper():
         scraper = NewsletterScraper()
         logger.info("NewsletterScraper initialized successfully")
         
-        # Run single scraping cycle with email limit
-        logger.info("Starting scraping cycle with max_emails=20...")
-        scraper.run_scraping_cycle(max_emails=20)
+        # Run single scraping cycle with increased email limit
+        max_emails = int(os.getenv('MAX_EMAILS_PER_RUN', '75'))  # Default 75 emails per run
+        logger.info(f"Starting scraping cycle with max_emails={max_emails}...")
+        
+        # Run scraper and get summary
+        summary = scraper.run_scraping_cycle(max_emails=max_emails)
         logger.info("Scraping cycle completed successfully")
         
-        # Get stats
-        logger.info("Getting database stats...")
+        # Get current database stats (for reference, not logged verbosely)
         stats = scraper.db.get_stats()
-        logger.info(f"Database stats retrieved: {stats}")
         
         # Cleanup
         logger.info("Cleaning up scraper resources...")
@@ -53,17 +54,24 @@ def run_scraper():
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
         
-        # Return results
+        # Return results with clear summary
         result = {
             'success': True,
             'message': 'Newsletter scraper completed successfully',
             'duration_seconds': duration,
-            'stats': stats,
+            'summary': summary,
+            'database_stats': stats,  # Keep for API response but don't log verbosely
             'timestamp': end_time.isoformat()
         }
         
-        logger.info(f"Scraper completed in {duration:.2f} seconds")
-        logger.info(f"Final stats: {stats}")
+        # Log summary (detailed stats already logged by scraper)
+        logger.info(f"✅ API Wrapper: Scraper completed in {duration:.1f}s")
+        if summary.get('error'):
+            logger.error(f"   ❌ Error: {summary.get('error')}")
+        else:
+            logger.info(f"   New Sponsors Added: {summary.get('new_sponsors_added', 0)}")
+            logger.info(f"   Need Review: {summary.get('need_review', 0)}")
+            logger.info(f"   Complete: {summary.get('complete', 0)}")
         
         return result
         

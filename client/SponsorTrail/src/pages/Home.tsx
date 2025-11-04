@@ -4,6 +4,8 @@ import { useEffect, useState, useRef, memo, useCallback } from 'react';
 
 // Components
 import FAQAccordian from "../components/FAQAccordian";
+import NewsletterSubscribe from "../components/NewsletterSubscribe";
+import { User } from "../types/User";
 
 // Font Awesome Icons
 import { faArrowRight, faArrowDown, faCheckCircle, faDatabase, faEnvelope, faChartLine, faSearch, faTimes, faExclamationTriangle, faRocket, faClock, faEnvelopeOpen, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
@@ -23,12 +25,14 @@ interface HomeProps {
     email: string,
     sponsorCount: number,
     newsletterCount: number,
-    lastUpdated: string
+    lastUpdated: string,
+    user?: User
 }
 
 
 
-const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated }: HomeProps) => {
+const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated, user }: HomeProps) => {
+    const isNewsletterSubscribed = user?.newsletterOptIn === true;
     const [arrowPosition, setArrowPosition] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
     
@@ -68,7 +72,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
 
         // Track scroll behavior and section visibility
         const handleScroll = () => {
-            const sections = ['hero', 'demo', 'pricing', 'faq'];
+            const sections = ['hero', 'pricing', 'faq'];
             const newVisibleSections = new Set<string>();
             
             sections.forEach(sectionId => {
@@ -142,9 +146,10 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
         trackUserJourney('pricing_click', 3, { time_on_page: timeOnPage });
     }, [timeOnPage, safeSponsorCount]);
 
-    const handleVideoInteraction = useCallback((action: string) => {
-        trackContentInteraction('demo_video', 'youtube_demo', action, 'home');
-    }, []);
+    // Commented out until we have a working demo video
+    // const handleVideoInteraction = useCallback((action: string) => {
+    //     trackContentInteraction('demo_video', 'youtube_demo', action, 'home');
+    // }, []);
 
     const handleFeatureCardClick = (feature: string) => {
         trackContentInteraction('feature_card', feature, 'click', 'home');
@@ -158,7 +163,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                     <div className="hero-content">
                         <div className="hero-text">
                             <h1 className="web-section__container-header airtable-header text-center">
-                                Access 300+ Verified Newsletter Sponsors
+                                Access {safeSponsorCount}+ Verified Newsletter Sponsors
                             </h1>
                             <p className="hero-text-p">
                                 Stop searching. We've compiled sponsors actively paying for newsletter placements, with direct contact information and pre-filled outreach templates.
@@ -179,7 +184,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                             </div>
                             <div className="hero-buttons">
                                 <Link to="/signup" className="btn home__container-item__btn mb-3" onClick={() => handleSignupClick('hero')}>
-                                    Start Making Money &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                                    Try Free for 14 Days &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
                                 </Link>
                                 <div className="hero-trust-container">
                                     <p className="hero-trust-text">Join newsletter creators already earning with SponsorDB</p>
@@ -424,7 +429,8 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
             </div>
             */}
 
-            {/* Demo Video Section */}
+            {/* Demo Video Section - Commented out until we have a working video */}
+            {/* 
             <div className="web-section web-section-dark" id="demo">
                 <div className="web-section__container web-section-content">
                     <div className="demo-container">
@@ -459,6 +465,7 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                     </div>
                 </div>
             </div>
+            */}
             <div className="web-section web-section-dark subscribe" id="pricing">
                 <div className="web-section__container web-section-content">
                     <div className="home__pricing-container">
@@ -501,8 +508,9 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                                 </div>
                                 
                                 <Link className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" to="/signup" onClick={handlePricingClick}>
-                                    Get Started - $20/month
+                                    Start Free Trial
                                 </Link>
+                                <p className="home__pricing-card__trial-note">Card required • Cancel anytime</p>
                             </div>
                         </div>
                     </div>
@@ -516,8 +524,13 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated 
                 <FAQAccordian />
             </div>
             <Link to="/signup" className="btn home__container-item__btn mb-5" onClick={() => handleSignupClick('bottom')}>
-                Start Making Money&nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                Try Free for 14 Days&nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
             </Link>
+
+            {/* Newsletter Subscribe Section */}
+            <div id="newsletter">
+                <NewsletterSubscribe isSubscribed={isNewsletterSubscribed} />
+            </div>
         </div>
     );
 };

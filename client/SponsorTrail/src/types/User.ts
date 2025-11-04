@@ -88,6 +88,7 @@ export interface User {
   stripeCustomerId: string;
   billing: BillingInfo | null;
   newsletterInfo: NewsletterInfo | null;
+  newsletterOptIn?: boolean;
   sponsor_interactions?: SponsorInteraction[];
   // Additional fields that might be present
   name?: string;

@@ -54,6 +54,8 @@ interface PaidSponsorTableProps {
     sortOrder?: 'asc' | 'desc';
     showAffiliatePrograms?: boolean;
     statusFilter?: string;
+    matchedSponsors?: any[]; // Pre-matched sponsors with match scores
+    showOneTime?: boolean;
     user?: {
         email: string;
         newsletterInfo?: {
@@ -227,7 +229,7 @@ const SAMPLE_SPONSORS: Sponsor[] = [
     }
 ];
 
-const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateAdded', sortOrder = 'desc', showAffiliatePrograms = false, statusFilter = 'all', user }) => {
+const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateAdded', sortOrder = 'desc', showAffiliatePrograms = false, statusFilter = 'all', matchedSponsors, showOneTime = true, user }) => {
     const navigate = useNavigate();
     const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
     const [displayedSponsors, setDisplayedSponsors] = useState<Sponsor[]>([]);
@@ -309,8 +311,14 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
     }, [onError]); // Removed navigate from dependencies
 
     useEffect(() => {
-        fetchAllSponsors();
-    }, [showAffiliatePrograms]); // Refetch when affiliate toggle changes
+        // If matched sponsors provided, use them directly
+        if (matchedSponsors && matchedSponsors.length > 0) {
+            setAllSponsors(matchedSponsors);
+            setLoading(false);
+        } else {
+            fetchAllSponsors();
+        }
+    }, [showAffiliatePrograms, matchedSponsors]); // Refetch when affiliate toggle changes or matched sponsors update
 
     // Helper function to determine sponsor status
     const getSponsorStatus = (sponsor: Sponsor) => {
@@ -338,52 +346,26 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
     const filteredSponsors = useMemo(() => {
         let filtered = allSponsors;
         
-        // Apply status filter first
-        if (statusFilter && statusFilter !== 'all') {
-            filtered = filtered.filter(sponsor => {
-                const sponsorStatus = getSponsorStatus(sponsor);
-                return sponsorStatus === statusFilter;
-            });
+        // Enforce user-facing constraints: only approved sponsors
+        if (!isAdmin) {
+            filtered = filtered.filter(s => s.status === 'approved');
         }
         
-        // Filter out sponsors without contact info (only show sponsors with email or application)
-        // This is now conditional based on status filter
-        if (statusFilter === 'all' || statusFilter === 'complete' || statusFilter === 'pending_with_contact') {
+        // User-facing default: must have contact info unless viewing affiliate programs
+        if (!isAdmin && !showAffiliatePrograms) {
             filtered = filtered.filter(sponsor => {
-                // Check new contact fields first
                 const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
                 const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
                 const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
-                
-                // Also check the legacy businessContact field
                 const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
-                
-                // Only show sponsors that have at least one contact method
                 return hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
             });
         }
         
-        // Apply affiliate filter if showAffiliatePrograms is true
-        if (showAffiliatePrograms) {
-            console.log('🔍 Filtering for affiliate programs...');
-            console.log('Total sponsors before affiliate filter:', filtered.length);
-            
-            const affiliateSponsors = filtered.filter(sponsor => {
-                const isAffiliate = sponsor.isAffiliateProgram === true || 
-                                   (sponsor.tags && sponsor.tags.includes('Affiliate'));
-                
-                if (isAffiliate) {
-                    console.log('✅ Found affiliate sponsor:', sponsor.sponsorName, {
-                        isAffiliateProgram: sponsor.isAffiliateProgram,
-                        tags: sponsor.tags
-                    });
-                }
-                
-                return isAffiliate;
-            });
-            
-            console.log('Affiliate sponsors found:', affiliateSponsors.length);
-            filtered = affiliateSponsors;
+        // Affiliate view: approved affiliates with a valid affiliate application link
+        if (!isAdmin && showAffiliatePrograms) {
+            filtered = filtered.filter(sponsor => (sponsor.isAffiliateProgram === true || (sponsor.tags && sponsor.tags.includes('Affiliate')))
+                && sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '');
         }
         
         // Apply category filter - only filter if there are active filters
@@ -409,7 +391,7 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         }
         
         return filtered;
-    }, [allSponsors, activeFilter, searchQuery, showAffiliatePrograms, statusFilter]);
+    }, [allSponsors, activeFilter, searchQuery, showAffiliatePrograms, isAdmin]);
 
     const sortedSponsors = [...filteredSponsors].sort((a, b) => {
         if (sortBy === 'subscriberCount') {
@@ -418,6 +400,10 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
             return sortOrder === 'asc' ? new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime() : new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
         } else if (sortBy === 'sponsorName') {
             return sortOrder === 'asc' ? a.sponsorName.localeCompare(b.sponsorName) : b.sponsorName.localeCompare(a.sponsorName);
+        } else if (sortBy === 'matchScore') {
+            const scoreA = (a as any).matchScore || 0;
+            const scoreB = (b as any).matchScore || 0;
+            return sortOrder === 'asc' ? scoreA - scoreB : scoreB - scoreA;
         }
         return 0;
     });
@@ -721,12 +707,22 @@ ${newsletterName}`;
                                     <h3 className="sponsor-name">{sponsor.sponsorName}</h3>
                                     <p className="sponsor-domain">{sponsor.rootDomain}</p>
                                 </div>
+                                {(sponsor as any).matchScore !== undefined && (
+                                    <div className="sponsor-match-badge">
+                                        <span className="match-score">{(sponsor as any).matchScore}% Match</span>
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="sponsor-tags">
                                 {sponsor.tags?.map((tag, index) => (
                                     <span key={index} className="sponsor-tag">{tag}</span>
                                 ))}
+                                {(sponsor as any).matchedTags && (sponsor as any).matchedTags.length > 0 && (
+                                    <span className="sponsor-tag sponsor-tag--matched">
+                                        Matches: {(sponsor as any).matchedTags.slice(0, 2).join(', ')}
+                                    </span>
+                                )}
                             </div>
                             
                             <div className="sponsor-details">
@@ -811,7 +807,7 @@ ${newsletterName}`;
                     <tbody>
                         {displayedSponsors.map((sponsor, index) => (
                             <tr key={`${sponsor.sponsorName || index}-${index}`} 
-                                className={`sponsor-table__row ${sponsor.isViewed || sponsor.isApplied ? 'sponsor-table__row--inactive' : ''}`}>
+                                className={`sponsor-table__row ${sponsor.isViewed || sponsor.isApplied ? 'sponsor-table__row--inactive' : ''} ${(sponsor as any).matchScore ? 'sponsor-table__row--matched' : ''}`}>
                                 
                                 {/* Sponsor Name */}
                                 <td className="sponsor-table__cell sponsor-name-cell">
@@ -829,6 +825,9 @@ ${newsletterName}`;
                                                 className="sponsor-table__link-icon" 
                                             />
                                         </a>
+                                        {(sponsor as any).matchScore !== undefined && (
+                                            <span className="match-score-badge">{(sponsor as any).matchScore}% Match</span>
+                                        )}
                                     </div>
                                 </td>
                                 

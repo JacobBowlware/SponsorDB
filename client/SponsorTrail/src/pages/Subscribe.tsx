@@ -14,6 +14,7 @@ interface SubscribeProps {
 
 const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => {
     const [loading, setLoading] = useState<boolean>(false);
+    const [approvedCount, setApprovedCount] = useState<number>(150);
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -33,6 +34,16 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
             navigate('/sponsors');
         }
     }, [userAuth, isSubscribed, subscription, navigate]);
+
+    // Fetch approved sponsor count for dynamic display (fallback 150)
+    useEffect(() => {
+        let mounted = true;
+        axios.get(`${config.backendUrl}sponsors/db-info`).then(res => {
+            if (!mounted) return;
+            setApprovedCount(res.data?.sponsors || 150);
+        }).catch(() => setApprovedCount(150));
+        return () => { mounted = false; };
+    }, []);
 
     const handleSubscribe = async () => {
         setLoading(true);
@@ -80,7 +91,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                     <div className="subscribe-container">
                         <div className="subscribe-header">
                             <h1 className="subscribe-title">
-                                Access Our Sponsor Database
+                                Start your 14-day free trial
                             </h1>
                             <p className="subscribe-subtitle">
                                 Get instant access to verified newsletter sponsors with proven track records. 
@@ -103,7 +114,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                 <div className="home__pricing-card__benefits">
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Access to 300+ verified sponsors</span>
+                                        <span>Access to {approvedCount}+ verified sponsors</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
@@ -136,8 +147,15 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                     onClick={handleSubscribe}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Processing...' : 'Start 2-Week Free Trial'}
+                                    {loading ? 'Processing...' : 'Start Free Trial'}
                                 </button>
+                                <p className="home__pricing-card__trial-note">Card required • Cancel anytime</p>
+                                {(() => {
+                                    const trialEndDate = new Date();
+                                    trialEndDate.setDate(trialEndDate.getDate() + 14);
+                                    const formattedDate = trialEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                                    return <p className="trial-charge-note">Your card will be charged $20 on {formattedDate}</p>;
+                                })()}
                             </div>
                         </div>
 
@@ -151,7 +169,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                         <div className="subscribe-trust">
                             <div className="subscribe-trust__item">
                                 <FontAwesomeIcon icon={faCheckCircle} />
-                                <span>300+ verified sponsors</span>
+                                <span>{approvedCount}+ verified sponsors</span>
                             </div>
                             <div className="subscribe-trust__item">
                                 <FontAwesomeIcon icon={faCheckCircle} />

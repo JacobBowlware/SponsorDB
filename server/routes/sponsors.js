@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const Joi = require('joi');
 const { Sponsor, validateSponsor } = require('../models/sponsor');
 const { PotentialSponsor } = require('../models/potentialSponsor');
 const csv = require('csv-parser');
 const fs = require('fs');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
+const { getMatchedSponsors } = require('../utils/sponsorMatching');
+const { User } = require('../models/user');
 
 // Import sponsors csv
 var Airtable = require('airtable');
@@ -45,6 +48,7 @@ const saveToAirtable = async (sponsor) => {
 router.get('/', auth, async (req, res) => {
     try {
         // Build query based on affiliate filter
+        // Default: Only show sponsors with email, application, or businessContact (NOT affiliate-only)
         let query = {
             $or: [
                 { sponsorEmail: { $exists: true, $ne: '' } },
@@ -53,7 +57,7 @@ router.get('/', auth, async (req, res) => {
             ]
         };
         
-        // Add affiliate filter if requested
+        // Add affiliate filter if requested - only show affiliates when checkbox is checked
         if (req.query.affiliateOnly === 'true') {
             console.log('🔍 Backend: Filtering for affiliate sponsors only');
             const affiliateQuery = {
@@ -62,7 +66,8 @@ router.get('/', auth, async (req, res) => {
                         $or: [
                             { sponsorEmail: { $exists: true, $ne: '' } },
                             { sponsorApplication: { $exists: true, $ne: '' } },
-                            { businessContact: { $exists: true, $ne: '' } }
+                            { businessContact: { $exists: true, $ne: '' } },
+                            { affiliateSignupLink: { $exists: true, $ne: '' } }  // Include affiliate links when filtering for affiliates
                         ]
                     },
                     {
@@ -112,37 +117,18 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-// Get DB info {sponsor count, newsletter count, last updated date}
+// Get DB info {approved sponsor count, newsletter count, last updated date}
 router.get('/db-info', async (req, res) => {
     try {
-        // Get sponsor count - only sponsors with contact info (simplified check)
-        const sponsors = await Sponsor.find({
-            $or: [
-                { sponsorEmail: { $exists: true, $ne: '' } },
-                { sponsorApplication: { $exists: true, $ne: '' } },
-                { businessContact: { $exists: true, $ne: '' } }
-            ]
-        });
-        const sponsorCount = sponsors.length;
+        // Count only approved sponsors for public display
+        const sponsorCount = await Sponsor.countDocuments({ status: 'approved' });
 
-        // Get newsletter count - only from sponsors with contact info
-        const newsletters = await Sponsor.distinct("newsletterSponsored", {
-            $or: [
-                { sponsorEmail: { $exists: true, $ne: '' } },
-                { sponsorApplication: { $exists: true, $ne: '' } },
-                { businessContact: { $exists: true, $ne: '' } }
-            ]
-        });
+        // Get newsletter count from approved sponsors only
+        const newsletters = await Sponsor.distinct("newsletterSponsored", { status: 'approved' });
         const newsletterCount = newsletters.length;
 
-        // Get last updated date (from most recently added sponsor with contact info)
-        const lastSponsor = await Sponsor.find({
-            $or: [
-                { sponsorEmail: { $exists: true, $ne: '' } },
-                { sponsorApplication: { $exists: true, $ne: '' } },
-                { businessContact: { $exists: true, $ne: '' } }
-            ]
-        }).sort({ _id: -1 }).limit(1);
+        // Get last updated date among approved sponsors
+        const lastSponsor = await Sponsor.find({ status: 'approved' }).sort({ _id: -1 }).limit(1);
         
         // Use _id timestamp if dateAdded is not available or is old
         let lastUpdated = null;
@@ -358,35 +344,81 @@ router.get('/sample', async (req, res) => {
 // Update a sponsor
 router.put('/:id', [auth, admin], async (req, res) => {
     try {
-        const { error } = validateSponsor(req.body);
+        // Debug: Log raw incoming body to verify fields received from client
+        console.log('Raw update body for sponsor', req.params.id, ':', req.body);
+
+        // Build update object with all fields that can be updated
+        const updateData = {
+            sponsorName: req.body.sponsorName,
+            sponsorLink: req.body.sponsorLink,
+            rootDomain: req.body.rootDomain,
+            tags: req.body.tags,
+            newsletterSponsored: req.body.newsletterSponsored,
+            subscriberCount: req.body.subscriberCount,
+            sponsorEmail: req.body.sponsorEmail,
+            sponsorApplication: req.body.sponsorApplication,
+            businessContact: req.body.businessContact,
+            contactMethod: req.body.contactMethod,
+            status: req.body.status,
+            isAffiliateProgram: req.body.isAffiliateProgram,
+            affiliateSignupLink: req.body.affiliateSignupLink,
+            commissionInfo: req.body.commissionInfo
+        };
+
+        // Remove undefined/null values to avoid overwriting with undefined
+        // But keep false booleans and empty strings as they are valid values
+        Object.keys(updateData).forEach(key => {
+            if (updateData[key] === undefined || updateData[key] === null) {
+                delete updateData[key];
+            }
+            // Handle empty arrays - remove them if they're empty
+            if (Array.isArray(updateData[key]) && updateData[key].length === 0 && key !== 'tags') {
+                // Keep tags even if empty, remove other empty arrays
+                delete updateData[key];
+            }
+        });
+
+        // Basic validation - make all fields optional for updates
+        const validationSchema = Joi.object({
+            sponsorName: Joi.string().min(2).max(256).optional(),
+            sponsorLink: Joi.string().min(0).max(256).allow('').optional(),
+            rootDomain: Joi.string().max(256).allow('').optional(),
+            tags: Joi.array().items(Joi.string()).max(5).optional(),
+            newsletterSponsored: Joi.string().max(1000).allow('').optional(),
+            subscriberCount: Joi.number().optional(),
+            sponsorEmail: Joi.string().allow('').optional(),
+            sponsorApplication: Joi.string().allow('').optional(),
+            businessContact: Joi.string().max(500).allow('').optional(),
+            contactMethod: Joi.string().valid('email', 'application', 'both', 'none').optional(),
+            status: Joi.string().valid('pending', 'approved').optional(),
+            isAffiliateProgram: Joi.boolean().optional(),
+            affiliateSignupLink: Joi.string().max(500).allow('').optional(),
+            commissionInfo: Joi.string().max(500).allow('').optional()
+        }).unknown(false); // Don't allow unknown fields
+
+        const { error } = validationSchema.validate(updateData);
         if (error) {
-            return res.status(400).send(error.details[0].message);
+            console.error('Validation error:', error.details);
+            return res.status(400).json({ error: 'Validation failed', details: error.details[0].message });
         }
+
+        console.log('Updating sponsor:', req.params.id, 'with data:', updateData);
 
         const sponsor = await Sponsor.findByIdAndUpdate(
             req.params.id,
-            {
-                sponsorName: req.body.sponsorName,
-                sponsorLink: req.body.sponsorLink,
-                rootDomain: req.body.rootDomain,
-                tags: req.body.tags,
-                newsletterSponsored: req.body.newsletterSponsored,
-                subscriberCount: req.body.subscriberCount,
-                sponsorEmail: req.body.sponsorEmail,
-                sponsorApplication: req.body.sponsorApplication,
-                contactMethod: req.body.contactMethod
-            },
-            { new: true }
+            { $set: updateData },
+            { new: true, runValidators: false } // Run validators false since we validated above
         );
 
         if (!sponsor) {
             return res.status(404).send('The sponsor with the given ID was not found.');
         }
 
+        console.log('Successfully updated sponsor:', sponsor._id, 'Status:', sponsor.status, 'isAffiliate:', sponsor.isAffiliateProgram);
         res.send(sponsor);
     } catch (e) {
-        console.log("Error updating sponsor", e);
-        res.status(500).send("Error updating sponsor");
+        console.error("Error updating sponsor:", e);
+        res.status(500).json({ error: "Error updating sponsor", message: e.message });
     }
 });
 
@@ -610,6 +642,70 @@ router.post('/:id/apply', auth, async (req, res) => {
         console.log("Error details:", e.message);
         console.log("Error stack:", e.stack);
         res.status(500).send("Error marking sponsor as applied");
+    }
+});
+
+// Get matched sponsors for current user based on newsletter info
+router.get('/matched', auth, async (req, res) => {
+    try {
+        // Get user with newsletter info
+        const user = await User.findById(req.user._id).select('newsletterInfo');
+        
+        if (!user || !user.newsletterInfo || !user.newsletterInfo.topic) {
+            return res.status(200).json({
+                success: true,
+                requiresOnboarding: true,
+                message: 'Complete newsletter onboarding to see matched sponsors',
+                sponsors: []
+            });
+        }
+        
+        // Get all approved sponsors
+        const sponsors = await Sponsor.find({ 
+            status: 'approved',
+            $or: [
+                { sponsorEmail: { $exists: true, $ne: '' } },
+                { sponsorApplication: { $exists: true, $ne: '' } },
+                { businessContact: { $exists: true, $ne: '' } }
+            ]
+        });
+        
+        // Get matched sponsors
+        const matchedSponsors = getMatchedSponsors(sponsors, user.newsletterInfo, {
+            limit: 20,
+            minScore: 10
+        });
+        
+        // Add user status (viewed/applied) to each sponsor
+        const sponsorsWithStatus = matchedSponsors.map(sponsor => {
+            const sponsorObj = sponsor.toObject ? sponsor.toObject() : sponsor;
+            // Find the original sponsor to check viewed/applied status
+            const originalSponsor = sponsors.find(s => s._id.toString() === sponsorObj._id.toString());
+            const isViewed = originalSponsor && originalSponsor.viewedBy && originalSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
+            const isApplied = originalSponsor && originalSponsor.appliedBy && originalSponsor.appliedBy.some(id => id.toString() === req.user._id.toString());
+            
+            return {
+                ...sponsorObj,
+                isViewed: !!isViewed,
+                isApplied: !!isApplied,
+                matchScore: sponsor.matchScore,
+                matchedTags: sponsor.matchedTags || []
+            };
+        });
+        
+        res.json({
+            success: true,
+            sponsors: sponsorsWithStatus,
+            count: sponsorsWithStatus.length
+        });
+        
+    } catch (error) {
+        console.error('Error fetching matched sponsors:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching matched sponsors',
+            message: error.message
+        });
     }
 });
 

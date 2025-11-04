@@ -154,8 +154,8 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
             if (response.data.checkoutUrl) {
                 window.location.href = response.data.checkoutUrl;
             } else {
-                // Fallback to sponsors page if no checkout URL
-                navigate('/sponsors');
+                // Fallback to subscribe page if no checkout URL
+                navigate('/subscribe');
             }
         } catch (error) {
             console.error('Error during subscription:', error);
@@ -163,8 +163,8 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
             if (onAuthChange) {
                 onAuthChange(true);
             }
-            // Still navigate to sponsors even if subscription fails
-            navigate('/sponsors');
+            // Still navigate to subscribe even if subscription fails
+            navigate('/subscribe');
         }
     };
 
@@ -305,12 +305,24 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
         </div>
     );
 
+    // Calculate trial end date (14 days from now)
+    const getTrialEndDate = () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 14);
+        return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    };
+
     const renderStep2 = () => (
         <div className="signup-step">
             <div className="signup-header">
                 <FontAwesomeIcon icon={faCreditCard} className="signup-icon" />
-                <h1>Choose Your Plan</h1>
-                <p>Get access to verified sponsors and tools to help you connect with them. <strong>Limited Time: 50% off your first month</strong></p>
+                <h1>Start your 14-day free trial</h1>
+                <p>Get access to verified sponsors and tools to help you connect with them.</p>
+            </div>
+            
+            {/* Trial info message */}
+            <div className="trial-info-message">
+                <p>Your trial starts after adding a payment method. You won't be charged until <strong>{getTrialEndDate()}</strong>.</p>
             </div>
             
             {showNewsletterPrompt && (
@@ -373,9 +385,10 @@ const SignupFlow: React.FC<SignupFlowProps> = ({ userAuth, isSubscribed, subscri
                 className="signup-btn" 
                 onClick={handleSubscribe}
             >
-                Start 2-Week Free Trial
+                Start Free Trial
                 <FontAwesomeIcon icon={faArrowRight} />
             </button>
+            <p className="trial-charge-note">Your card will be charged $20 on {getTrialEndDate()}</p>
         </div>
     );
 

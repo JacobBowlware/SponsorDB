@@ -22,7 +22,8 @@ import {
     faDownload,
     faCalendarAlt,
     faArrowTrendUp,
-    faUsers
+    faUsers,
+    faLock
 } from "@fortawesome/free-solid-svg-icons";
 import PaidSponsorTable from "../../components/PaidSponsorTable";
 import axios from 'axios';
@@ -93,14 +94,7 @@ const FILTER_CATEGORIES = [
     { key: 'lifestyle', label: 'Lifestyle', icon: faGlobe, color: '#EC4899' }
 ];
 
-// Status filter options
-const STATUS_FILTERS = [
-    { key: 'all', label: 'All Sponsors', icon: faDatabase, color: '#6B7280' },
-    { key: 'complete', label: 'Complete', icon: faCheckCircle, color: '#10B981' },
-    { key: 'pending_with_contact', label: 'Pending with Contact', icon: faClock, color: '#F59E0B' },
-    { key: 'pending_without_contact', label: 'Pending without Contact', icon: faTimes, color: '#EF4444' },
-    { key: 'complete_missing_contact', label: 'Complete Missing Contact', icon: faInfoCircle, color: '#8B5CF6' }
-];
+// Status filter removed from user-facing UI (internal use only)
 
 const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: SponsorsProps) => {
     const [error, setError] = useState<string | null>(null);
@@ -110,10 +104,46 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
     const [sortBy, setSortBy] = useState('dateAdded');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [showAffiliatePrograms, setShowAffiliatePrograms] = useState(false);
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'matched'>('all');
+    const [matchedSponsors, setMatchedSponsors] = useState<any[]>([]);
+    const [loadingMatches, setLoadingMatches] = useState(false);
+    const [hasOnboarding, setHasOnboarding] = useState(false);
+    // Status filter not exposed to users; filtering enforced in table
     
     // Convert subscription to boolean for backward compatibility
     const hasSubscription = Boolean(isSubscribed);
+    
+    // Check if user has completed onboarding
+    useEffect(() => {
+        const hasTopic = user?.newsletterInfo?.topic && user.newsletterInfo.topic.length > 0;
+        setHasOnboarding(hasTopic || false);
+    }, [user]);
+    
+    // Fetch matched sponsors when tab is switched to matched
+    useEffect(() => {
+        if (activeTab === 'matched' && hasOnboarding && matchedSponsors.length === 0) {
+            fetchMatchedSponsors();
+        }
+    }, [activeTab, hasOnboarding]);
+    
+    const fetchMatchedSponsors = async () => {
+        try {
+            setLoadingMatches(true);
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${config.backendUrl}sponsors/matched`, {
+                headers: { 'x-auth-token': token }
+            });
+            
+            if (response.data.success) {
+                setMatchedSponsors(response.data.sponsors || []);
+            }
+        } catch (error: any) {
+            console.error('Error fetching matched sponsors:', error);
+            setError('Failed to load matched sponsors');
+        } finally {
+            setLoadingMatches(false);
+        }
+    };
 
 
     // Enhanced filter handling with multi-selection
@@ -162,7 +192,28 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
                         </p>
                     </div>
 
+                    {/* Tab Navigation */}
+                    <div className="sponsors-tabs">
+                        <button 
+                            className={`sponsors-tab ${activeTab === 'all' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('all')}
+                        >
+                            <FontAwesomeIcon icon={faDatabase} />
+                            All Sponsors
+                        </button>
+                        <button 
+                            className={`sponsors-tab ${activeTab === 'matched' ? 'active' : ''} ${!hasOnboarding ? 'locked' : ''}`}
+                            onClick={() => hasOnboarding && setActiveTab('matched')}
+                            title={!hasOnboarding ? 'Complete newsletter onboarding to unlock matched sponsors' : ''}
+                        >
+                            <FontAwesomeIcon icon={activeTab === 'matched' && hasOnboarding ? faCheckCircle : faDatabase} />
+                            Best Matches
+                            {!hasOnboarding && <FontAwesomeIcon icon={faLock} className="lock-icon" />}
+                        </button>
+                    </div>
+
                     {/* Professional Search & Filter Module */}
+                    {activeTab === 'all' && (
                     <div className="sponsors-controls-section">
                         <div className="sponsors-controls-header">
                             <h3>Find Your Perfect Sponsors</h3>
@@ -218,23 +269,7 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
                                 </div>
                             </div>
                             
-                            {/* Status Filter Row */}
-                            <div className="status-filters-section">
-                                <h4 className="status-filters-title">Filter by Status</h4>
-                                <div className="status-filters-grid">
-                                    {STATUS_FILTERS.map((status) => (
-                                        <button
-                                            key={status.key}
-                                            className={`status-filter-btn ${statusFilter === status.key ? 'active' : ''}`}
-                                            onClick={() => setStatusFilter(status.key)}
-                                            style={{ '--status-color': status.color } as React.CSSProperties}
-                                        >
-                                            <FontAwesomeIcon icon={status.icon} />
-                                            <span>{status.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Status filter hidden in user-facing UI */}
                             
                             {/* Sorting Row */}
                             <div className="sorting-section">
@@ -295,8 +330,61 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
                             </div>
                         </div>
                     </div>
+                    )}
+
+                    {/* Matched Sponsors Section */}
+                    {activeTab === 'matched' && (
+                        <div className="sponsors-matched-section">
+                            {!hasOnboarding ? (
+                                <div className="sponsors-matched-locked">
+                                    <FontAwesomeIcon icon={faDatabase} className="locked-icon" />
+                                    <h3>Unlock Personalized Sponsor Matches</h3>
+                                    <p>
+                                        Complete your newsletter onboarding to see sponsors that match your newsletter's topic and audience.
+                                    </p>
+                                    <a href="/signup-flow/" className="btn btn-primary">
+                                        Complete Onboarding
+                                    </a>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="sponsors-matched-header">
+                                        <h3>Your Best Matches</h3>
+                                        <p>Sponsors that align with your newsletter's topic and audience</p>
+                                    </div>
+                                    {loadingMatches ? (
+                                        <div className="sponsors-matched-loading">
+                                            <FontAwesomeIcon icon={faClock} spin />
+                                            <span>Finding your matches...</span>
+                                        </div>
+                                    ) : matchedSponsors.length === 0 ? (
+                                        <div className="sponsors-matched-empty">
+                                            <FontAwesomeIcon icon={faInfoCircle} />
+                                            <p>No matches found. Try updating your newsletter profile or browse all sponsors.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="sponsors-matched-content">
+                                            <PaidSponsorTable 
+                                                onError={setError} 
+                                                activeFilter="" 
+                                                isAdmin={isAdmin} 
+                                                searchQuery=""
+                                                sortBy="matchScore"
+                                                sortOrder="desc"
+                                                user={user}
+                                                showAffiliatePrograms={false}
+                                                matchedSponsors={matchedSponsors}
+                                                showOneTime={false}
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
 
                     {/* Professional Table Section */}
+                    {activeTab === 'all' && (
                     <div className="sponsors-table-section">
                         <div className="sponsors-table-header">
                             <h3>Available Sponsors</h3>
@@ -315,10 +403,10 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
                                 sortOrder={sortOrder}
                                 user={user}
                                 showAffiliatePrograms={showAffiliatePrograms}
-                                statusFilter={statusFilter}
                             />
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
         );

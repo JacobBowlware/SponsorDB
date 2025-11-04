@@ -211,15 +211,7 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
                                 />
                                 {errors.affiliateSignupLink && <span className="error-message">{errors.affiliateSignupLink}</span>}
                             </div>
-                            <div className="edit-modal__field">
-                                <label>Commission Information</label>
-                                <textarea
-                                    value={editedSponsor.commissionInfo || ''}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, commissionInfo: e.target.value})}
-                                    placeholder="Commission rates, terms, etc."
-                                    rows={3}
-                                />
-                            </div>
+                            {/* Commission info input removed to keep form simple */}
                         </div>
 
                         {/* Status & Classification Section */}

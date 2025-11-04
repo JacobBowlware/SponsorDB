@@ -100,6 +100,10 @@ const userSchema = new mongoose.Schema({
         required: false,
         default: false
     },
+    newsletterOptIn: {
+        type: Boolean,
+        default: false
+    },
     // New newsletter information
     newsletterInfo: {
         // Basic Info
@@ -253,7 +257,7 @@ const userSchema = new mongoose.Schema({
             type: String
         }
     }]
-});
+}, { timestamps: true });
 
 // Generate access token (short-lived, 15 minutes)
 userSchema.methods.generateAccessToken = function () {
@@ -329,6 +333,7 @@ const validateUser = (user) => {
             trialEnd: Joi.date()
         }),
         isAdmin: Joi.boolean(),
+        newsletterOptIn: Joi.boolean(),
         newsletterInfo: Joi.object({
             name: Joi.string(),
             topic: Joi.string(),

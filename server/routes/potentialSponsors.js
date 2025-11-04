@@ -63,7 +63,9 @@ router.get('/emailMonitor', async (req, res) => {
     res.redirect('/api/potentialSponsors/pythonScraper');
 });
 
-// Route to run Python Newsletter Scraper
+// Public endpoint to run Python Newsletter Scraper
+// Used by Heroku Scheduler - NO AUTH REQUIRED
+// This endpoint processes 75 emails per run
 router.get('/pythonScraper', async (req, res) => {
     const { spawn } = require('child_process');
     const path = require('path');
@@ -81,7 +83,7 @@ router.get('/pythonScraper', async (req, res) => {
                 ...process.env,
                 // Ensure Python can find the modules
                 PYTHONPATH: path.join(__dirname, '../newsletter_scraper'),
-                MAX_EMAILS_PER_RUN: '20'  // Process 20 emails per run
+                MAX_EMAILS_PER_RUN: '75'  // Process 75 emails per run
             }
         });
         

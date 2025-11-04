@@ -29,6 +29,7 @@ import './css/pages/authReq/PaymentSuccess.css'
 import './css/pages/authReq/AuthedLayout.css'
 import './css/pages/Blog.css'
 import './css/pages/BlogPost.css'
+import './css/pages/NewsletterPage.css'
 import './css/Analytics.css'
 
 // Components
@@ -57,6 +58,7 @@ import ChangePassword from './pages/ChangePassword';
 import AuthCallback from './pages/AuthCallback';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
+import NewsletterPage from './pages/NewsletterPage';
 import NewsletterOnboarding from './components/NewsletterOnboarding';
 
 // Authed Pages
@@ -342,8 +344,8 @@ function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root />}>
-        <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} isSubscribed={isSubscribed} email={user.email} sponsorCount={dbInfo.sponsors} />} />
-        <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} isSubscribed={isSubscribed} email={user.email} sponsorCount={dbInfo.sponsors} />} />
+        <Route index element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} isSubscribed={isSubscribed} email={user.email} sponsorCount={dbInfo.sponsors} user={user} />} />
+        <Route path="/*" element={<Home lastUpdated={dbInfo.lastUpdated} newsletterCount={dbInfo.newsletters} isSubscribed={isSubscribed} email={user.email} sponsorCount={dbInfo.sponsors} user={user} />} />
         {/* <Route path="/newsletter/" element={<Newsletter />} /> */}
         <Route path="/login/" element={<Login userAuth={userAuth} isSubscribed={isSubscribed} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} isSubscribed={isSubscribed} sponsorCount={dbInfo.sponsors} newsletterCount={dbInfo.newsletters} onAuthChange={setUserAuth} onUserUpdate={getUserInfo} />} />
@@ -406,6 +408,7 @@ function App() {
         <Route path="/terms-of-service/" element={<TOS />} />
         <Route path="/blog/" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
+        <Route path="/newsletter/" element={<NewsletterPage user={user} userAuth={userAuth} />} />
         {/* Authed Routes */}
         {userAuth && <Route path="/checkout/" element={<Purchase isSubscribed={isSubscribed} sponsorCount={dbInfo.sponsors} />} />}
         {userAuth && <Route path="/profile/" element={<Profile

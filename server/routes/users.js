@@ -7,6 +7,7 @@ const auth = require('../middleware/auth');
 const config = require("config");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const sendEmail = require("../utils/sendEmail");
+const { sendWelcomeEmail, sendNewsletterWelcomeEmail } = require("../utils/sendEmail");
 const jwt = require("jsonwebtoken");
 
 const stripePriceIdTest = "";
@@ -186,6 +187,16 @@ router.post('/', async (req, res) => {
     }
 
 
+    // Check if email exists in newsletter subscribers
+    const { NewsletterSubscriber } = require('../models/newsletterSubscriber');
+    const existingSubscriber = await NewsletterSubscriber.findOne({ 
+        email: req.body.email.toLowerCase(),
+        isActive: true
+    });
+    
+    // If they were a newsletter subscriber, opt them in automatically
+    const shouldOptIn = existingSubscriber !== null || req.body.newsletterOptIn === true;
+
     let user = new User({
         email: req.body.email.toLowerCase(),
         password: "",
@@ -193,13 +204,21 @@ router.post('/', async (req, res) => {
         billing: {
             status: 'incomplete'
         },
-        newsletterInfo: req.body.newsletterInfo || null
+        newsletterInfo: req.body.newsletterInfo || null,
+        newsletterOptIn: shouldOptIn
     });
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(req.body.password, salt);
     try {
         await user.save();
+        
+        // If they were a newsletter subscriber, mark it as merged (or delete)
+        if (existingSubscriber) {
+            existingSubscriber.isActive = false;
+            await existingSubscriber.save();
+            console.log(`Merged newsletter subscriber ${existingSubscriber.email} into user account`);
+        }
     }
     catch (error) {
         return res.status(400).send("A user with this email already exists");
@@ -208,6 +227,14 @@ router.post('/', async (req, res) => {
     const token = user.generateAuthToken();
 
     res.header('x-auth-token', token);
+    
+    // Send welcome email
+    try {
+        await sendWelcomeEmail(user);
+    } catch (error) {
+        console.error("Error sending welcome email:", error);
+    }
+    
     res.status(200).send(_.pick(user, ['_id', 'email']));
 });
 
@@ -663,6 +690,220 @@ router.get('/debug-subscription', auth, async (req, res) => {
     } catch (error) {
         console.error('Debug subscription error:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Test email endpoint for admin
+router.post('/test-email', auth, async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email address is required' });
+        }
+
+        // Send test email
+        await sendEmail(email, 'Test Email from SponsorDB', 
+            `This is a test email from SponsorDB admin panel.\n\nTimestamp: ${new Date().toISOString()}\n\nIf you received this email, the email system is working correctly.`);
+
+        res.status(200).json({ message: 'Test email sent successfully' });
+    } catch (error) {
+        console.error('Error sending test email:', error);
+        res.status(500).json({ error: 'Failed to send test email: ' + error.message });
+    }
+});
+
+// Newsletter subscription endpoint (for non-users)
+router.post('/newsletter/subscribe', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Valid email address is required' 
+            });
+        }
+
+        const { NewsletterSubscriber, validateNewsletterSubscriber } = require('../models/newsletterSubscriber');
+        
+        // Validate email format
+        const { error } = validateNewsletterSubscriber({ email, source: 'homepage' });
+        if (error) {
+            return res.status(400).json({ 
+                success: false, 
+                error: error.details[0].message 
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check if already subscribed (as non-user)
+        let subscriber = await NewsletterSubscriber.findOne({ email: normalizedEmail });
+        
+        if (subscriber) {
+            if (subscriber.isActive) {
+                return res.status(200).json({ 
+                    success: true, 
+                    message: 'You are already subscribed to our newsletter' 
+                });
+            } else {
+                // Reactivate subscription
+                subscriber.isActive = true;
+                subscriber.subscribedAt = new Date();
+                await subscriber.save();
+                
+                // Send welcome email
+                try {
+                    await sendNewsletterWelcomeEmail(normalizedEmail);
+                } catch (emailError) {
+                    console.error('Error sending newsletter welcome email:', emailError);
+                    // Don't fail the subscription if email fails
+                }
+                
+                return res.status(200).json({ 
+                    success: true, 
+                    message: 'Welcome back! You have been resubscribed to our newsletter' 
+                });
+            }
+        }
+
+        // Check if user exists with this email
+        const existingUser = await User.findOne({ email: normalizedEmail });
+        if (existingUser) {
+            // User exists, update their newsletterOptIn
+            existingUser.newsletterOptIn = true;
+            await existingUser.save();
+            
+            // Send welcome email
+            try {
+                await sendNewsletterWelcomeEmail(existingUser.email, existingUser.name);
+            } catch (emailError) {
+                console.error('Error sending newsletter welcome email:', emailError);
+                // Don't fail the subscription if email fails
+            }
+            
+            return res.status(200).json({ 
+                success: true, 
+                message: 'You have been subscribed to our newsletter',
+                isUser: true
+            });
+        }
+
+        // Create new newsletter subscriber
+        subscriber = new NewsletterSubscriber({
+            email: normalizedEmail,
+            source: 'homepage',
+            isActive: true
+        });
+
+        await subscriber.save();
+
+        // Send welcome email
+        try {
+            await sendNewsletterWelcomeEmail(normalizedEmail);
+        } catch (emailError) {
+            console.error('Error sending newsletter welcome email:', emailError);
+            // Don't fail the subscription if email fails
+        }
+
+        res.status(201).json({ 
+            success: true, 
+            message: 'Successfully subscribed to our newsletter! Check your email for confirmation.' 
+        });
+
+    } catch (error) {
+        console.error('Error subscribing to newsletter:', error);
+        if (error.code === 11000) {
+            // Duplicate key error
+            return res.status(200).json({ 
+                success: true, 
+                message: 'You are already subscribed to our newsletter' 
+            });
+        }
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to subscribe. Please try again.' 
+        });
+    }
+});
+
+// Public endpoint to get sent newsletters (for newsletter page)
+router.get('/newsletter/list', async (req, res) => {
+    try {
+        const { Newsletter } = require('../models/newsletter');
+        
+        // Only return sent newsletters, populate sponsor names and links
+        const newsletters = await Newsletter.find({ status: 'sent' })
+            .populate('sponsors', 'sponsorName sponsorLink tags sponsorEmail sponsorApplication')
+            .sort({ sentAt: -1 })
+            .select('subject status sentAt recipientCount sponsors')
+            .limit(20); // Limit to most recent 20
+
+        res.json({
+            success: true,
+            newsletters: newsletters,
+            count: newsletters.length
+        });
+
+    } catch (error) {
+        console.error('Error fetching newsletters:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching newsletters',
+            message: error.message
+        });
+    }
+});
+
+// Newsletter unsubscribe endpoint
+router.post('/newsletter/unsubscribe', async (req, res) => {
+    try {
+        const { email } = req.query;
+        
+        if (!email) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Email address is required' 
+            });
+        }
+
+        const { NewsletterSubscriber } = require('../models/newsletterSubscriber');
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check if user exists
+        const user = await User.findOne({ email: normalizedEmail });
+        if (user) {
+            user.newsletterOptIn = false;
+            await user.save();
+            return res.status(200).json({ 
+                success: true, 
+                message: 'You have been unsubscribed from our newsletter' 
+            });
+        }
+
+        // Check newsletter subscribers
+        const subscriber = await NewsletterSubscriber.findOne({ email: normalizedEmail });
+        if (subscriber) {
+            subscriber.isActive = false;
+            await subscriber.save();
+            return res.status(200).json({ 
+                success: true, 
+                message: 'You have been unsubscribed from our newsletter' 
+            });
+        }
+
+        return res.status(404).json({ 
+            success: false, 
+            error: 'Email address not found in our system' 
+        });
+
+    } catch (error) {
+        console.error('Error unsubscribing from newsletter:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to unsubscribe. Please try again.' 
+        });
     }
 });
 

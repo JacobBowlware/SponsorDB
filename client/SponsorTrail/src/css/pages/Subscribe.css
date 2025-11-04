@@ -27,9 +27,8 @@
 }
 
 .subscribe-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-xl);
+    display: flex;
+    justify-content: center;
     margin-bottom: var(--spacing-2xl);
 }
 
@@ -297,8 +296,7 @@
     }
     
     .subscribe-cards {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
+        justify-content: center;
     }
     
     .subscribe-trust {
@@ -310,4 +308,20 @@
     .subscribe-trust__item {
         justify-content: center;
     }
+}
+
+.home__pricing-card__trial-note {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+}
+
+.trial-charge-note {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
 }

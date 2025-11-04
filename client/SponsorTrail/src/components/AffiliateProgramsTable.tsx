@@ -265,12 +265,7 @@ const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError
                             )}
                         </div>
 
-                        {program.commissionInfo && (
-                            <div className="affiliate-program-commission">
-                                <FontAwesomeIcon icon={faDollarSign} />
-                                <span>{program.commissionInfo}</span>
-                            </div>
-                        )}
+                        {/* Commission info removed to simplify affiliate cards */}
 
                         {program.tags && program.tags.length > 0 && (
                             <div className="affiliate-program-tags">
@@ -307,16 +302,7 @@ const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError
                                 Sign Up
                             </button>
 
-                            <button
-                                className={`affiliate-action-btn affiliate-action-btn--interested ${
-                                    interestedPrograms.has(program._id) ? 'interested' : ''
-                                }`}
-                                onClick={() => handleMarkInterested(program._id)}
-                                title={interestedPrograms.has(program._id) ? 'Marked as interested' : 'Mark as interested'}
-                            >
-                                <FontAwesomeIcon icon={interestedPrograms.has(program._id) ? faCheckCircle : faHeart} />
-                                {interestedPrograms.has(program._id) ? 'Interested' : 'Mark Interested'}
-                            </button>
+                            {/* Interested button removed for affiliate view */}
                         </div>
 
                         <div className="affiliate-program-date">

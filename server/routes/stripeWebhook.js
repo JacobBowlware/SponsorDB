@@ -2,6 +2,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const router = express.Router();
 const { User } = require('../models/user');
+const { sendSubscriptionStartedEmail, sendSubscriptionCancelledEmail } = require('../utils/sendEmail');
 
 // Webhook endpoint for Stripe
 router.post('/', async (req, res) => {
@@ -22,6 +23,12 @@ router.post('/', async (req, res) => {
                 return res.status(404).send("User not found");
             }
 
+            // Get full subscription details from Stripe
+            let subscription = null;
+            if (session.subscription) {
+                subscription = await stripe.subscriptions.retrieve(session.subscription);
+            }
+
             // Update user subscription status
             user.subscription = plan;
             user.stripeCustomerId = session.customer;
@@ -31,9 +38,46 @@ router.post('/', async (req, res) => {
             if (session.subscription && session.subscription.trial_end) {
                 user.trialStatus = 'active';
                 console.log(`User ${userId} started ${plan} plan trial`);
+                
+                // Store trial end date
+                if (subscription) {
+                    user.billing = {
+                        ...user.billing,
+                        status: subscription.status,
+                        stripeSubscriptionId: subscription.id,
+                        stripePriceId: subscription.items.data[0].price.id,
+                        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null
+                    };
+                }
             } else {
                 user.trialStatus = 'none';
                 console.log(`User ${userId} subscribed to ${plan} plan`);
+                
+                // Update billing info (subscription started email sent in subscription.updated)
+                if (subscription) {
+                    const price = await stripe.prices.retrieve(subscription.items.data[0].price.id);
+                    user.billing = {
+                        ...user.billing,
+                        status: subscription.status,
+                        stripeSubscriptionId: subscription.id,
+                        stripePriceId: subscription.items.data[0].price.id,
+                        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                        nextBillingDate: new Date(subscription.current_period_end * 1000),
+                        monthlyCharge: price.unit_amount / 100,
+                        trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null
+                    };
+                    
+                    // Send subscription started email for non-trial subscriptions
+                    try {
+                        await sendSubscriptionStartedEmail(user, user.billing);
+                    } catch (error) {
+                        console.error("Error sending subscription started email:", error);
+                    }
+                }
             }
 
             await user.save();
@@ -46,9 +90,36 @@ router.post('/', async (req, res) => {
 
             const user = await User.findOne({ stripeCustomerId: customerId });
             if (user) {
+                const previousStatus = user.billing?.status;
+                
                 // Update subscription status based on Stripe subscription status
                 if (subscription.status === 'active') {
                     user.subscription = subscription.metadata.plan || 'basic';
+                    user.trialStatus = 'none';
+                    
+                    // Update billing info
+                    const price = await stripe.prices.retrieve(subscription.items.data[0].price.id);
+                    user.billing = {
+                        ...user.billing,
+                        status: subscription.status,
+                        stripeSubscriptionId: subscription.id,
+                        stripePriceId: subscription.items.data[0].price.id,
+                        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                        nextBillingDate: new Date(subscription.current_period_end * 1000),
+                        monthlyCharge: price.unit_amount / 100,
+                        trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null
+                    };
+                    
+                    // Send subscription started email only when transitioning from trial to active
+                    if (previousStatus === 'trialing' && subscription.status === 'active') {
+                        try {
+                            await sendSubscriptionStartedEmail(user, user.billing);
+                        } catch (error) {
+                            console.error("Error sending subscription started email:", error);
+                        }
+                    }
                 } else if (subscription.status === 'trialing') {
                     // User is in trial period
                     user.subscription = subscription.metadata.plan || 'basic';
@@ -71,8 +142,21 @@ router.post('/', async (req, res) => {
                 const previousSubscription = user.subscription;
                 user.subscription = 'none';
                 user.trialStatus = 'expired';
+                
+                // Calculate access end date (end of current period)
+                const accessEndsDate = subscription.current_period_end 
+                    ? new Date(subscription.current_period_end * 1000)
+                    : new Date(); // If no period end, assume immediate
+                
                 await user.save();
                 console.log(`User ${user._id} subscription canceled (was: ${previousSubscription})`);
+                
+                // Send subscription cancelled email
+                try {
+                    await sendSubscriptionCancelledEmail(user, accessEndsDate);
+                } catch (error) {
+                    console.error("Error sending subscription cancelled email:", error);
+                }
             } else {
                 console.log(`User not found for canceled subscription: ${customerId}`);
             }

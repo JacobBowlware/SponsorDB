@@ -94,15 +94,23 @@ SPONSOR_MARKERS = [
     'EXCLUSIVE DEAL'
 ]
 
-# Business Contact Keywords
+# Business Contact Keywords (used for filtering candidate emails)
 BUSINESS_EMAIL_PATTERNS = [
     'partnerships@',
+    'partners@',
+    'partner@',
+    'press@',
+    'pr@',
+    'media@',
     'marketing@',
     'business@',
     'advertising@',
     'sponsors@',
-    'partners@',
-    'media@'
+    'contact@',
+    'hello@',
+    'info@',
+    'support@',
+    'help@'
 ]
 
 # Excluded Domains - Focus on non-sponsor content sites only

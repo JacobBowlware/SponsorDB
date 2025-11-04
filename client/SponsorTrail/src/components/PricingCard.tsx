@@ -29,8 +29,9 @@ const PricingCard = ({ header, icon, price, text, year, handlePurchase }: Pricin
                     {price} {year && <span className="home__pricing-card__price__time">/year</span>} {!year && <span className="home__pricing-card__price__time">/month</span>}
                 </p>
                 <button onClick={handlePurchase} className="home__pricing-card__cta-button">
-                    Start 2-Week Free Trial
+                    Start Free Trial
                 </button>
+                <p className="home__pricing-card__trial-note">Card required • Cancel anytime</p>
             </div>
         </div>
     );

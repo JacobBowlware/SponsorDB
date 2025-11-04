@@ -6,6 +6,7 @@ import axios from "axios";
 
 // Stripe
 import { loadStripe } from '@stripe/stripe-js';
+import { useEffect, useState } from 'react';
 import PricingCard from "./PricingCard";
 
 const stripeAPIKey = "pk_live_51MpGntBKPgChhmNg9wLgFqQICAjXSVAzaEMRKwXjuLQeZZhwghaiA7VDoG0Cov9uEnDGF9RlAKQkQ1xXPSooAX8D00Mp9uCFyO";
@@ -60,15 +61,28 @@ interface PricingProps {
 }
 
 const Pricing = ({ isSubscribed, subscribePage }: PricingProps) => {
+    const [approvedCount, setApprovedCount] = useState<number>(150);
+    useEffect(() => {
+        let mounted = true;
+        axios.get(`${config.backendUrl}sponsors/db-info`).then(res => {
+            if (!mounted) return;
+            setApprovedCount(res.data?.sponsors || 150);
+        }).catch(() => setApprovedCount(150));
+        return () => { mounted = false; };
+    }, []);
+
     return <div className="web-section__container-center web-section-content" id="subscribe">
         <h2 className={"subscribe__header align-left" + (subscribePage ? 'authed_subscribe-header' : '')}>
             Choose Your Plan
         </h2>
+        <div className="pricing-trial-badge-container">
+            <span className="pricing-trial-badge">14-day free trial included</span>
+        </div>
         <div className="subscribe__card-cont authed_subcribe-cont">
             <PricingCard
                 header="Basic"
                 text={[
-                    "Access to 300+ verified sponsors",
+                    `Access to ${approvedCount}+ verified sponsors`,
                     "Basic email templates",
                     "Sponsor search and filtering",
                     "Unlimited outreach emails",

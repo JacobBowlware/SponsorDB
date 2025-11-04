@@ -29,6 +29,9 @@ const Footer = ({ auth }: FooterProps) => {
                         <Link className="footer-link" to="/feedback/">
                             Feedback
                         </Link>
+                        <Link className="footer-link" to="/newsletter/">
+                            Newsletter
+                        </Link>
                     </div>
                 </div>
                 
@@ -84,6 +87,9 @@ const Footer = ({ auth }: FooterProps) => {
                     <div className="footer-contact">
                         <a className="footer-contact-link" href="mailto:info@sponsor-db.com">
                             info@sponsor-db.com
+                        </a>
+                        <a className="footer-contact-link" href="https://x.com/Sponsor_DB" target="_blank" rel="noopener noreferrer">
+                            Twitter
                         </a>
                     </div>
                 </div>

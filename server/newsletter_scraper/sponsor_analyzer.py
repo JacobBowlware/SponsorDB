@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import requests
 from typing import List, Dict, Optional, Tuple
@@ -14,15 +15,64 @@ logger = logging.getLogger(__name__)
 class SponsorAnalyzer:
     def __init__(self):
         self.openai_client = None
+        logger.info("=== INITIALIZING SPONSOR ANALYZER ===")
+        
         # Try to initialize OpenAI client
         try:
+            logger.info("Attempting to import OpenAI package...")
             import openai
             from config import OPENAI_API_KEY
-            if OPENAI_API_KEY:
-                self.openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
-                logger.info("OpenAI client initialized")
+            logger.info("OpenAI package imported successfully")
+            
+            logger.info(f"Checking for OpenAI API key...")
+            if not OPENAI_API_KEY:
+                logger.error("❌ OpenAI API key not found in environment variables")
+                logger.info("Expected environment variable: sponsorDB_openAIKey")
+                logger.info("GPT analysis will be DISABLED")
+                return
+                
+            if not OPENAI_API_KEY.strip():
+                logger.error("❌ OpenAI API key is empty")
+                logger.info("GPT analysis will be DISABLED")
+                return
+                
+            logger.info(f"✅ OpenAI API key found (length: {len(OPENAI_API_KEY)})")
+            logger.info("Creating OpenAI client...")
+            self.openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+            logger.info("✅ OpenAI client created successfully")
+            
+            # Test the client with a simple API call
+            logger.info("Testing OpenAI API connection...")
+            try:
+                test_response = self.openai_client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": "test"}],
+                    max_tokens=1,
+                    temperature=0
+                )
+                logger.info("✅ OpenAI API test successful - GPT analysis ENABLED")
+                logger.info(f"Test response: {test_response.choices[0].message.content}")
+            except Exception as test_error:
+                logger.error(f"❌ OpenAI API test failed: {test_error}")
+                if "insufficient_quota" in str(test_error).lower():
+                    logger.error("❌ OpenAI account needs funding! Visit: https://platform.openai.com/account/billing")
+                elif "invalid_api_key" in str(test_error).lower():
+                    logger.error("❌ Invalid OpenAI API key!")
+                elif "rate_limit" in str(test_error).lower():
+                    logger.error("❌ OpenAI rate limit exceeded!")
+                else:
+                    logger.error(f"❌ Unknown OpenAI error: {test_error}")
+                self.openai_client = None
+                logger.info("GPT analysis will be DISABLED due to API test failure")
+                
+        except ImportError as e:
+            logger.error(f"❌ OpenAI package not available: {e}")
+            logger.info("GPT analysis will be DISABLED")
         except Exception as e:
-            logger.warning(f"OpenAI client not available: {e}")
+            logger.error(f"❌ OpenAI client initialization failed: {e}")
+            logger.info("GPT analysis will be DISABLED")
+        
+        logger.info("=== SPONSOR ANALYZER INITIALIZATION COMPLETE ===")
     
     def analyze_sponsor_section(self, section_data: Dict, newsletter_name: str) -> List[Dict]:
         """Analyze a sponsor section and extract sponsor information"""
@@ -44,7 +94,11 @@ class SponsorAnalyzer:
                     logger.warning(f"Failed to analyze link {link}: {e}")
                     continue
             
-            logger.info(f"Extracted {len(sponsors)} sponsors from section")
+            if sponsors:
+                sponsor_names = [s.get('sponsorName', 'Unknown') for s in sponsors]
+                logger.info(f"✅ Found {len(sponsors)} sponsors: {', '.join(sponsor_names)}")
+            else:
+                logger.debug("No sponsors found in section")
             return sponsors
             
         except Exception as e:
@@ -54,50 +108,41 @@ class SponsorAnalyzer:
     def _analyze_single_link(self, link: str, context: str, newsletter_name: str) -> Optional[Dict]:
         """Analyze a single link and extract sponsor information"""
         try:
-            logger.info(f"=== ANALYZING LINK: {link} ===")
-            
             # Parse URL
             parsed_url = urlparse(link)
             root_domain = self._extract_root_domain(parsed_url.netloc)
-            logger.info(f"Root domain: {root_domain}")
             
             # 1. STRICT DOMAIN BLACKLISTING - Check first!
             if self._is_blacklisted(link, root_domain):
-                logger.info(f"REJECTED: Blacklisted - {link}")
+                logger.debug(f"REJECTED: Blacklisted - {root_domain}")
                 return None
-            logger.info(f"✓ Passed blacklist check")
             
             # 2. CHECK FOR SELF-REFERENCE - Newsletter advertising itself
             newsletter_domain = self._extract_newsletter_domain(newsletter_name)
             if newsletter_domain and root_domain.lower() == newsletter_domain.lower():
-                logger.info(f"REJECTED: Self-reference - {root_domain} matches {newsletter_domain}")
+                logger.debug(f"REJECTED: Self-reference - {root_domain}")
                 return None
             
             # 2b. CHECK FOR NEWSLETTER SELF-PROMOTION PATTERNS
             if self._is_newsletter_self_promotion(root_domain, context):
-                logger.info(f"REJECTED: Newsletter self-promotion - {root_domain}")
+                logger.debug(f"REJECTED: Newsletter self-promotion - {root_domain}")
                 return None
-            logger.info(f"✓ Passed self-reference check")
             
             # 3. REQUIRE MINIMUM TEXT CONTEXT
             if not self._has_sufficient_context(link, context):
-                logger.info(f"REJECTED: Insufficient context - {link}")
+                logger.debug(f"REJECTED: Insufficient context - {root_domain}")
                 return None
-            logger.info(f"✓ Passed context check")
             
             # 4. VALIDATE COMPANY NAME QUALITY
             company_name = self._extract_company_name_from_context(link, context, root_domain)
-            logger.info(f"Extracted company name: {company_name}")
             if not self._is_valid_company_name(company_name):
-                logger.info(f"REJECTED: Invalid company name - {company_name}")
+                logger.debug(f"REJECTED: Invalid company name - {company_name}")
                 return None
-            logger.info(f"✓ Passed company name validation")
             
             # 5. Check if it's a non-sponsor company
             if self._is_non_sponsor_company(company_name, root_domain):
-                logger.info(f"REJECTED: Non-sponsor company - {company_name}")
+                logger.debug(f"REJECTED: Non-sponsor company - {company_name}")
                 return None
-            logger.info(f"✓ Passed non-sponsor check")
             
             # 6. STRENGTHEN SPONSOR VALIDATION - Must be legitimate business
             if not self._is_legitimate_company(company_name, root_domain, link):
@@ -107,11 +152,23 @@ class SponsorAnalyzer:
             
             logger.info(f"SUCCESS: Sponsor passed all checks - {company_name}")
             
+            # Check if link is an affiliate redirect and try to find real domain
+            # e.g., moneypickle.go2cloud.org -> moneypickle.com
+            real_domain = self._extract_real_domain_from_affiliate_redirect(link, root_domain, company_name)
+            domain_for_scraping = real_domain if real_domain else root_domain
+            
+            if real_domain and real_domain.lower() != root_domain.lower():
+                logger.info(f"🔍 Detected affiliate redirect: {root_domain} -> Using real domain: {real_domain}")
+                # Use real domain for scraping, but keep original link
+                url_for_scraping = f"https://{real_domain}"
+            else:
+                url_for_scraping = link if link.startswith(('http://', 'https://')) else f"https://{domain_for_scraping}"
+            
             # Create sponsor data
             sponsor_data = {
                 'sponsorName': company_name,
-                'sponsorLink': link,
-                'rootDomain': root_domain,
+                'sponsorLink': link,  # Keep original link (affiliate redirect)
+                'rootDomain': domain_for_scraping,  # Use real domain if found
                 'newsletterSponsored': newsletter_name,
                 'sourceNewsletter': newsletter_name,
                 'discoveryMethod': 'email_scraper',
@@ -119,8 +176,8 @@ class SponsorAnalyzer:
                 'confidence': 0.0
             }
             
-            # Try to get additional info from the website
-            additional_info = self._scrape_website_info(link, root_domain, newsletter_name)
+            # Try to get additional info from the website (use real domain for email search)
+            additional_info = self._scrape_website_info(url_for_scraping, domain_for_scraping, newsletter_name)
             if additional_info:
                 sponsor_data.update(additional_info)
             
@@ -141,7 +198,20 @@ class SponsorAnalyzer:
             is_affiliate = self._detect_affiliate_program(sponsor_data, context)
             if is_affiliate:
                 sponsor_data['isAffiliateProgram'] = True
-                logger.info(f"Affiliate program detected for: {company_name}")
+                logger.info(f"🔗 Affiliate program detected for: {company_name}")
+                
+                # Try to find affiliate signup link from website footer
+                # Use the real domain URL for scraping (not the affiliate redirect)
+                try:
+                    if url_for_scraping and url_for_scraping.startswith(('http://', 'https://')):
+                        affiliate_link = self._find_affiliate_signup_link(url_for_scraping, domain_for_scraping)
+                        if affiliate_link:
+                            sponsor_data['affiliateSignupLink'] = affiliate_link
+                            logger.info(f"✅ Found affiliate signup link: {affiliate_link}")
+                        else:
+                            logger.warning(f"⚠️ Affiliate program detected but couldn't find signup link for: {company_name}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Error finding affiliate link for {company_name}: {e}")
             
             # 10. AUTOMATIC TAG ASSIGNMENT
             assigned_tags = self._assign_tags_ai(sponsor_data)
@@ -780,6 +850,7 @@ class SponsorAnalyzer:
             description = meta_desc.get('content', '').strip() if meta_desc else ""
             
             # Try to find contact email and application page
+            logger.info(f"🔍 Searching for contact email on website: {url}")
             contact_email = self._find_contact_email(soup, domain)
             application_url = self._find_application_url(soup, domain, url)
             
@@ -791,7 +862,10 @@ class SponsorAnalyzer:
             
             # Set contact information
             if contact_email:
+                logger.info(f"✅ Contact email found and set: {contact_email} for domain: {domain}")
                 info['sponsorEmail'] = contact_email
+            else:
+                logger.warning(f"⚠️ No contact email found for domain: {domain}")
             if application_url:
                 # Validate it's not the newsletter's sponsor page
                 if newsletter_name and self._is_newsletter_sponsor_page(application_url, newsletter_name, domain):
@@ -831,73 +905,223 @@ class SponsorAnalyzer:
             }
     
     def _find_contact_email(self, soup: BeautifulSoup, domain: str) -> Optional[str]:
-        """Find contact email on the website - check multiple sources"""
-        # Look for common email patterns
-        email_patterns = [
-            r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
-        ]
+        """Find contact email on the website - check multiple sources with priority"""
+        logger.info(f"🔍 Starting contact email search for domain: {domain}")
         
         # First check the main page
         text = soup.get_text()
-        email = self._extract_email_from_text(text, domain)
-        if email:
-            return email
+        logger.debug(f"Main page text length: {len(text)} characters")
+        emails = self._extract_emails_from_text(text, domain)
+        logger.info(f"Found {len(emails)} email(s) on main page: {emails}")
+        
+        if emails:
+            best_email = self._select_best_email(emails, domain)
+            if best_email:
+                logger.info(f"✅ Selected best email from main page: {best_email}")
+                return best_email
         
         # Look for contact/about links and check those pages
         contact_links = self._find_contact_links(soup)
+        logger.info(f"Found {len(contact_links)} contact page link(s): {contact_links[:5]}")
+        
+        all_emails = list(emails)  # Start with emails from main page
         for link in contact_links[:3]:  # Limit to first 3 contact links
             try:
-                contact_email = self._scrape_contact_page(link, domain)
-                if contact_email:
-                    return contact_email
+                logger.debug(f"Scraping contact page: {link}")
+                contact_emails = self._scrape_contact_page(link, domain)
+                if contact_emails:
+                    if isinstance(contact_emails, list):
+                        all_emails.extend(contact_emails)
+                    else:
+                        all_emails.append(contact_emails)
+                    logger.info(f"Found {len(contact_emails) if isinstance(contact_emails, list) else 1} email(s) on contact page {link}")
             except Exception as e:
-                logger.debug(f"Failed to scrape contact page {link}: {e}")
+                logger.warning(f"Failed to scrape contact page {link}: {e}")
                 continue
         
+        # Select best email from all found emails
+        if all_emails:
+            best_email = self._select_best_email(all_emails, domain)
+            if best_email:
+                logger.info(f"✅ Selected best email from all sources: {best_email}")
+                return best_email
+        
+        logger.warning(f"❌ No valid contact email found for domain: {domain}")
         return None
     
-    def _extract_email_from_text(self, text: str, domain: str) -> Optional[str]:
-        """Extract business email from text"""
-        email_patterns = [
-            r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
-        ]
+    def _extract_emails_from_text(self, text: str, domain: str) -> List[str]:
+        """Extract all valid business emails from text with improved regex"""
+        logger.debug(f"Extracting emails from text (length: {len(text)} chars) for domain: {domain}")
         
-        for pattern in email_patterns:
-            matches = re.findall(pattern, text)
-            for email in matches:
-                # Clean up the email - remove any extra text that got concatenated
-                email = email.strip()
-                
-                # Validate email format more strictly
-                if not self._is_valid_email(email):
-                    continue
-                    
-                email_lower = email.lower()
-                # Check if it's a business contact email
-                if any(business_pattern in email_lower for business_pattern in BUSINESS_EMAIL_PATTERNS):
-                    return email
-                # Or if it's from the same domain
-                if domain.lower() in email_lower:
-                    return email
+        # Improved regex with word boundaries to prevent capturing extra text
+        # Use \b word boundaries and more precise pattern
+        email_pattern = r'\b[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}\b'
         
-        return None
+        matches = re.findall(email_pattern, text)
+        logger.debug(f"Regex found {len(matches)} potential email matches: {matches[:10]}")
+        
+        valid_emails = []
+        for email in matches:
+            # Clean up the email - remove any extra text that got concatenated
+            email = email.strip()
+            
+            # Remove any trailing punctuation or invalid characters
+            email = self._clean_email(email)
+            
+            # Validate email format more strictly
+            if not self._is_valid_email(email):
+                logger.debug(f"Rejected invalid email: {email}")
+                continue
+            
+            email_lower = email.lower()
+            
+            # Check if it's from the target domain or a business contact email
+            if domain.lower() in email_lower:
+                valid_emails.append(email)
+                logger.debug(f"✅ Accepted email (matches domain): {email}")
+            elif any(business_pattern in email_lower for business_pattern in BUSINESS_EMAIL_PATTERNS):
+                valid_emails.append(email)
+                logger.debug(f"✅ Accepted email (business pattern): {email}")
+            else:
+                logger.debug(f"Rejected email (not matching domain or business pattern): {email}")
+        
+        logger.info(f"Extracted {len(valid_emails)} valid email(s): {valid_emails}")
+        return valid_emails
+    
+    def _clean_email(self, email: str) -> str:
+        """Clean email by removing trailing invalid characters"""
+        # Remove trailing punctuation and whitespace
+        email = email.rstrip(' .,;:!?')
+        
+        # Check for common trailing words that might have been captured
+        # Split on whitespace and take the first part if it looks like an email
+        parts = email.split()
+        if len(parts) > 1:
+            # Check if first part is a valid email
+            if '@' in parts[0] and self._looks_like_valid_email(parts[0]):
+                logger.debug(f"Cleaned email: '{email}' -> '{parts[0]}' (removed trailing text)")
+                return parts[0]
+        
+        # Remove trailing invalid patterns like ".What", ".How", etc.
+        invalid_suffixes = ['.what', '.how', '.when', '.where', '.why', '.which']
+        email_lower = email.lower()
+        for suffix in invalid_suffixes:
+            if email_lower.endswith(suffix):
+                cleaned = email[:-len(suffix)]
+                if self._looks_like_valid_email(cleaned):
+                    logger.debug(f"Cleaned email: '{email}' -> '{cleaned}' (removed invalid suffix '{suffix}')")
+                    return cleaned
+        
+        return email
+    
+    def _looks_like_valid_email(self, text: str) -> bool:
+        """Quick check if text looks like a valid email"""
+        if not text or '@' not in text:
+            return False
+        parts = text.split('@')
+        if len(parts) != 2:
+            return False
+        if '.' not in parts[1]:
+            return False
+        # Check it ends with valid TLD pattern
+        domain_part = parts[1]
+        if len(domain_part) < 4:  # At least "x.co"
+            return False
+        return True
     
     def _is_valid_email(self, email: str) -> bool:
         """Validate email format more strictly"""
         if not email or len(email) < 5:
+            logger.debug(f"Email validation failed: too short - '{email}'")
             return False
             
         # Check for malformed emails (contains extra text)
         if len(email) > 100:  # Emails shouldn't be this long
+            logger.debug(f"Email validation failed: too long - '{email}'")
             return False
+        
+        # Check for invalid patterns that suggest concatenation with surrounding text
+        invalid_patterns = [
+            r'\.(what|how|when|where|why|which)$',  # Ends with .What, .How, etc.
+            r'\s',  # Contains whitespace
+            r'[^\w.@+-]',  # Contains invalid characters (after cleaning)
+        ]
+        
+        for pattern in invalid_patterns:
+            if re.search(pattern, email, re.IGNORECASE):
+                logger.debug(f"Email validation failed: invalid pattern '{pattern}' - '{email}'")
+                return False
             
-        # Check for common concatenation issues
-        if any(word in email.lower() for word in ['documentation', 'get', 'try', 'visit', 'click', 'read']):
+        # Check for common concatenation issues with words
+        invalid_words = ['documentation', 'get', 'try', 'visit', 'click', 'read', 'learn', 'start']
+        email_lower = email.lower()
+        for word in invalid_words:
+            # Check if word appears after @ (should only be domain after @)
+            if '@' in email_lower:
+                domain_part = email_lower.split('@')[1]
+                if word in domain_part:
+                    logger.debug(f"Email validation failed: invalid word '{word}' in domain - '{email}'")
+                    return False
+        
+        # Basic email validation with stricter regex
+        # Must match: local@domain.tld format exactly
+        email_pattern = r'^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            logger.debug(f"Email validation failed: regex mismatch - '{email}'")
             return False
+        
+        # Additional check: domain part should end with valid TLD
+        domain_part = email.split('@')[1]
+        if len(domain_part) < 4:  # At least "x.co"
+            logger.debug(f"Email validation failed: domain too short - '{email}'")
+            return False
+        
+        logger.debug(f"✅ Email validation passed: '{email}'")
+        return True
+    
+    def _select_best_email(self, emails: List[str], domain: str) -> Optional[str]:
+        """Select the best email from a list based on priority"""
+        if not emails:
+            return None
+        
+        logger.info(f"📧 Selecting best email from {len(emails)} candidates: {emails}")
+        
+        # Email priority (higher priority = better)
+        # Priority order: partner@ > press@ > contact@ > support@ > others
+        priority_patterns = [
+            (['partner', 'partnerships', 'partners'], 100),
+            (['press', 'pr', 'media'], 90),
+            (['contact', 'hello', 'info'], 80),
+            (['support', 'help'], 70),
+            (['business', 'marketing', 'advertising', 'sponsors'], 60),
+            ([], 50)  # Default priority for other emails
+        ]
+        
+        scored_emails = []
+        for email in emails:
+            email_lower = email.lower()
+            priority = 50  # Default priority
             
-        # Basic email validation
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        return bool(re.match(email_pattern, email))
+            # Check priority patterns
+            for patterns, score in priority_patterns:
+                if patterns and any(pattern in email_lower for pattern in patterns):
+                    priority = score
+                    break
+            
+            # Bonus points if it matches the domain exactly
+            if f"@{domain.lower()}" in email_lower:
+                priority += 10
+            
+            scored_emails.append((email, priority))
+            logger.debug(f"Email '{email}' scored priority: {priority}")
+        
+        # Sort by priority (higher is better) and return the best one
+        scored_emails.sort(key=lambda x: x[1], reverse=True)
+        best_email = scored_emails[0][0]
+        best_priority = scored_emails[0][1]
+        
+        logger.info(f"🏆 Selected best email: '{best_email}' with priority score: {best_priority}")
+        return best_email
     
     def _find_contact_links(self, soup: BeautifulSoup) -> List[str]:
         """Find contact/about page links"""
@@ -918,14 +1142,18 @@ class SponsorAnalyzer:
         
         return contact_links
     
-    def _scrape_contact_page(self, url: str, domain: str) -> Optional[str]:
-        """Scrape a contact page for email"""
+    def _scrape_contact_page(self, url: str, domain: str) -> List[str]:
+        """Scrape a contact page for emails (returns list)"""
         try:
+            logger.debug(f"Scraping contact page: {url} for domain: {domain}")
+            
             # Make sure URL is absolute
             if url.startswith('/'):
                 url = f"https://{domain}{url}"
             elif not url.startswith('http'):
                 url = f"https://{url}"
+            
+            logger.debug(f"Resolved contact page URL: {url}")
             
             # CHANGED: Reduced timeout from 10 to 5 seconds
             response = requests.get(url, timeout=5, headers={
@@ -936,11 +1164,153 @@ class SponsorAnalyzer:
             soup = BeautifulSoup(response.content, 'html.parser')
             text = soup.get_text()
             
-            return self._extract_email_from_text(text, domain)
+            logger.debug(f"Contact page text length: {len(text)} characters")
+            emails = self._extract_emails_from_text(text, domain)
+            logger.info(f"Found {len(emails)} email(s) on contact page {url}: {emails}")
+            
+            return emails
             
         except Exception as e:
-            logger.debug(f"Failed to scrape contact page {url}: {e}")
+            logger.warning(f"Failed to scrape contact page {url}: {e}")
+            return []
+    
+    def _extract_real_domain_from_affiliate_redirect(self, link: str, current_domain: str, company_name: str) -> Optional[str]:
+        """Extract real company domain from affiliate redirect URLs"""
+        # Known affiliate redirect platforms
+        affiliate_platforms = ['go2cloud.org', 'shareasale.com', 'cj.com', 'impact.com']
+        
+        # Check if current domain is an affiliate platform
+        is_affiliate_redirect = any(platform in current_domain.lower() for platform in affiliate_platforms)
+        
+        if not is_affiliate_redirect:
+            # Check URL patterns for affiliate redirects
+            affiliate_patterns = [r'/aff_c', r'/aff_', r'/ref/', r'[?&]aff_id=', r'[?&]ref=']
+            if not any(re.search(pattern, link.lower()) for pattern in affiliate_patterns):
+                return None
+        
+        logger.debug(f"🔍 Attempting to find real domain from affiliate redirect: {current_domain}")
+        
+        # Strategy 1: Extract from subdomain (e.g., moneypickle.go2cloud.org -> moneypickle)
+        parsed = urlparse(link if link.startswith('http') else f"https://{link}")
+        if '.' in parsed.netloc:
+            subdomain = parsed.netloc.split('.')[0]
+            if len(subdomain) > 3:  # Reasonable subdomain length
+                # Try common TLDs
+                for tld in ['com', 'io', 'ai', 'co', 'app']:
+                    potential = f"{subdomain}.{tld}"
+                    logger.debug(f"🎯 Trying subdomain-based domain: {potential}")
+                    try:
+                        test_url = f"https://{potential}"
+                        response = requests.head(test_url, timeout=2, allow_redirects=True)
+                        if response.status_code < 400:
+                            logger.info(f"✅ Found real domain via subdomain: {potential}")
+                            return potential
+                    except:
+                        continue
+        
+        # Strategy 2: Generate from company name (simple slug)
+        company_slug = re.sub(r'[^a-z0-9]', '', company_name.lower()).strip()
+        if len(company_slug) >= 3 and len(company_slug) <= 30:
+            for tld in ['com', 'io', 'ai', 'co']:
+                potential = f"{company_slug}.{tld}"
+                logger.debug(f"🎯 Trying company-name-based domain: {potential}")
+                try:
+                    test_url = f"https://{potential}"
+                    response = requests.head(test_url, timeout=2, allow_redirects=True)
+                    if response.status_code < 400:
+                        logger.info(f"✅ Found real domain via company name: {potential}")
+                        return potential
+                except:
+                    continue
+        
+        logger.debug(f"⚠️ Could not determine real domain from affiliate redirect")
+        return None
+    
+    def _find_affiliate_signup_link(self, url: str, domain: str) -> Optional[str]:
+        """Find affiliate signup link from website footer - look for 'Affiliates' links"""
+        try:
+            logger.info(f"🔍 Searching for affiliate signup link on: {url}")
+            
+            # Try the main page first
+            response = requests.get(url, timeout=5, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Look for affiliate links in footer and main navigation
+            # Common patterns: "Affiliates", "Affiliate Program", "Become an Affiliate", "Partner Program"
+            affiliate_patterns = [
+                r'affiliate', r'partner.*program', r'referral.*program', 
+                r'become.*affiliate', r'join.*program', r'sign.*up.*affiliate'
+            ]
+            
+            # Search in footer first (most common location)
+            footer = soup.find('footer')
+            if footer:
+                logger.debug("Searching footer for affiliate links...")
+                affiliate_link = self._search_for_affiliate_link_in_element(footer, domain, url, affiliate_patterns)
+                if affiliate_link:
+                    logger.info(f"✅ Found affiliate link in footer: {affiliate_link}")
+                    return affiliate_link
+            
+            # Also check navigation/menu
+            nav = soup.find('nav')
+            if nav:
+                logger.debug("Searching navigation for affiliate links...")
+                affiliate_link = self._search_for_affiliate_link_in_element(nav, domain, url, affiliate_patterns)
+                if affiliate_link:
+                    logger.info(f"✅ Found affiliate link in navigation: {affiliate_link}")
+                    return affiliate_link
+            
+            # Check all links on page as fallback
+            logger.debug("Searching all page links for affiliate links...")
+            for link in soup.find_all('a', href=True):
+                link_text = link.get_text().lower().strip()
+                href = link.get('href', '')
+                
+                # Check if link text matches affiliate patterns
+                for pattern in affiliate_patterns:
+                    if re.search(pattern, link_text, re.IGNORECASE):
+                        # Make sure href is valid
+                        if href.startswith('http'):
+                            logger.info(f"✅ Found affiliate link via text match: {href}")
+                            return href
+                        elif href.startswith('/'):
+                            full_url = f"https://{domain}{href}"
+                            logger.info(f"✅ Found affiliate link (relative): {full_url}")
+                            return full_url
+            
+            logger.warning(f"⚠️ No affiliate signup link found on {url}")
             return None
+            
+        except Exception as e:
+            logger.warning(f"Failed to find affiliate link for {url}: {e}")
+            return None
+    
+    def _search_for_affiliate_link_in_element(self, element, domain: str, base_url: str, patterns: List[str]) -> Optional[str]:
+        """Search for affiliate links within a specific HTML element"""
+        for link in element.find_all('a', href=True):
+            link_text = link.get_text().lower().strip()
+            href = link.get('href', '')
+            
+            # Check if link text matches affiliate patterns
+            for pattern in patterns:
+                if re.search(pattern, link_text, re.IGNORECASE):
+                    # Convert relative URLs to absolute
+                    if href.startswith('http'):
+                        return href
+                    elif href.startswith('/'):
+                        return f"https://{domain}{href}"
+                    elif href.startswith('#'):
+                        # Skip anchor links
+                        continue
+                    else:
+                        # Relative path without leading slash
+                        return f"https://{domain}/{href}"
+        
+        return None
     
     def _find_application_url(self, soup: BeautifulSoup, domain: str, base_url: str) -> Optional[str]:
         """Find application/partnership page URL - ONLY specific sponsor pages"""
@@ -975,10 +1345,12 @@ class SponsorAnalyzer:
     def gpt_analyze_sponsor(self, sponsor_data: Dict) -> Dict:
         """Use GPT to analyze and enhance sponsor data"""
         if not self.openai_client:
-            logger.warning("OpenAI client not available for GPT analysis")
+            logger.warning("⚠️ OpenAI client not available for GPT analysis - skipping GPT enhancement")
             return sponsor_data
         
         try:
+            logger.info(f"🤖 Starting GPT analysis for: {sponsor_data.get('sponsorName', 'Unknown')}")
+            
             # Create a prompt for GPT analysis
             prompt = f"""
             Analyze this potential sponsor and provide structured information:
@@ -1016,7 +1388,7 @@ class SponsorAnalyzer:
             
             # Parse GPT response and update sponsor data
             gpt_response = response.choices[0].message.content
-            logger.info(f"GPT analysis response: {gpt_response}")
+            logger.info(f"✅ GPT analysis completed for {sponsor_data.get('sponsorName', 'Unknown')}")
             
             # Try to extract JSON from response
             try:

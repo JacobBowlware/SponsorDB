@@ -691,10 +691,96 @@
     box-shadow: none;
 }
 
+/* Active Conversations Section */
+.conversations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.conversation-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    align-items: center;
+}
+
+.conversation-item:hover {
+    background: #f8f9fa;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.conversation-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.conversation-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--var-color-text);
+    margin: 0;
+}
+
+.conversation-date {
+    font-size: 0.85rem;
+    color: var(--var-color-text-light);
+    font-weight: 500;
+}
+
+.conversation-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.conversation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.status-badge.pending_response {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+}
+
+.status-badge.follow_up_needed {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8B5CF6;
+}
+
+.status-badge.closed {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6B7280;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .analytics-overview {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .conversation-item {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .conversation-status,
+    .conversation-actions {
+        justify-content: flex-start;
     }
 }
 
@@ -769,6 +855,17 @@
     .sort-filter {
         min-width: auto;
         width: 100%;
+    }
+    
+    .conversation-item {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .conversation-status,
+    .conversation-actions {
+        justify-content: flex-start;
     }
     
 }

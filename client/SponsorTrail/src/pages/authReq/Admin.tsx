@@ -21,7 +21,13 @@ import {
     faTimes as faTimesIcon,
     faEdit,
     faList,
-    faDatabase
+    faDatabase,
+    faPaperPlane,
+    faNewspaper,
+    faSave,
+    faHistory,
+    faEye,
+    faEyeSlash
 } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import config from '../../config';
@@ -86,8 +92,22 @@ const Admin = () => {
     const [exportResults, setExportResults] = useState<any>(null);
     const [showAllSponsors, setShowAllSponsors] = useState(false);
     
+    // Test email state
+    const [testEmail, setTestEmail] = useState('');
+    const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+    const [testEmailResult, setTestEmailResult] = useState<string | null>(null);
+    
     // Edit modal state
     const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
+    
+    // Newsletter state
+    const [newsletters, setNewsletters] = useState<any[]>([]);
+    const [currentNewsletter, setCurrentNewsletter] = useState<any | null>(null);
+    const [isGeneratingNewsletter, setIsGeneratingNewsletter] = useState(false);
+    const [isSendingNewsletter, setIsSendingNewsletter] = useState(false);
+    const [isSavingNewsletter, setIsSavingNewsletter] = useState(false);
+    const [newsletterSubscriberCount, setNewsletterSubscriberCount] = useState<number | null>(null);
+    const [newsletterFilter, setNewsletterFilter] = useState<'all' | 'draft' | 'sent'>('all');
 
     // Status filter options
     const STATUS_FILTERS = [
@@ -221,6 +241,34 @@ const Admin = () => {
         }
     };
 
+    // Handle test email
+    const handleTestEmail = async () => {
+        if (!testEmail.trim()) {
+            setTestEmailResult('Please enter an email address');
+            return;
+        }
+
+        try {
+            setIsSendingTestEmail(true);
+            setTestEmailResult(null);
+            
+            const token = localStorage.getItem('token');
+            const response = await axios.post(`${config.backendUrl}users/test-email`, {
+                email: testEmail.trim()
+            }, {
+                headers: { 'x-auth-token': token }
+            });
+
+            setTestEmailResult('Test email sent successfully!');
+            setTestEmail(''); // Clear the input
+        } catch (err: any) {
+            console.error('Error sending test email:', err);
+            setTestEmailResult(`Failed to send test email: ${err.response?.data?.error || err.message}`);
+        } finally {
+            setIsSendingTestEmail(false);
+        }
+    };
+
     // Handle bulk actions
     const handleBulkAction = async (action: string) => {
         if (selectedSponsors.length === 0) return;
@@ -241,15 +289,20 @@ const Admin = () => {
                 }
             }
             
-            await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
+            const response = await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
                 action,
                 sponsorIds: selectedSponsors
             }, {
                 headers: { 'x-auth-token': token }
             });
             
+            console.log('Bulk action response:', response.data);
+            
             setSelectedSponsors([]);
-            fetchData();
+            // Small delay to ensure database operations complete before refetching
+            setTimeout(() => {
+                fetchData();
+            }, 100);
         } catch (err: any) {
             console.error('Error performing bulk action:', err);
             setError(`Failed to ${action} sponsors`);
@@ -282,15 +335,7 @@ const Admin = () => {
                         return;
                     }
                     
-                    // Call deny-domain API
-                    await axios.post(`${config.backendUrl}admin/deny-domain`, {
-                        rootDomain: sponsor.rootDomain,
-                        reason: 'Rejected by admin'
-                    }, {
-                        headers: { 'x-auth-token': token }
-                    });
-                    
-                    // Also remove from potential sponsors
+                    // Use bulk-action endpoint which handles blacklisting and deletion
                     await axios.post(`${config.backendUrl}admin/sponsors/bulk-action`, {
                         action: 'reject',
                         sponsorIds: [sponsorId]
@@ -343,7 +388,8 @@ const Admin = () => {
             const token = localStorage.getItem('token');
             console.log('Admin: Making API call to update sponsor');
             
-            const response = await axios.put(`${config.backendUrl}sponsors/${updatedSponsor._id}`, {
+            // Build payload and log it before sending
+            const payload = {
                 sponsorName: updatedSponsor.sponsorName,
                 sponsorLink: updatedSponsor.sponsorLink,
                 rootDomain: updatedSponsor.rootDomain,
@@ -352,15 +398,25 @@ const Admin = () => {
                 subscriberCount: updatedSponsor.subscriberCount,
                 sponsorEmail: updatedSponsor.sponsorEmail,
                 sponsorApplication: updatedSponsor.sponsorApplication,
-                contactMethod: updatedSponsor.contactMethod
-            }, {
+                businessContact: updatedSponsor.businessContact,
+                contactMethod: updatedSponsor.contactMethod,
+                status: updatedSponsor.status,
+                isAffiliateProgram: updatedSponsor.isAffiliateProgram,
+                affiliateSignupLink: updatedSponsor.affiliateSignupLink,
+                commissionInfo: updatedSponsor.commissionInfo
+            };
+            console.log('Admin: Sending sponsor update payload:', payload);
+
+            // Send all fields including status, businessContact, and affiliate fields
+            const response = await axios.put(`${config.backendUrl}sponsors/${updatedSponsor._id}`, payload, {
                 headers: { 'x-auth-token': token }
             });
 
             if (response.status === 200) {
                 // Update the sponsor in the local state
+                const saved = response.data as Sponsor;
                 setSponsors(prev => prev.map(sponsor => 
-                    sponsor._id === updatedSponsor._id ? updatedSponsor : sponsor
+                    sponsor._id === saved._id ? { ...sponsor, ...saved } : sponsor
                 ));
                 setEditingSponsor(null);
             }
@@ -374,6 +430,168 @@ const Admin = () => {
     const handleCloseEditModal = () => {
         setEditingSponsor(null);
     };
+
+    // Newsletter functions
+    const fetchNewsletters = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${config.backendUrl}admin/newsletter/list`, {
+                headers: { 'x-auth-token': token }
+            });
+            if (response.data.success) {
+                setNewsletters(response.data.newsletters);
+            }
+        } catch (error) {
+            console.error('Error fetching newsletters:', error);
+            setError('Failed to load newsletters');
+        }
+    };
+
+    const fetchSubscriberCount = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            // We'll estimate subscriber count from the send endpoint response
+            // For now, we'll use a placeholder - in production, you might want a separate endpoint
+            setNewsletterSubscriberCount(null); // Will be set when generating
+        } catch (error) {
+            console.error('Error fetching subscriber count:', error);
+        }
+    };
+
+    const handleGenerateNewsletter = async () => {
+        try {
+            setIsGeneratingNewsletter(true);
+            setError(null);
+            const token = localStorage.getItem('token');
+            const response = await axios.post(`${config.backendUrl}admin/newsletter/generate`, {}, {
+                headers: { 'x-auth-token': token }
+            });
+            
+            if (response.data.success) {
+                setCurrentNewsletter(response.data.newsletter);
+                // Estimate subscriber count (we'll get actual count when sending)
+                // For now, we'll fetch it separately or estimate
+                fetchSubscriberCount();
+            }
+        } catch (error: any) {
+            console.error('Error generating newsletter:', error);
+            setError(error.response?.data?.error || 'Failed to generate newsletter');
+        } finally {
+            setIsGeneratingNewsletter(false);
+        }
+    };
+
+    const handleRegenerateNewsletter = async () => {
+        await handleGenerateNewsletter();
+    };
+
+    const handleSaveNewsletter = async () => {
+        if (!currentNewsletter) return;
+        
+        try {
+            setIsSavingNewsletter(true);
+            setError(null);
+            const token = localStorage.getItem('token');
+            const response = await axios.put(
+                `${config.backendUrl}admin/newsletter/update/${currentNewsletter._id}`,
+                {
+                    subject: currentNewsletter.subject,
+                    sponsors: currentNewsletter.sponsors.map((s: any) => s._id || s)
+                },
+                {
+                    headers: { 'x-auth-token': token }
+                }
+            );
+            
+            if (response.data.success) {
+                setCurrentNewsletter(response.data.newsletter);
+                await fetchNewsletters();
+                alert('Newsletter saved as draft successfully!');
+            }
+        } catch (error: any) {
+            console.error('Error saving newsletter:', error);
+            setError(error.response?.data?.error || 'Failed to save newsletter');
+        } finally {
+            setIsSavingNewsletter(false);
+        }
+    };
+
+    const handleSendNewsletter = async () => {
+        if (!currentNewsletter) return;
+        
+        const confirmed = window.confirm(
+            `Send this newsletter to all subscribers?\n\nSubject: ${currentNewsletter.subject}\n\nThis action cannot be undone.`
+        );
+        
+        if (!confirmed) return;
+
+        try {
+            setIsSendingNewsletter(true);
+            setError(null);
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `${config.backendUrl}admin/newsletter/send/${currentNewsletter._id}`,
+                {},
+                {
+                    headers: { 'x-auth-token': token }
+                }
+            );
+            
+            if (response.data.success) {
+                alert(`Newsletter sent successfully!\n\nSent to: ${response.data.sentCount} subscribers\nFailed: ${response.data.failedCount}`);
+                setCurrentNewsletter(null);
+                await fetchNewsletters();
+            }
+        } catch (error: any) {
+            console.error('Error sending newsletter:', error);
+            setError(error.response?.data?.error || 'Failed to send newsletter');
+        } finally {
+            setIsSendingNewsletter(false);
+        }
+    };
+
+    const handleDeleteNewsletter = async (newsletterId: string) => {
+        const confirmed = window.confirm('Delete this newsletter draft? This action cannot be undone.');
+        if (!confirmed) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            // Note: You may need to add a delete endpoint, or we can just remove from state
+            // For now, we'll just remove from local state if it's a draft
+            setNewsletters(prev => prev.filter(n => n._id !== newsletterId));
+        } catch (error: any) {
+            console.error('Error deleting newsletter:', error);
+            setError('Failed to delete newsletter');
+        }
+    };
+
+    const handleEditNewsletter = async (newsletter: any) => {
+        // Fetch full newsletter with populated sponsors
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${config.backendUrl}admin/newsletter/list`, {
+                headers: { 'x-auth-token': token }
+            });
+            if (response.data.success) {
+                const fullNewsletter = response.data.newsletters.find((n: any) => n._id === newsletter._id);
+                if (fullNewsletter) {
+                    setCurrentNewsletter(fullNewsletter);
+                } else {
+                    setCurrentNewsletter(newsletter);
+                }
+            } else {
+                setCurrentNewsletter(newsletter);
+            }
+        } catch (error) {
+            console.error('Error fetching newsletter details:', error);
+            setCurrentNewsletter(newsletter);
+        }
+    };
+
+    // Fetch newsletters on component mount
+    useEffect(() => {
+        fetchNewsletters();
+    }, []);
 
     // Handle table sorting
     const handleSort = (column: string) => {
@@ -549,6 +767,256 @@ const Admin = () => {
                             <FontAwesomeIcon icon={faRefresh} spin={loading} />
                             Refresh
                         </button>
+                    </div>
+                </div>
+
+                {/* Test Email Section */}
+                <div className="admin-test-email">
+                    <div className="test-email-header">
+                        <h3>Test Email System</h3>
+                        <p>Send a test email to verify the email system is working correctly</p>
+                    </div>
+                    <div className="test-email-form">
+                        <input
+                            type="email"
+                            placeholder="Enter email address to test"
+                            value={testEmail}
+                            onChange={(e) => setTestEmail(e.target.value)}
+                            className="test-email-input"
+                            disabled={isSendingTestEmail}
+                        />
+                        <button
+                            className="btn btn-primary"
+                            onClick={handleTestEmail}
+                            disabled={isSendingTestEmail || !testEmail.trim()}
+                        >
+                            <FontAwesomeIcon icon={isSendingTestEmail ? faSpinner : faPaperPlane} spin={isSendingTestEmail} />
+                            {isSendingTestEmail ? 'Sending...' : 'Send Test Email'}
+                        </button>
+                    </div>
+                    {testEmailResult && (
+                        <div className={`test-email-result ${testEmailResult.includes('successfully') ? 'success' : 'error'}`}>
+                            {testEmailResult}
+                        </div>
+                    )}
+                </div>
+
+                {/* Newsletter Management Section */}
+                <div className="admin-newsletter-section">
+                    <div className="newsletter-header">
+                        <FontAwesomeIcon icon={faNewspaper} />
+                        <h2>Newsletter Management</h2>
+                    </div>
+
+                    {/* Create & Send Newsletter */}
+                    <div className="newsletter-create-section">
+                        <div className="section-header">
+                            <h3>Create & Send Newsletter</h3>
+                            {!currentNewsletter && (
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={handleGenerateNewsletter}
+                                    disabled={isGeneratingNewsletter}
+                                >
+                                    <FontAwesomeIcon icon={isGeneratingNewsletter ? faSpinner : faNewspaper} spin={isGeneratingNewsletter} />
+                                    {isGeneratingNewsletter ? 'Generating...' : 'Generate Newsletter'}
+                                </button>
+                            )}
+                        </div>
+
+                        {currentNewsletter && (
+                            <div className="newsletter-preview">
+                                <div className="newsletter-preview-header">
+                                    <h4>Newsletter Preview</h4>
+                                    <button 
+                                        className="btn btn-sm btn-secondary"
+                                        onClick={() => setCurrentNewsletter(null)}
+                                    >
+                                        <FontAwesomeIcon icon={faTimes} />
+                                        Close
+                                    </button>
+                                </div>
+
+                                <div className="newsletter-preview-content">
+                                    <div className="newsletter-field">
+                                        <label>Subject Line</label>
+                                        <input
+                                            type="text"
+                                            value={currentNewsletter.subject}
+                                            onChange={(e) => setCurrentNewsletter({
+                                                ...currentNewsletter,
+                                                subject: e.target.value
+                                            })}
+                                            className="newsletter-subject-input"
+                                            placeholder="Enter newsletter subject"
+                                        />
+                                    </div>
+
+                                    <div className="newsletter-sponsors">
+                                        <label>Selected Sponsors ({currentNewsletter.sponsors?.length || 0})</label>
+                                        <div className="sponsors-list">
+                                            {currentNewsletter.sponsors?.map((sponsor: any, index: number) => (
+                                                <div key={sponsor._id || index} className="sponsor-item">
+                                                    <div className="sponsor-info">
+                                                        <strong>{sponsor.sponsorName || 'Unknown Sponsor'}</strong>
+                                                        <div className="sponsor-contact">
+                                                            {sponsor.sponsorEmail && (
+                                                                <span className="contact-badge email">
+                                                                    <FontAwesomeIcon icon={faEnvelope} />
+                                                                    Email
+                                                                </span>
+                                                            )}
+                                                            {sponsor.sponsorApplication && (
+                                                                <span className="contact-badge application">
+                                                                    <FontAwesomeIcon icon={faLink} />
+                                                                    Application
+                                                                </span>
+                                                            )}
+                                                            {sponsor.sponsorLink && (
+                                                                <a href={sponsor.sponsorLink} target="_blank" rel="noopener noreferrer" className="sponsor-link">
+                                                                    <FontAwesomeIcon icon={faExternalLink} />
+                                                                    View
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="newsletter-subscriber-info">
+                                        <FontAwesomeIcon icon={faUsers} />
+                                        <span>Will be sent to subscribers (count will be shown when sending)</span>
+                                    </div>
+
+                                    <div className="newsletter-actions">
+                                        <button 
+                                            className="btn btn-secondary"
+                                            onClick={handleRegenerateNewsletter}
+                                            disabled={isGeneratingNewsletter}
+                                        >
+                                            <FontAwesomeIcon icon={faRefresh} spin={isGeneratingNewsletter} />
+                                            Regenerate
+                                        </button>
+                                        <button 
+                                            className="btn btn-info"
+                                            onClick={handleSaveNewsletter}
+                                            disabled={isSavingNewsletter || currentNewsletter.status === 'sent'}
+                                        >
+                                            <FontAwesomeIcon icon={isSavingNewsletter ? faSpinner : faSave} spin={isSavingNewsletter} />
+                                            {isSavingNewsletter ? 'Saving...' : 'Save as Draft'}
+                                        </button>
+                                        <button 
+                                            className="btn btn-success"
+                                            onClick={handleSendNewsletter}
+                                            disabled={isSendingNewsletter || currentNewsletter.status === 'sent'}
+                                        >
+                                            <FontAwesomeIcon icon={isSendingNewsletter ? faSpinner : faPaperPlane} spin={isSendingNewsletter} />
+                                            {isSendingNewsletter ? 'Sending...' : 'Send Now'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Newsletter History */}
+                    <div className="newsletter-history-section">
+                        <div className="section-header">
+                            <h3>Newsletter History</h3>
+                            <div className="newsletter-filter">
+                                <button
+                                    className={`filter-btn ${newsletterFilter === 'all' ? 'active' : ''}`}
+                                    onClick={() => setNewsletterFilter('all')}
+                                >
+                                    All
+                                </button>
+                                <button
+                                    className={`filter-btn ${newsletterFilter === 'draft' ? 'active' : ''}`}
+                                    onClick={() => setNewsletterFilter('draft')}
+                                >
+                                    Drafts
+                                </button>
+                                <button
+                                    className={`filter-btn ${newsletterFilter === 'sent' ? 'active' : ''}`}
+                                    onClick={() => setNewsletterFilter('sent')}
+                                >
+                                    Sent
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="newsletter-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Date Sent</th>
+                                        <th>Recipients</th>
+                                        <th>Sponsors</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {newsletters
+                                        .filter(n => newsletterFilter === 'all' || n.status === newsletterFilter)
+                                        .map((newsletter) => (
+                                        <tr key={newsletter._id}>
+                                            <td>{newsletter.subject}</td>
+                                            <td>
+                                                {newsletter.sentAt 
+                                                    ? new Date(newsletter.sentAt).toLocaleDateString()
+                                                    : newsletter.createdAt
+                                                        ? new Date(newsletter.createdAt).toLocaleDateString()
+                                                        : 'N/A'
+                                                }
+                                            </td>
+                                            <td>{newsletter.recipientCount || 0}</td>
+                                            <td>{newsletter.sponsors?.length || 0}</td>
+                                            <td>
+                                                <span className={`status-badge ${newsletter.status}`}>
+                                                    {newsletter.status === 'sent' ? 'Sent' : 'Draft'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div className="newsletter-action-buttons">
+                                                    {newsletter.status === 'draft' && (
+                                                        <>
+                                                            <button
+                                                                className="btn btn-sm btn-primary"
+                                                                onClick={() => handleEditNewsletter(newsletter)}
+                                                                title="Edit & Send"
+                                                            >
+                                                                <FontAwesomeIcon icon={faEdit} />
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-sm btn-danger"
+                                                                onClick={() => handleDeleteNewsletter(newsletter._id)}
+                                                                title="Delete"
+                                                            >
+                                                                <FontAwesomeIcon icon={faTrash} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {newsletter.status === 'sent' && (
+                                                        <span className="text-muted">Sent</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {newsletters.filter(n => newsletterFilter === 'all' || n.status === newsletterFilter).length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="text-center">
+                                                No newsletters found
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 

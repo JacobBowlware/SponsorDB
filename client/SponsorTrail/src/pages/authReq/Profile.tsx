@@ -99,6 +99,14 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                     {isSubscribed && user.billing && (
                         <div className="profile-section">
                             <h2>Subscription Details</h2>
+                            {user.billing.trialEnd && new Date(user.billing.trialEnd) > new Date() && (
+                                <div className="profile-field profile-trial-info">
+                                    <label>Trial Active Until</label>
+                                    <div className="profile-value profile-trial-date">
+                                        {new Date(user.billing.trialEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                    </div>
+                                </div>
+                            )}
                             <div className="profile-field">
                                 <label>Plan</label>
                                 <div className="profile-value">

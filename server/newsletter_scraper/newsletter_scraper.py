@@ -38,21 +38,39 @@ class NewsletterScraper:
         
     def run_scraping_cycle(self, max_emails=10):
         """Run a single scraping cycle with email limit to prevent timeouts"""
-        logger.info("Starting newsletter scraping cycle")
+        logger.info(f"Starting newsletter scraping cycle (max_emails={max_emails})")
         start_time = time.time()
+        total_sponsors = 0
+        processed_emails = 0
+        new_pending_sponsors = 0  # Track newly added sponsors that need review
+        
+        # Track rejection reasons
+        rejection_stats = {
+            'emails_without_sponsor_indicators': 0,
+            'emails_without_sponsor_sections': 0,
+            'sections_rejected_low_confidence': 0,
+            'domains_denied': 0,
+            'self_reference_skipped': 0,
+            'already_exists': 0,
+            'enriched_existing': 0,
+            'no_contact_method': 0,
+            'no_subscriber_estimate': 0,
+            'save_failed': 0,
+            'email_processing_errors': 0,
+            'total_sponsors_analyzed': 0,
+            'total_sections_found': 0
+        }
         
         try:
             # Get recent emails with limit
             emails = self.email_processor.get_recent_emails(limit=max_emails)
-            logger.info(f"Processing {len(emails)} emails (limited to {max_emails})")
-            
-            total_sponsors = 0
-            processed_emails = 0
+            logger.info(f"Found {len(emails)} emails to process")
             
             for email_data in emails:
                 try:
                     # Check if email has sponsor indicators
                     if not self.email_processor.has_sponsor_indicators(email_data):
+                        rejection_stats['emails_without_sponsor_indicators'] += 1
                         continue
                     
                     # Extract newsletter name
@@ -62,36 +80,38 @@ class NewsletterScraper:
                     sponsor_sections = self.email_processor.process_sponsor_sections_with_confidence(email_data)
                     
                     if not sponsor_sections:
+                        rejection_stats['emails_without_sponsor_sections'] += 1
                         continue
+                    
+                    rejection_stats['total_sections_found'] += len(sponsor_sections)
                     
                     # Process each sponsor section (filter by confidence and status)
                     for section in sponsor_sections:
                         # Skip rejected sections
                         if section.get('processing_status') == 'rejected':
-                            logger.debug(f"Skipping rejected section with confidence {section.get('confidence_score', 0):.2f}")
+                            rejection_stats['sections_rejected_low_confidence'] += 1
                             continue
                         
-                        # Log confidence and status
+                        # Get confidence and status (but don't log every section)
                         confidence = section.get('confidence_score', 0)
                         status = section.get('processing_status', 'unknown')
-                        logger.info(f"Processing section with confidence {confidence:.2f}, status: {status}")
                         
                         sponsors = self.sponsor_analyzer.analyze_sponsor_section(
                             section, newsletter_name
                         )
                         
-                        logger.info(f"Sponsor analyzer returned {len(sponsors)} sponsors for this section")
-                        
                         for sponsor in sponsors:
+                            rejection_stats['total_sponsors_analyzed'] += 1
+                            
                             # 1. VALIDATION: Check if domain is denied
                             if self.db.is_domain_denied(sponsor['rootDomain']):
-                                logger.debug(f"Domain is denied: {sponsor['rootDomain']}")
+                                rejection_stats['domains_denied'] += 1
                                 continue
                             
                             # 2. VALIDATION: Check for self-reference (newsletter advertising itself)
                             newsletter_domain = self.sponsor_analyzer._extract_newsletter_domain(newsletter_name)
                             if newsletter_domain and sponsor['rootDomain'].lower() == newsletter_domain.lower():
-                                logger.debug(f"Rejecting self-reference: {sponsor['rootDomain']} matches newsletter domain {newsletter_domain}")
+                                rejection_stats['self_reference_skipped'] += 1
                                 continue
                             
                             # 3. VALIDATION: Check if sponsor already exists
@@ -99,7 +119,6 @@ class NewsletterScraper:
                             if existing:
                                 # If existing sponsor has no contact info, try to enrich it
                                 if existing.get('contactMethod') == 'none' and sponsor.get('contactMethod') != 'none':
-                                    logger.info(f"Enriching existing sponsor with contact info: {sponsor['rootDomain']}")
                                     try:
                                         # Update existing record with new contact info
                                         update_data = {
@@ -109,27 +128,25 @@ class NewsletterScraper:
                                             'lastAnalyzed': datetime.utcnow()
                                         }
                                         self.db.update_sponsor(str(existing['_id']), update_data)
-                                        logger.info(f"✅ ENRICHED EXISTING SPONSOR: {sponsor['sponsorName']}")
+                                        rejection_stats['enriched_existing'] += 1
                                     except Exception as e:
-                                        logger.error(f"❌ FAILED TO ENRICH SPONSOR: {sponsor['sponsorName']} - Error: {e}")
+                                        logger.error(f"Failed to enrich sponsor {sponsor.get('sponsorName')}: {e}")
+                                        rejection_stats['save_failed'] += 1
                                 else:
-                                    logger.debug(f"Sponsor already exists with contact info: {sponsor['rootDomain']}")
+                                    rejection_stats['already_exists'] += 1
                                 continue
                             
                             # 4. VALIDATION: Mandatory contact info requirement - RELAXED
-                            # Allow pending sponsors without contact info to be saved
-                            # if sponsor.get('contactMethod') == 'none':
-                            #     logger.debug(f"Rejecting sponsor with no contact info: {sponsor['sponsorName']}")
-                            #     continue
-                            
-                            # 5. VALIDATION: Must have either email or application
+                            # CHANGED: Allow sponsors without contact info to be saved as pending
+                            # If they passed legitimacy checks, they're likely sponsors - save them for manual review
+                            # No longer rejecting here - let them be saved with pending status
                             if not sponsor.get('sponsorEmail') and not sponsor.get('sponsorApplication'):
-                                logger.debug(f"Rejecting sponsor with no contact method: {sponsor['sponsorName']}")
-                                continue
+                                logger.info(f"⚠️ No contact info for {sponsor.get('sponsorName')}, but saving as pending for manual review")
+                                # Don't increment rejection_stats - this is intentional, not a rejection
                             
                             # 6. VALIDATION: Must have estimated subscribers
                             if not sponsor.get('estimatedSubscribers') or sponsor.get('estimatedSubscribers', 0) <= 0:
-                                logger.debug(f"Rejecting sponsor with no subscriber estimate: {sponsor['sponsorName']}")
+                                rejection_stats['no_subscriber_estimate'] += 1
                                 continue
                             
                             # Add confidence and processing status from section
@@ -149,18 +166,20 @@ class NewsletterScraper:
                             
                             # Optional: Use GPT for final analysis
                             if self.sponsor_analyzer.openai_client:
-                                logger.info(f"Running GPT analysis on sponsor: {sponsor.get('sponsorName', 'Unknown')}")
                                 sponsor = self.sponsor_analyzer.gpt_analyze_sponsor(sponsor)
-                            else:
-                                logger.info("OpenAI client not available - skipping GPT analysis")
                             
                             # Save to database
                             try:
                                 sponsor_id = self.db.create_sponsor(sponsor)
                                 total_sponsors += 1
-                                logger.info(f"✅ SUCCESSFULLY SAVED SPONSOR: {sponsor['sponsorName']} (ID: {sponsor_id}, confidence: {confidence:.2f}, status: {status})")
+                                
+                                # Track if this new sponsor needs review (pending status)
+                                if sponsor.get('analysisStatus') == 'pending':
+                                    new_pending_sponsors += 1
+                                    
                             except Exception as e:
-                                logger.error(f"❌ FAILED TO SAVE SPONSOR: {sponsor['sponsorName']} - Error: {e}")
+                                logger.error(f"Failed to save sponsor {sponsor.get('sponsorName', 'Unknown')}: {e}")
+                                rejection_stats['save_failed'] += 1
                                 continue
                     
                     # Mark email as read
@@ -169,20 +188,77 @@ class NewsletterScraper:
                     
                 except Exception as e:
                     logger.error(f"Failed to process email {email_data.get('id', 'unknown')}: {e}")
+                    rejection_stats['email_processing_errors'] += 1
                     continue
             
-            # Log results
+            # Log comprehensive summary with rejection stats
             duration = time.time() - start_time
-            logger.info(f"Scraping cycle completed: {total_sponsors} sponsors found, "
-                       f"{processed_emails} emails processed in {duration:.2f}s")
+            logger.info("")
+            logger.info("=" * 70)
+            logger.info("📊 SPONSOR SCRAPER COMPLETE")
+            logger.info("=" * 70)
+            logger.info("")
+            logger.info("✅ RESULTS:")
+            logger.info(f"   • Emails Processed: {processed_emails}")
+            logger.info(f"   • New Sponsors Added: {total_sponsors}")
+            logger.info(f"   • Need Review (Pending): {new_pending_sponsors}")
+            logger.info(f"   • Complete (Ready): {total_sponsors - new_pending_sponsors}")
+            logger.info("")
+            logger.info("📈 ANALYSIS STATS:")
+            logger.info(f"   • Total Sponsor Sections Found: {rejection_stats['total_sections_found']}")
+            logger.info(f"   • Total Sponsors Analyzed: {rejection_stats['total_sponsors_analyzed']}")
+            logger.info(f"   • Existing Sponsors Enriched: {rejection_stats['enriched_existing']}")
+            logger.info("")
+            logger.info("❌ REJECTION SUMMARY:")
             
-            # Print database stats
-            stats = self.db.get_stats()
-            logger.info(f"Database stats: {stats}")
+            # Log rejections in order of frequency (most common first)
+            rejections_ordered = [
+                ('emails_without_sponsor_indicators', 'Emails without sponsor indicators'),
+                ('emails_without_sponsor_sections', 'Emails with no sponsor sections extracted'),
+                ('sections_rejected_low_confidence', 'Sections rejected due to low confidence'),
+                ('already_exists', 'Sponsors already exist in database'),
+                # Removed: no_contact_method - we now save sponsors without contact as pending
+                ('no_subscriber_estimate', 'Rejected: No subscriber estimate'),
+                ('domains_denied', 'Rejected: Domain is blacklisted'),
+                ('self_reference_skipped', 'Skipped: Self-reference (newsletter advertising itself)'),
+                ('save_failed', 'Failed to save to database'),
+                ('email_processing_errors', 'Email processing errors')
+            ]
+            
+            total_rejected = 0
+            for key, description in rejections_ordered:
+                count = rejection_stats.get(key, 0)
+                if count > 0:
+                    logger.info(f"   • {description}: {count}")
+                    total_rejected += count
+            
+            logger.info("")
+            logger.info(f"⏱️  Duration: {duration:.1f}s")
+            logger.info("=" * 70)
+            logger.info("")
+            
+            # Return summary for API wrapper
+            return {
+                'new_sponsors_added': total_sponsors,
+                'need_review': new_pending_sponsors,
+                'complete': total_sponsors - new_pending_sponsors,
+                'emails_processed': processed_emails,
+                'duration_seconds': duration,
+                'rejection_stats': rejection_stats
+            }
             
         except Exception as e:
             logger.error(f"Scraping cycle failed: {e}")
-            raise
+            # Return error summary instead of raising
+            return {
+                'new_sponsors_added': 0,
+                'need_review': 0,
+                'complete': 0,
+                'emails_processed': processed_emails,
+                'duration_seconds': time.time() - start_time,
+                'error': str(e),
+                'rejection_stats': rejection_stats if 'rejection_stats' in locals() else {}
+            }
     
     def run_manual_analysis(self):
         """Run analysis on pending sponsors"""
