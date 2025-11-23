@@ -145,6 +145,17 @@ const mockPosts: BlogPost[] = [
         readTime: '6 min read',
         category: 'Case Studies',
         tags: ['Growth', 'Tips']
+    },
+    {
+        id: '8',
+        title: 'How Do I Find Sponsors for My Newsletter? A Practical Guide',
+        summary: 'A practical guide to finding sponsors for your newsletter, understanding the sponsorship landscape, and how SponsorDB simplifies the process.',
+        excerpt: '"How do I find sponsors for my newsletter? How should I apply?" If you\'re a newsletter creator, these are questions you\'ve probably asked yourself more than once. Growing a newsletter is one thing — monetizing it through sponsorships is another. Many creators spend hours emailing companies that never respond or pitching to brands that aren\'t a good fit. At SponsorDB, we\'ve been working to simplify that process.',
+        date: 'March 8, 2025',
+        author: 'SponsorDB Team',
+        readTime: '5 min read',
+        category: 'Sponsor Research',
+        tags: ['Strategy', 'Tips', 'Resources']
     }
 ];
 

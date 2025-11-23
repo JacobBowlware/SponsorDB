@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { PotentialSponsor } = require('../models/potentialSponsor');
 const { Sponsor } = require('../models/sponsor');
+const { SponsorNew } = require('../models/sponsorNew');
 const { DeniedSponsorLink } = require('../models/deniedSponsorLink');
 const { DeniedDomain } = require('../models/deniedDomain');
+const { Affiliate } = require('../models/affiliate');
 const { Newsletter } = require('../models/newsletter');
 const { User } = require('../models/user');
 const mongoose = require('mongoose');
@@ -12,7 +14,61 @@ const admin = require('../middleware/admin');
 const { spawn } = require('child_process');
 const path = require('path');
 const sendEmail = require('../utils/sendEmail');
-const { renderWeeklySponsorsTemplate } = require('../utils/emailTemplate');
+// Helper function to get collapsed sponsors (one per company) with most recent newsletter date
+const getCollapsedSponsorsForFrontend = (sponsors, userId = null) => {
+    const collapsed = [];
+    
+    sponsors.forEach(sponsor => {
+        const sponsorObj = sponsor.toObject ? sponsor.toObject() : sponsor;
+        const newsletters = sponsorObj.newslettersSponsored || [];
+        
+        // Find most recent newsletter date
+        let mostRecentDate = sponsorObj.dateAdded;
+        let mostRecentNewsletter = null;
+        
+        if (newsletters.length > 0) {
+            newsletters.forEach(newsletter => {
+                const date = newsletter.dateSponsored ? new Date(newsletter.dateSponsored) : null;
+                if (date && (!mostRecentDate || date > new Date(mostRecentDate))) {
+                    mostRecentDate = date;
+                    mostRecentNewsletter = newsletter;
+                }
+            });
+        }
+        
+        // Create collapsed sponsor record
+        const collapsedSponsor = {
+            ...sponsorObj,
+            // Show most recent newsletter info
+            newsletterSponsored: mostRecentNewsletter ? mostRecentNewsletter.newsletterName : (sponsorObj.newsletterSponsored || ''),
+            subscriberCount: mostRecentNewsletter ? mostRecentNewsletter.estimatedAudience : (sponsorObj.subscriberCount || 0),
+            dateSponsored: mostRecentDate, // Most recent newsletter date
+            mostRecentNewsletterDate: mostRecentDate,
+            // Keep full newslettersSponsored array for reference (ensure it's always an array)
+            newslettersSponsored: Array.isArray(newsletters) ? newsletters : [],
+            // Count of total placements
+            totalPlacements: newsletters.length || (sponsorObj.newsletterSponsored ? 1 : 0),
+            // Calculate average audience size
+            avgAudienceSize: newsletters.length > 0 
+                ? Math.round(newsletters.reduce((sum, n) => sum + (n.estimatedAudience || 0), 0) / newsletters.length)
+                : (sponsorObj.subscriberCount || 0),
+            // User tracking
+            isViewed: userId && sponsorObj.viewedBy ? sponsorObj.viewedBy.some(id => id.toString() === userId.toString()) : false,
+            isApplied: userId && sponsorObj.appliedBy ? sponsorObj.appliedBy.some(id => id.toString() === userId.toString()) : false
+        };
+        
+        collapsed.push(collapsedSponsor);
+    });
+    
+    // Sort by most recent newsletter date (most recent first)
+    collapsed.sort((a, b) => {
+        const dateA = new Date(a.mostRecentNewsletterDate || a.dateAdded || 0).getTime();
+        const dateB = new Date(b.mostRecentNewsletterDate || b.dateAdded || 0).getTime();
+        return dateB - dateA; // Descending order
+    });
+    
+    return collapsed;
+};
 
 // Migration endpoint to migrate affiliate sponsors
 router.post('/migrate-affiliate-sponsors', [auth, admin], async (req, res) => {
@@ -306,24 +362,176 @@ router.post('/migrate-sponsor-status', [auth, admin], async (req, res) => {
     }
 });
 
-// Get admin dashboard stats
+// Get user analytics for admin dashboard
+router.get('/user-analytics', [auth, admin], async (req, res) => {
+    try {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        // Current user count (all users)
+        const totalUsers = await User.countDocuments({});
+        
+        // Users created today - using ObjectId timestamp
+        // ObjectId contains timestamp in first 4 bytes (first 8 hex chars)
+        const todayTimestamp = Math.floor(startOfToday.getTime() / 1000);
+        const todayId = new mongoose.Types.ObjectId(todayTimestamp.toString(16).padStart(8, '0') + '0000000000000000');
+        const usersToday = await User.countDocuments({
+            _id: { $gte: todayId }
+        });
+        
+        // Signups this month (users created this month)
+        const monthTimestamp = Math.floor(startOfMonth.getTime() / 1000);
+        const monthId = new mongoose.Types.ObjectId(monthTimestamp.toString(16).padStart(8, '0') + '0000000000000000');
+        const signupsThisMonth = await User.countDocuments({
+            _id: { $gte: monthId }
+        });
+        
+        // Users with active subscriptions (premium)
+        const activeSubscribers = await User.countDocuments({
+            subscription: { $in: ['premium', 'basic'] }
+        });
+        
+        // Newsletter subscribers count
+        const { NewsletterSubscriber } = require('../models/newsletterSubscriber');
+        const newsletterSubscribers = await NewsletterSubscriber.countDocuments({
+            isActive: true
+        });
+        
+        // Also count users who have newsletterOptIn = true
+        const usersWithNewsletterOptIn = await User.countDocuments({
+            newsletterOptIn: true
+        });
+        
+        // Total newsletter subscribers (from both collections, deduplicated)
+        // Since users can be in both, we'll just sum them (with note that there might be overlap)
+        // In practice, NewsletterSubscriber emails should be merged into User when they sign up
+        const totalNewsletterSubscribers = newsletterSubscribers + usersWithNewsletterOptIn;
+        
+        // Calculate conversion ratio (users with subscription / total users)
+        const conversionRate = totalUsers > 0 ? ((activeSubscribers / totalUsers) * 100).toFixed(1) : '0.0';
+        
+        // Monthly signup data for the last 12 months
+        const monthlySignups = [];
+        for (let i = 11; i >= 0; i--) {
+            const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+            
+            // Use ObjectId timestamp range for accurate counting
+            const startTimestamp = Math.floor(monthStart.getTime() / 1000);
+            const endTimestamp = Math.floor(monthEnd.getTime() / 1000);
+            
+            const startId = new mongoose.Types.ObjectId(startTimestamp.toString(16).padStart(8, '0') + '0000000000000000');
+            const endId = new mongoose.Types.ObjectId(endTimestamp.toString(16).padStart(8, '0') + 'FFFFFFFFFFFFFFFF');
+            
+            const count = await User.countDocuments({
+                _id: {
+                    $gte: startId,
+                    $lte: endId
+                }
+            });
+            
+            monthlySignups.push({
+                month: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                year: monthStart.getFullYear(),
+                monthNum: monthStart.getMonth() + 1,
+                count: count
+            });
+        }
+        
+        // Users created vs users with subscriptions (for conversion tracking)
+        const usersCreated = totalUsers;
+        const usersWithSubscription = activeSubscribers;
+        const usersWithoutSubscription = totalUsers - activeSubscribers;
+        
+        res.json({
+            success: true,
+            totalUsers,
+            usersToday,
+            signupsThisMonth,
+            activeSubscribers,
+            paidUsers: activeSubscribers, // Alias for clarity
+            newsletterSubscribers: totalNewsletterSubscribers,
+            conversionRate: parseFloat(conversionRate),
+            usersWithoutSubscription,
+            monthlySignups
+        });
+    } catch (error) {
+        console.error('Error fetching user analytics:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch user analytics',
+            message: error.message
+        });
+    }
+});
+
 router.get('/stats', [auth, admin], async (req, res) => {
     try {
         const now = new Date();
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         
+        // Get total sponsors (approved) - try new structure first
+        let totalSponsors = 0;
+        let sponsorsWithContactInfo = 0;
+        let approvedSponsors = 0;
+        let reviewedSponsors = 0;
+        let totalViews = 0;
+        let totalApplications = 0;
+        
+        try {
+            totalSponsors = await SponsorNew.countDocuments({ status: 'approved' });
+            sponsorsWithContactInfo = await SponsorNew.countDocuments({
+                status: 'approved',
+                $or: [
+                    { sponsorEmail: { $exists: true, $ne: '' } },
+                    { businessContact: { $exists: true, $ne: '' } }
+                ]
+            });
+            approvedSponsors = await SponsorNew.countDocuments({ status: 'approved' });
+            reviewedSponsors = await SponsorNew.countDocuments({
+                viewedBy: { $exists: true, $ne: [] }
+            });
+            
+            const sponsorsWithViews = await SponsorNew.find({ viewedBy: { $exists: true, $ne: [] } });
+            totalViews = sponsorsWithViews.reduce((sum, sponsor) => sum + (sponsor.viewedBy?.length || 0), 0);
+            
+            const sponsorsWithApplications = await SponsorNew.find({ appliedBy: { $exists: true, $ne: [] } });
+            totalApplications = sponsorsWithApplications.reduce((sum, sponsor) => sum + (sponsor.appliedBy?.length || 0), 0);
+        } catch (error) {
+            // Fallback to old structure
+            totalSponsors = await Sponsor.countDocuments();
+            sponsorsWithContactInfo = await Sponsor.countDocuments({
+                $or: [
+                    { sponsorEmail: { $exists: true, $ne: '' } },
+                    { sponsorApplication: { $exists: true, $ne: '' } },
+                    { businessContact: { $exists: true, $ne: '' } }
+                ]
+            });
+            approvedSponsors = await Sponsor.countDocuments();
+            reviewedSponsors = await Sponsor.countDocuments({
+                viewedBy: { $exists: true, $ne: [] }
+            });
+            
+            const sponsorsWithViews = await Sponsor.find({ viewedBy: { $exists: true, $ne: [] } });
+            totalViews = sponsorsWithViews.reduce((sum, sponsor) => sum + sponsor.viewedBy.length, 0);
+            
+            const sponsorsWithApplications = await Sponsor.find({ appliedBy: { $exists: true, $ne: [] } });
+            totalApplications = sponsorsWithApplications.reduce((sum, sponsor) => sum + sponsor.appliedBy.length, 0);
+        }
+        
         // Get total sponsors (approved)
-        const totalSponsors = await Sponsor.countDocuments();
+        // const totalSponsors = await Sponsor.countDocuments();
         
         // Get sponsors with contact info (for public display)
-        const sponsorsWithContactInfo = await Sponsor.countDocuments({
-            $or: [
-                { sponsorEmail: { $exists: true, $ne: '' } },
-                { sponsorApplication: { $exists: true, $ne: '' } },
-                { businessContact: { $exists: true, $ne: '' } }
-            ]
-        });
+        // const sponsorsWithContactInfo = await Sponsor.countDocuments({
+        //     $or: [
+        //         { sponsorEmail: { $exists: true, $ne: '' } },
+        //         { sponsorApplication: { $exists: true, $ne: '' } },
+        //         { businessContact: { $exists: true, $ne: '' } }
+        //     ]
+        // });
         
         // Get sponsors scraped this week
         const scrapedThisWeek = await PotentialSponsor.countDocuments({
@@ -346,18 +554,18 @@ router.get('/stats', [auth, admin], async (req, res) => {
         const successRate = totalProcessed > 0 ? Math.round((totalApproved / (totalApproved + totalDenied)) * 100) : 0;
         
         // Get additional stats
-        const approvedSponsors = await Sponsor.countDocuments();
+        // const approvedSponsors = await Sponsor.countDocuments();
         const rejectedSponsors = await DeniedSponsorLink.countDocuments();
-        const reviewedSponsors = await Sponsor.countDocuments({
-            viewedBy: { $exists: true, $ne: [] }
-        });
+        // const reviewedSponsors = await Sponsor.countDocuments({
+        //     viewedBy: { $exists: true, $ne: [] }
+        // });
         
         // Get total views and applications
-        const sponsorsWithViews = await Sponsor.find({ viewedBy: { $exists: true, $ne: [] } });
-        const totalViews = sponsorsWithViews.reduce((sum, sponsor) => sum + sponsor.viewedBy.length, 0);
+        // const sponsorsWithViews = await Sponsor.find({ viewedBy: { $exists: true, $ne: [] } });
+        // const totalViews = sponsorsWithViews.reduce((sum, sponsor) => sum + sponsor.viewedBy.length, 0);
         
-        const sponsorsWithApplications = await Sponsor.find({ appliedBy: { $exists: true, $ne: [] } });
-        const totalApplications = sponsorsWithApplications.reduce((sum, sponsor) => sum + sponsor.appliedBy.length, 0);
+        // const sponsorsWithApplications = await Sponsor.find({ appliedBy: { $exists: true, $ne: [] } });
+        // const totalApplications = sponsorsWithApplications.reduce((sum, sponsor) => sum + sponsor.appliedBy.length, 0);
 
         // Get weekly data for the last 8 weeks
         const weeklyData = [];
@@ -365,11 +573,18 @@ router.get('/stats', [auth, admin], async (req, res) => {
             const weekStart = new Date(now.getTime() - (i * 7 + 6) * 24 * 60 * 60 * 1000);
             const weekEnd = new Date(now.getTime() - (i * 7) * 24 * 60 * 60 * 1000);
             
-            const weekCount = await Sponsor.countDocuments({
+            const weekCount = await SponsorNew.countDocuments({
                 dateAdded: {
                     $gte: weekStart,
                     $lte: weekEnd
                 }
+            }).catch(() => {
+                return Sponsor.countDocuments({
+                    dateAdded: {
+                        $gte: weekStart,
+                        $lte: weekEnd
+                    }
+                });
             });
             
             const weekLabel = weekStart.toLocaleDateString('en-US', { 
@@ -465,29 +680,130 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
         const sort = {};
         sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
         
-        // Query only the main Sponsor collection
-        const sponsors = await Sponsor.find(query)
+        // Query SponsorNew first, fallback to Sponsor
+        let sponsors, total;
+        try {
+            // Update search to include newslettersSponsored array
+            if (search) {
+                const searchRegex = { $regex: search, $options: 'i' };
+                query.$or = [
+                    { sponsorName: searchRegex },
+                    { rootDomain: searchRegex },
+                    { 'newslettersSponsored.newsletterName': searchRegex }
+                ];
+            }
+            
+            // Update contact filter for new structure
+            if (filter === 'has-contact') {
+                query.$or = [
+                    { sponsorEmail: { $exists: true, $ne: '', $ne: null } },
+                    { businessContact: { $exists: true, $ne: '', $ne: null } }
+                ];
+            }
+            
+            sponsors = await SponsorNew.find(query)
+                .sort(sort)
+                .skip(skip)
+                .limit(parseInt(limit));
+            
+            total = await SponsorNew.countDocuments(query);
+        } catch (error) {
+            // Fallback to old structure
+            if (search) {
+                const searchRegex = { $regex: search, $options: 'i' };
+                query.$or = [
+                    { sponsorName: searchRegex },
+                    { newsletterSponsored: searchRegex },
+                    { rootDomain: searchRegex }
+                ];
+            }
+            
+            if (filter === 'has-contact') {
+                query.$or = [
+                    { sponsorEmail: { $exists: true, $ne: '', $ne: null } },
+                    { sponsorApplication: { $exists: true, $ne: '', $ne: null } },
+                    { affiliateSignupLink: { $exists: true, $ne: '', $ne: null } },
+                    { businessContact: { $exists: true, $ne: '', $ne: null } }
+                ];
+            }
+            
+            sponsors = await Sponsor.find(query)
+                .sort(sort)
+                .skip(skip)
+                .limit(parseInt(limit));
+            
+            total = await Sponsor.countDocuments(query);
+        }
+        
+        // Return collapsed view (one per company) sorted by most recent newsletter date
+        const collapsedSponsors = getCollapsedSponsorsForFrontend(sponsors);
+        
+        // Sort by dateSponsored (most recent first) for admin table
+        collapsedSponsors.sort((a, b) => {
+            const dateA = new Date(a.dateSponsored || a.dateAdded || 0);
+            const dateB = new Date(b.dateSponsored || b.dateAdded || 0);
+            return dateB - dateA; // Descending order
+        });
+        
+        // Apply pagination to collapsed results
+        const paginatedSponsors = collapsedSponsors.slice(skip, skip + parseInt(limit));
+        const totalCollapsed = collapsedSponsors.length;
+        
+        // Debug logging
+        console.log(`Admin query: Found ${sponsors.length} sponsors, collapsed to ${totalCollapsed} records`);
+        
+        res.status(200).json({
+            sponsors: paginatedSponsors,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: totalCollapsed,
+                pages: Math.ceil(totalCollapsed / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error getting all sponsors:', error);
+        res.status(500).json({ error: 'Error getting all sponsors' });
+    }
+});
+
+// Get all affiliates for admin
+router.get('/affiliates/all', [auth, admin], async (req, res) => {
+    try {
+        const { page = 1, limit = 50, sortBy = 'dateAdded', sortOrder = 'desc', search = '', status = 'all' } = req.query;
+        
+        const skip = (page - 1) * limit;
+        
+        let query = {};
+        
+        // Apply search filter
+        if (search) {
+            const searchRegex = { $regex: search, $options: 'i' };
+            query.$or = [
+                { affiliateName: searchRegex },
+                { rootDomain: searchRegex },
+                { 'affiliatedNewsletters.newsletterName': searchRegex }
+            ];
+        }
+        
+        // Apply status filter
+        if (status !== 'all' && status !== '') {
+            query.status = status;
+        }
+        
+        // Build sort object
+        const sort = {};
+        sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+        
+        const affiliates = await Affiliate.find(query)
             .sort(sort)
             .skip(skip)
             .limit(parseInt(limit));
         
-        const total = await Sponsor.countDocuments(query);
-        
-        // Debug logging
-        console.log(`Admin query for status '${status}': Found ${sponsors.length} sponsors`);
-        if (sponsors.length > 0) {
-            console.log('Sample sponsor statuses:', sponsors.slice(0, 3).map(s => ({ 
-                name: s.sponsorName, 
-                status: s.status, 
-                hasEmail: !!s.sponsorEmail,
-                hasApplication: !!s.sponsorApplication,
-                hasAffiliateLink: !!s.affiliateSignupLink,
-                hasBusinessContact: !!s.businessContact
-            })));
-        }
+        const total = await Affiliate.countDocuments(query);
         
         res.status(200).json({
-            sponsors,
+            affiliates,
             pagination: {
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -496,8 +812,129 @@ router.get('/sponsors/all', [auth, admin], async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error getting all sponsors:', error);
-        res.status(500).json({ error: 'Error getting all sponsors' });
+        console.error('Error getting all affiliates:', error);
+        res.status(500).json({ error: 'Error getting all affiliates' });
+    }
+});
+
+// Convert sponsor to affiliate
+router.post('/sponsors/:id/convert-to-affiliate', [auth, admin], async (req, res) => {
+    try {
+        const sponsorId = req.params.id;
+        
+        // Find sponsor in SponsorNew first, fallback to Sponsor
+        let sponsor = await SponsorNew.findById(sponsorId);
+        let useNewStructure = true;
+        
+        if (!sponsor) {
+            sponsor = await Sponsor.findById(sponsorId);
+            useNewStructure = false;
+        }
+        
+        if (!sponsor) {
+            return res.status(404).json({ error: 'Sponsor not found' });
+        }
+        
+        const sponsorObj = sponsor.toObject ? sponsor.toObject() : sponsor;
+        const rootDomain = sponsorObj.rootDomain || sponsorObj.sponsorLink?.replace(/^https?:\/\//, '').split('/')[0] || '';
+        
+        // Check if affiliate already exists
+        let affiliate = await Affiliate.findOne({ rootDomain });
+        
+        if (affiliate) {
+            // Update existing affiliate with newsletter info from sponsor
+            const newsletters = sponsorObj.newslettersSponsored || [];
+            
+            if (newsletters.length > 0) {
+                newsletters.forEach(newsletter => {
+                    const exists = affiliate.affiliatedNewsletters.some(
+                        n => n.newsletterName === newsletter.newsletterName
+                    );
+                    if (!exists) {
+                        affiliate.affiliatedNewsletters.push({
+                            newsletterName: newsletter.newsletterName,
+                            estimatedAudience: newsletter.estimatedAudience || 0,
+                            contentTags: newsletter.contentTags || [],
+                            dateAffiliated: newsletter.dateSponsored || new Date(),
+                            emailAddress: newsletter.emailAddress || ''
+                        });
+                    }
+                });
+            } else if (sponsorObj.newsletterSponsored) {
+                // Old format - add single newsletter
+                const exists = affiliate.affiliatedNewsletters.some(
+                    n => n.newsletterName === sponsorObj.newsletterSponsored
+                );
+                if (!exists) {
+                    affiliate.affiliatedNewsletters.push({
+                        newsletterName: sponsorObj.newsletterSponsored,
+                        estimatedAudience: sponsorObj.subscriberCount || 0,
+                        contentTags: sponsorObj.tags || [],
+                        dateAffiliated: sponsorObj.dateAdded || new Date(),
+                        emailAddress: ''
+                    });
+                }
+            }
+            
+            // Merge tags
+            if (sponsorObj.tags && sponsorObj.tags.length > 0) {
+                const existingTags = new Set(affiliate.tags || []);
+                sponsorObj.tags.forEach(tag => existingTags.add(tag));
+                affiliate.tags = Array.from(existingTags);
+            }
+            
+            await affiliate.save();
+        } else {
+            // Create new affiliate
+            const affiliateData = {
+                affiliateName: sponsorObj.sponsorName,
+                affiliateLink: sponsorObj.sponsorLink || '',
+                rootDomain: rootDomain,
+                tags: sponsorObj.tags || [],
+                commissionInfo: sponsorObj.commissionInfo || '',
+                status: sponsorObj.status || 'pending',
+                dateAdded: sponsorObj.dateAdded || new Date(),
+                interestedUsers: sponsorObj.interestedUsers || []
+            };
+            
+            // Add newsletter info
+            const newsletters = sponsorObj.newslettersSponsored || [];
+            if (newsletters.length > 0) {
+                affiliateData.affiliatedNewsletters = newsletters.map(n => ({
+                    newsletterName: n.newsletterName,
+                    estimatedAudience: n.estimatedAudience || 0,
+                    contentTags: n.contentTags || [],
+                    dateAffiliated: n.dateSponsored || new Date(),
+                    emailAddress: n.emailAddress || ''
+                }));
+            } else if (sponsorObj.newsletterSponsored) {
+                affiliateData.affiliatedNewsletters = [{
+                    newsletterName: sponsorObj.newsletterSponsored,
+                    estimatedAudience: sponsorObj.subscriberCount || 0,
+                    contentTags: sponsorObj.tags || [],
+                    dateAffiliated: sponsorObj.dateAdded || new Date(),
+                    emailAddress: ''
+                }];
+            }
+            
+            affiliate = await Affiliate.create(affiliateData);
+        }
+        
+        // Delete sponsor from SponsorNew or Sponsor
+        if (useNewStructure) {
+            await SponsorNew.findByIdAndDelete(sponsorId);
+        } else {
+            await Sponsor.findByIdAndDelete(sponsorId);
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Sponsor converted to affiliate successfully',
+            affiliate
+        });
+    } catch (error) {
+        console.error('Error converting sponsor to affiliate:', error);
+        res.status(500).json({ error: 'Error converting sponsor to affiliate', message: error.message });
     }
 });
 
@@ -658,11 +1095,31 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                 break;
                 
             case 'reject': {
-                // Find sponsors to reject
-                const sponsorsToReject = await Sponsor.find({ _id: { $in: objectIds } });
+                console.log('Admin bulk-action: Starting REJECT action for', objectIds.length, 'sponsor(s)');
+                console.log('Admin bulk-action: ObjectIds to reject:', objectIds.map(id => id.toString()));
+                
+                // Check all collections to find sponsors to reject
+                const [foundInPotential, foundInSponsors, foundInSponsorsNew] = await Promise.all([
+                    PotentialSponsor.find({ _id: { $in: objectIds } }).select('_id sponsorName rootDomain'),
+                    Sponsor.find({ _id: { $in: objectIds } }).select('_id sponsorName rootDomain'),
+                    SponsorNew.find({ _id: { $in: objectIds } }).select('_id sponsorName rootDomain')
+                ]);
+                
+                console.log('Admin bulk-action: Found in PotentialSponsor:', foundInPotential.length, foundInPotential.map(s => ({ id: s._id.toString(), name: s.sponsorName, domain: s.rootDomain })));
+                console.log('Admin bulk-action: Found in Sponsor:', foundInSponsors.length, foundInSponsors.map(s => ({ id: s._id.toString(), name: s.sponsorName, domain: s.rootDomain })));
+                console.log('Admin bulk-action: Found in SponsorNew:', foundInSponsorsNew.length, foundInSponsorsNew.map(s => ({ id: s._id.toString(), name: s.sponsorName, domain: s.rootDomain })));
+                
+                const allSponsorsToReject = [...foundInPotential, ...foundInSponsors, ...foundInSponsorsNew];
+                
+                if (allSponsorsToReject.length === 0) {
+                    console.warn('Admin bulk-action: WARNING - No sponsors found to reject in any collection!');
+                    result = { message: 'Rejected 0 sponsors (none found)' };
+                    break;
+                }
                 
                 // Extract domains and add to denied list (only if not already denied)
-                for (const sponsor of sponsorsToReject) {
+                let domainsAdded = 0;
+                for (const sponsor of allSponsorsToReject) {
                     if (sponsor.rootDomain) {
                         const rootDomain = sponsor.rootDomain.toLowerCase();
                         
@@ -677,14 +1134,34 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                                 dateAdded: new Date(),
                                 addedBy: 'admin'
                             });
+                            domainsAdded++;
+                            console.log(`Admin bulk-action: Added domain ${rootDomain} to denied list`);
+                        } else {
+                            console.log(`Admin bulk-action: Domain ${rootDomain} already in denied list`);
                         }
                     }
                 }
                 
-                // Delete from sponsors collection
-                const deletedResult = await Sponsor.deleteMany({ _id: { $in: objectIds } });
+                console.log(`Admin bulk-action: Added ${domainsAdded} new domains to denied list`);
                 
-                result = { message: `Rejected ${deletedResult.deletedCount} sponsors` };
+                // Delete from all collections
+                console.log('Admin bulk-action: Attempting to delete from PotentialSponsor...');
+                const deletedFromPotential = await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
+                console.log('Admin bulk-action: PotentialSponsor deletion result:', { deletedCount: deletedFromPotential.deletedCount });
+                
+                console.log('Admin bulk-action: Attempting to delete from Sponsor...');
+                const deletedFromSponsors = await Sponsor.deleteMany({ _id: { $in: objectIds } });
+                console.log('Admin bulk-action: Sponsor deletion result:', { deletedCount: deletedFromSponsors.deletedCount });
+                
+                console.log('Admin bulk-action: Attempting to delete from SponsorNew...');
+                const deletedFromSponsorsNew = await SponsorNew.deleteMany({ _id: { $in: objectIds } });
+                console.log('Admin bulk-action: SponsorNew deletion result:', { deletedCount: deletedFromSponsorsNew.deletedCount });
+                
+                const totalDeleted = deletedFromPotential.deletedCount + deletedFromSponsors.deletedCount + deletedFromSponsorsNew.deletedCount;
+                
+                console.log(`Admin bulk-action: REJECT SUMMARY - Deleted ${deletedFromPotential.deletedCount} from PotentialSponsor, ${deletedFromSponsors.deletedCount} from Sponsor, ${deletedFromSponsorsNew.deletedCount} from SponsorNew. Total: ${totalDeleted}`);
+                
+                result = { message: `Rejected ${totalDeleted} sponsors` };
                 break;
             }
                 
@@ -706,13 +1183,63 @@ router.post('/sponsors/bulk-action', [auth, admin], async (req, res) => {
                 break;
                 
             case 'delete': {
-                // Delete sponsors from both collections
-                const deletedFromPotential = await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
-                const deletedFromSponsors = await Sponsor.deleteMany({ _id: { $in: objectIds } });
+                console.log('Admin bulk-action: Starting DELETE action for', objectIds.length, 'sponsor(s)');
+                console.log('Admin bulk-action: ObjectIds to delete:', objectIds.map(id => id.toString()));
                 
-                const totalDeleted = deletedFromPotential.deletedCount + deletedFromSponsors.deletedCount;
-                
-                result = { message: `Deleted ${totalDeleted} sponsors` };
+                // First, check what exists in each collection before deletion
+                try {
+                    const [foundInPotential, foundInSponsors, foundInSponsorsNew] = await Promise.all([
+                        PotentialSponsor.find({ _id: { $in: objectIds } }).select('_id sponsorName newslettersSponsored'),
+                        Sponsor.find({ _id: { $in: objectIds } }).select('_id sponsorName newsletterSponsored newslettersSponsored'),
+                        SponsorNew.find({ _id: { $in: objectIds } }).select('_id sponsorName newslettersSponsored')
+                    ]);
+                    
+                    console.log('Admin bulk-action: Found in PotentialSponsor:', foundInPotential.length, foundInPotential.map(s => ({ id: s._id.toString(), name: s.sponsorName })));
+                    console.log('Admin bulk-action: Found in Sponsor:', foundInSponsors.length, foundInSponsors.map(s => ({ 
+                        id: s._id.toString(), 
+                        name: s.sponsorName,
+                        hasNewslettersSponsored: !!s.newslettersSponsored,
+                        newslettersCount: Array.isArray(s.newslettersSponsored) ? s.newslettersSponsored.length : 0
+                    })));
+                    console.log('Admin bulk-action: Found in SponsorNew:', foundInSponsorsNew.length, foundInSponsorsNew.map(s => ({ 
+                        id: s._id.toString(), 
+                        name: s.sponsorName,
+                        hasNewslettersSponsored: !!s.newslettersSponsored,
+                        newslettersCount: Array.isArray(s.newslettersSponsored) ? s.newslettersSponsored.length : 0
+                    })));
+                    
+                    // Delete sponsors from all collections (PotentialSponsor, Sponsor, SponsorNew)
+                    console.log('Admin bulk-action: Attempting to delete from PotentialSponsor...');
+                    const deletedFromPotential = await PotentialSponsor.deleteMany({ _id: { $in: objectIds } });
+                    console.log('Admin bulk-action: PotentialSponsor deletion result:', { deletedCount: deletedFromPotential.deletedCount });
+                    
+                    console.log('Admin bulk-action: Attempting to delete from Sponsor...');
+                    const deletedFromSponsors = await Sponsor.deleteMany({ _id: { $in: objectIds } });
+                    console.log('Admin bulk-action: Sponsor deletion result:', { deletedCount: deletedFromSponsors.deletedCount });
+                    
+                    console.log('Admin bulk-action: Attempting to delete from SponsorNew...');
+                    const deletedFromSponsorsNew = await SponsorNew.deleteMany({ _id: { $in: objectIds } });
+                    console.log('Admin bulk-action: SponsorNew deletion result:', { deletedCount: deletedFromSponsorsNew.deletedCount });
+                    
+                    const totalDeleted = deletedFromPotential.deletedCount + deletedFromSponsors.deletedCount + deletedFromSponsorsNew.deletedCount;
+                    
+                    console.log(`Admin bulk-action: DELETE SUMMARY - Deleted ${deletedFromPotential.deletedCount} from PotentialSponsor, ${deletedFromSponsors.deletedCount} from Sponsor, ${deletedFromSponsorsNew.deletedCount} from SponsorNew. Total: ${totalDeleted}`);
+                    
+                    if (totalDeleted === 0) {
+                        console.warn('Admin bulk-action: WARNING - No sponsors were deleted from any collection!');
+                        console.warn('Admin bulk-action: This might indicate the IDs were not found in any collection.');
+                    }
+                    
+                    result = { message: `Deleted ${totalDeleted} sponsors` };
+                } catch (deleteError) {
+                    console.error('Admin bulk-action: Error during DELETE operation:', deleteError);
+                    console.error('Admin bulk-action: DELETE error details:', {
+                        message: deleteError.message,
+                        stack: deleteError.stack,
+                        objectIds: objectIds.map(id => id.toString())
+                    });
+                    throw deleteError; // Re-throw to be caught by outer catch
+                }
                 break;
             }
                 
@@ -958,6 +1485,325 @@ router.post('/scraper/run', [auth, admin], async (req, res) => {
         sendResponse(500, {
             success: false,
             message: 'Error running scraper',
+            error: error.message
+        });
+    }
+});
+
+// List available Gemini models
+router.get('/test/gemini/models', [auth, admin], async (req, res) => {
+    const { spawn } = require('child_process');
+    const path = require('path');
+    let responseSent = false;
+    
+    const sendResponse = (statusCode, data) => {
+        if (!responseSent) {
+            responseSent = true;
+            res.status(statusCode).json(data);
+        }
+    };
+    
+    try {
+        console.log("Listing available Gemini models...");
+        
+        // Create a Python script to list models
+        const listModelsScript = `
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    import google.generativeai as genai
+    from config import GEMINI_API_KEY
+    
+    if not GEMINI_API_KEY:
+        print("ERROR: GEMINI_API_KEY not found in environment")
+        sys.exit(1)
+    
+    genai.configure(api_key=GEMINI_API_KEY)
+    
+    # List all available models
+    models = genai.list_models()
+    
+    print("SUCCESS: Available Gemini Models:")
+    print("=" * 60)
+    
+    available_models = []
+    for model in models:
+        model_name = model.name
+        # Extract just the model identifier (e.g., 'gemini-pro' from 'models/gemini-pro')
+        if '/' in model_name:
+            model_id = model_name.split('/')[-1]
+        else:
+            model_id = model_name
+        
+        # Check if model supports generateContent
+        supports_generate = 'generateContent' in model.supported_generation_methods if hasattr(model, 'supported_generation_methods') else False
+        
+        model_info = {
+            'name': model_id,
+            'full_name': model_name,
+            'supports_generateContent': supports_generate,
+            'display_name': getattr(model, 'display_name', 'N/A'),
+            'description': getattr(model, 'description', 'N/A')
+        }
+        available_models.append(model_info)
+        
+        status = "✅" if supports_generate else "❌"
+        print(f"{status} {model_id} (Full: {model_name})")
+        if supports_generate:
+            print(f"   Display: {model_info['display_name']}")
+            print(f"   Description: {model_info['description'][:100]}...")
+        print()
+    
+    print("=" * 60)
+    print(f"Total models found: {len(available_models)}")
+    print(f"Models supporting generateContent: {sum(1 for m in available_models if m['supports_generateContent'])}")
+    
+    # Print recommended models
+    print()
+    print("RECOMMENDED MODELS (support generateContent):")
+    for model in available_models:
+        if model['supports_generateContent']:
+            print(f"  • {model['name']}")
+    
+except ImportError as e:
+    print(f"ERROR: Missing package - {e}")
+    sys.exit(1)
+except Exception as e:
+    print(f"ERROR: {str(e)}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+`;
+        
+        // Write script to temp file
+        const fs = require('fs');
+        const scriptPath = path.join(__dirname, '../newsletter_scraper/list_gemini_models.py');
+        fs.writeFileSync(scriptPath, listModelsScript);
+        
+        // Run the script
+        const isHeroku = process.env.NODE_ENV === 'production' && process.env.DYNO;
+        const pythonCommands = isHeroku ? ['python3', 'python'] : ['python3', 'python'];
+        let pythonProcess;
+        let pythonCommand;
+        
+        for (const cmd of pythonCommands) {
+            try {
+                pythonProcess = spawn(cmd, [scriptPath], {
+                    cwd: path.join(__dirname, '../newsletter_scraper'),
+                    env: {
+                        ...process.env,
+                        PYTHONPATH: path.join(__dirname, '../newsletter_scraper')
+                    }
+                });
+                pythonCommand = cmd;
+                break;
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        if (!pythonProcess) {
+            return res.status(500).json({
+                success: false,
+                message: 'Python not found. Tried: ' + pythonCommands.join(', ')
+            });
+        }
+        
+        let output = '';
+        let errorOutput = '';
+        
+        pythonProcess.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+        
+        pythonProcess.stderr.on('data', (data) => {
+            errorOutput += data.toString();
+        });
+        
+        pythonProcess.on('close', (code) => {
+            // Clean up temp file
+            try {
+                fs.unlinkSync(scriptPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+            
+            if (code === 0) {
+                sendResponse(200, {
+                    success: true,
+                    message: 'Successfully listed Gemini models',
+                    output: output.trim(),
+                    errorOutput: errorOutput.trim()
+                });
+            } else {
+                sendResponse(500, {
+                    success: false,
+                    message: 'Failed to list Gemini models',
+                    output: output.trim(),
+                    errorOutput: errorOutput.trim(),
+                    exitCode: code
+                });
+            }
+        });
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+            if (!pythonProcess.killed) {
+                pythonProcess.kill();
+                sendResponse(408, {
+                    success: false,
+                    message: 'List models request timed out'
+                });
+            }
+        }, 30000);
+        
+    } catch (error) {
+        console.error("Error listing Gemini models:", error);
+        sendResponse(500, {
+            success: false,
+            message: 'Error listing Gemini models',
+            error: error.message
+        });
+    }
+});
+
+// Test Gemini API connection
+router.get('/test/gemini', [auth, admin], async (req, res) => {
+    const { spawn } = require('child_process');
+    const path = require('path');
+    let responseSent = false;
+    
+    const sendResponse = (statusCode, data) => {
+        if (!responseSent) {
+            responseSent = true;
+            res.status(statusCode).json(data);
+        }
+    };
+    
+    try {
+        console.log("Testing Gemini API connection...");
+        
+        // Create a simple Python test script
+        const testScript = `
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    import google.generativeai as genai
+    from config import GEMINI_API_KEY
+    
+    if not GEMINI_API_KEY:
+        print("ERROR: GEMINI_API_KEY not found in environment")
+        sys.exit(1)
+    
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    
+    # Test with a simple prompt
+    response = model.generate_content("Say 'Hello, Gemini is working!' if you can read this.")
+    
+    print(f"SUCCESS: {response.text}")
+    print(f"Model: gemini-2.5-flash")
+    print(f"API Key Length: {len(GEMINI_API_KEY)}")
+    
+except ImportError as e:
+    print(f"ERROR: Missing package - {e}")
+    sys.exit(1)
+except Exception as e:
+    print(f"ERROR: {str(e)}")
+    sys.exit(1)
+`;
+        
+        // Write test script to temp file
+        const fs = require('fs');
+        const testScriptPath = path.join(__dirname, '../newsletter_scraper/test_gemini.py');
+        fs.writeFileSync(testScriptPath, testScript);
+        
+        // Run the test script - use same Python detection as scraper
+        const isHeroku = process.env.NODE_ENV === 'production' && process.env.DYNO;
+        const pythonCommands = isHeroku ? ['python3', 'python'] : ['python3', 'python'];
+        let pythonProcess;
+        let pythonCommand;
+        
+        for (const cmd of pythonCommands) {
+            try {
+                pythonProcess = spawn(cmd, [testScriptPath], {
+                    cwd: path.join(__dirname, '../newsletter_scraper'),
+                    env: {
+                        ...process.env,
+                        PYTHONPATH: path.join(__dirname, '../newsletter_scraper')
+                    }
+                });
+                pythonCommand = cmd;
+                break;
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        if (!pythonProcess) {
+            return res.status(500).json({
+                success: false,
+                message: 'Python not found. Tried: ' + pythonCommands.join(', ')
+            });
+        }
+        
+        let output = '';
+        let errorOutput = '';
+        
+        pythonProcess.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+        
+        pythonProcess.stderr.on('data', (data) => {
+            errorOutput += data.toString();
+        });
+        
+        pythonProcess.on('close', (code) => {
+            // Clean up temp file
+            try {
+                fs.unlinkSync(testScriptPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+            
+            if (code === 0) {
+                sendResponse(200, {
+                    success: true,
+                    message: 'Gemini API test successful!',
+                    output: output.trim(),
+                    errorOutput: errorOutput.trim()
+                });
+            } else {
+                sendResponse(500, {
+                    success: false,
+                    message: 'Gemini API test failed',
+                    output: output.trim(),
+                    errorOutput: errorOutput.trim(),
+                    exitCode: code
+                });
+            }
+        });
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+            if (!pythonProcess.killed) {
+                pythonProcess.kill();
+                sendResponse(408, {
+                    success: false,
+                    message: 'Gemini API test timed out'
+                });
+            }
+        }, 30000);
+        
+    } catch (error) {
+        console.error("Error testing Gemini API:", error);
+        sendResponse(500, {
+            success: false,
+            message: 'Error testing Gemini API',
             error: error.message
         });
     }
@@ -1741,33 +2587,17 @@ router.post('/newsletter/generate', [auth, admin], async (req, res) => {
     try {
         console.log('📧 Generating new newsletter edition...');
         
-        // Fetch 3-4 sponsors where analysisStatus = 'complete'
-        // First try to find by analysisStatus, fallback to checking contact info
-        let sponsors = await Sponsor.find({
-            analysisStatus: 'complete',
+        // Fetch 3-4 sponsors from SponsorNew where status = 'approved'
+        let sponsors = await SponsorNew.find({
             status: 'approved'
         })
         .sort({ _id: -1 })
         .limit(4);
 
-        // Fallback: if no results and analysisStatus doesn't exist in schema,
-        // use sponsors with contact info as proxy for 'complete' analysis
-        if (sponsors.length < 3) {
-            sponsors = await Sponsor.find({
-                $or: [
-                    { sponsorEmail: { $exists: true, $ne: '' } },
-                    { sponsorApplication: { $exists: true, $ne: '' } }
-                ],
-                status: 'approved'
-            })
-            .sort({ _id: -1 })
-            .limit(4);
-        }
-
         if (sponsors.length < 3) {
             return res.status(400).json({
                 success: false,
-                error: 'Not enough sponsors available. Need at least 3 sponsors with complete analysis.',
+                error: 'Not enough approved sponsors available. Need at least 3 sponsors.',
                 available: sponsors.length
             });
         }
@@ -1780,18 +2610,25 @@ router.post('/newsletter/generate', [auth, admin], async (req, res) => {
         });
         const subject = `This week's new sponsors - ${currentDate}`;
 
+        // Single CTA option
+        const ctaIndex = 0; // Keep for backward compatibility, but always use same CTA
+
         // Create newsletter edition
         const newsletter = new Newsletter({
             subject: subject,
             sponsors: sponsors.map(s => s._id),
             status: 'draft',
+            ctaIndex: ctaIndex,
             createdAt: new Date()
         });
 
         await newsletter.save();
 
-        // Populate sponsors for response
-        await newsletter.populate('sponsors');
+        // Populate sponsors for response with all necessary fields including newslettersSponsored
+        await newsletter.populate({
+            path: 'sponsors',
+            select: 'sponsorName sponsorLink rootDomain tags sponsorEmail contactPersonName contactPersonTitle contactType newslettersSponsored avgAudienceSize totalPlacements'
+        });
 
         console.log(`✅ Newsletter edition created: ${newsletter._id}`);
 
@@ -1810,11 +2647,11 @@ router.post('/newsletter/generate', [auth, admin], async (req, res) => {
     }
 });
 
-// Update newsletter (subject and/or sponsors)
+// Update newsletter (subject, customIntro, sponsors, scheduledFor, status)
 router.put('/newsletter/update/:id', [auth, admin], async (req, res) => {
     try {
         const { id } = req.params;
-        const { subject, sponsors } = req.body;
+        const { subject, customIntro, sponsors, scheduledFor, status } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({
@@ -1840,24 +2677,39 @@ router.put('/newsletter/update/:id', [auth, admin], async (req, res) => {
         }
 
         // Update fields if provided
-        if (subject) {
+        if (subject !== undefined) {
             newsletter.subject = subject;
+        }
+
+        if (customIntro !== undefined) {
+            newsletter.customIntro = customIntro;
+        }
+
+        if (scheduledFor !== undefined) {
+            newsletter.scheduledFor = scheduledFor ? new Date(scheduledFor) : null;
+        }
+
+        if (status !== undefined && ['draft', 'scheduled', 'sent'].includes(status)) {
+            newsletter.status = status;
         }
 
         if (sponsors && Array.isArray(sponsors)) {
             // Validate that all sponsor IDs are valid
             const validSponsorIds = sponsors.filter(id => mongoose.Types.ObjectId.isValid(id));
-            if (validSponsorIds.length < 3) {
+            if (validSponsorIds.length < 1) {
                 return res.status(400).json({
                     success: false,
-                    error: 'At least 3 valid sponsor IDs are required'
+                    error: 'At least 1 valid sponsor ID is required'
                 });
             }
             newsletter.sponsors = validSponsorIds;
         }
 
         await newsletter.save();
-        await newsletter.populate('sponsors');
+        await newsletter.populate({
+            path: 'sponsors',
+            select: 'sponsorName sponsorLink rootDomain tags sponsorEmail contactPersonName contactPersonTitle contactType newslettersSponsored avgAudienceSize totalPlacements'
+        });
 
         console.log(`✅ Newsletter updated: ${newsletter._id}`);
 
@@ -1888,7 +2740,10 @@ router.post('/newsletter/send/:id', [auth, admin], async (req, res) => {
             });
         }
 
-        const newsletter = await Newsletter.findById(id).populate('sponsors');
+        const newsletter = await Newsletter.findById(id).populate({
+            path: 'sponsors',
+            select: 'sponsorName sponsorLink rootDomain tags sponsorEmail contactPersonName contactPersonTitle contactType newslettersSponsored avgAudienceSize totalPlacements'
+        });
 
         if (!newsletter) {
             return res.status(404).json({
@@ -1958,10 +2813,20 @@ router.post('/newsletter/send/:id', [auth, admin], async (req, res) => {
         // Prepare dashboard and unsubscribe links
         const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'https://sponsor-db.com';
         const dashboardLink = `${frontendUrl}/sponsors`;
+        const signupLink = `${frontendUrl}/signup`;
+        const pricingLink = `${frontendUrl}/pricing`;
+        
+        // CTA options array (must match the one in generate endpoint)
+        // Single CTA option
+        const ctaText = "Want access to our full database? Try SponsorDB Free for 14 Days →";
+        const ctaLink = signupLink;
         
         // Send email to each subscriber
         let sentCount = 0;
         let failedCount = 0;
+
+        // Import email template function
+        const { renderWeeklySponsorsTemplate } = require('../utils/emailTemplate');
 
         for (const subscriber of subscribers) {
             try {
@@ -1977,35 +2842,22 @@ router.post('/newsletter/send/:id', [auth, admin], async (req, res) => {
                     subject: newsletter.subject,
                     sponsors: newsletter.sponsors,
                     dashboardLink: dashboardLink,
-                    unsubscribeLink: unsubscribeLink
+                    unsubscribeLink: unsubscribeLink,
+                    customIntro: newsletter.customIntro,
+                    ctaText: ctaText,
+                    ctaLink: ctaLink
                 });
 
-                // Generate plain text fallback
-                const textContent = `Hi ${firstName},
-
-Here are some verified sponsors from SponsorDB this week:
-
-${newsletter.sponsors.map((sponsor, index) => {
-    const tags = sponsor.tags && sponsor.tags.length > 0 ? sponsor.tags.join(', ') : 'General';
-    const contact = sponsor.sponsorEmail 
-        ? `Email: ${sponsor.sponsorEmail}` 
-        : sponsor.sponsorApplication 
-            ? `Apply: ${sponsor.sponsorApplication}`
-            : '';
-    
-    return `
-━━━━━━━━━━━━━━━━
-${sponsor.sponsorName}
-${tags}
-${contact}
-View in dashboard: ${dashboardLink}`;
-}).join('\n')}
-
-Browse all 100+ sponsors: ${dashboardLink}
-
-Unsubscribe: ${unsubscribeLink}
-
-The SponsorDB Team`;
+                // Generate plain text fallback using the template function
+                const { generatePlainTextFallback } = require('../utils/emailTemplate');
+                const textContent = generatePlainTextFallback({
+                    firstName: firstName,
+                    subject: newsletter.subject,
+                    sponsors: newsletter.sponsors,
+                    dashboardLink: dashboardLink,
+                    unsubscribeLink: unsubscribeLink,
+                    customIntro: newsletter.customIntro
+                }) + `\n\n${ctaText}\n${ctaLink}\n\nThe SponsorDB Team`;
 
                 await sendEmail(
                     subscriber.email,
@@ -2046,13 +2898,98 @@ The SponsorDB Team`;
     }
 });
 
-// List all newsletters
+// Send test email
+router.post('/newsletter/send-test/:id', [auth, admin], async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Use logged-in user's email, or default to jacobbowlware@gmail.com
+        const testEmail = req.body.testEmail || req.user.email || 'jacobbowlware@gmail.com';
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid newsletter ID'
+            });
+        }
+
+        const newsletter = await Newsletter.findById(id).populate({
+            path: 'sponsors',
+            select: 'sponsorName sponsorLink rootDomain tags sponsorEmail contactPersonName contactPersonTitle contactType newslettersSponsored avgAudienceSize totalPlacements'
+        });
+
+        if (!newsletter) {
+            return res.status(404).json({
+                success: false,
+                error: 'Newsletter not found'
+            });
+        }
+
+        const { renderWeeklySponsorsTemplate } = require('../utils/emailTemplate');
+        const frontendUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'https://sponsor-db.com';
+        const dashboardLink = `${frontendUrl}/sponsors`;
+        const signupLink = `${frontendUrl}/signup`;
+        const pricingLink = `${frontendUrl}/pricing`;
+        const unsubscribeLink = `${frontendUrl}/unsubscribe?email=${encodeURIComponent(testEmail)}`;
+
+        // Single CTA option (matches the send endpoint)
+        const ctaText = "Want access to our full database? Try SponsorDB Free for 14 Days →";
+        const ctaLink = signupLink;
+
+        // Render HTML email template
+        const htmlContent = renderWeeklySponsorsTemplate({
+            firstName: 'Test',
+            subject: newsletter.subject,
+            sponsors: newsletter.sponsors,
+            dashboardLink: dashboardLink,
+            unsubscribeLink: unsubscribeLink,
+            customIntro: newsletter.customIntro,
+            ctaText: ctaText,
+            ctaLink: ctaLink
+        });
+
+        // Generate plain text fallback using the template function
+        const { generatePlainTextFallback } = require('../utils/emailTemplate');
+        const textContent = generatePlainTextFallback({
+            firstName: 'Test',
+            subject: newsletter.subject,
+            sponsors: newsletter.sponsors,
+            dashboardLink: dashboardLink,
+            unsubscribeLink: unsubscribeLink,
+            customIntro: newsletter.customIntro
+        }) + `\n\n${ctaText}\n${ctaLink}\n\nThe SponsorDB Team`;
+
+        await sendEmail(
+            testEmail,
+            `[TEST] ${newsletter.subject}`,
+            textContent,
+            htmlContent
+        );
+
+        console.log(`✅ Test email sent to ${testEmail} for newsletter ${newsletter._id}`);
+
+        res.json({
+            success: true,
+            message: `Test email sent to ${testEmail}`,
+            testEmail: testEmail
+        });
+
+    } catch (error) {
+        console.error('❌ Error sending test email:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error sending test email',
+            message: error.message
+        });
+    }
+});
+
+// List all newsletters (MUST come before /newsletter/:id route)
 router.get('/newsletter/list', [auth, admin], async (req, res) => {
     try {
         const newsletters = await Newsletter.find({})
-            .populate('sponsors', 'sponsorName sponsorLink')
+            .populate('sponsors', 'sponsorName sponsorLink rootDomain tags sponsorEmail contactPersonName contactPersonTitle contactType newslettersSponsored avgAudienceSize totalPlacements')
             .sort({ createdAt: -1 })
-            .select('subject status createdAt sentAt recipientCount sponsors');
+            .select('subject status createdAt sentAt recipientCount sponsors customIntro scheduledFor ctaIndex');
 
         res.json({
             success: true,
@@ -2065,6 +3002,46 @@ router.get('/newsletter/list', [auth, admin], async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error listing newsletters',
+            message: error.message
+        });
+    }
+});
+
+// Get single newsletter by ID (MUST come after /newsletter/list route)
+router.get('/newsletter/:id', [auth, admin], async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid newsletter ID'
+            });
+        }
+
+        const newsletter = await Newsletter.findById(id)
+            .populate({
+                path: 'sponsors',
+                select: 'sponsorName sponsorLink rootDomain tags sponsorEmail contactPersonName contactPersonTitle contactType newslettersSponsored avgAudienceSize totalPlacements'
+            });
+
+        if (!newsletter) {
+            return res.status(404).json({
+                success: false,
+                error: 'Newsletter not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            newsletter: newsletter
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting newsletter:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error getting newsletter',
             message: error.message
         });
     }

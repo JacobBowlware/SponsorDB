@@ -11,7 +11,7 @@ else:
     MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'test')  # Use 'test' database as requested
-COLLECTION_NAME = os.getenv('COLLECTION_NAME', 'sponsors')
+COLLECTION_NAME = os.getenv('COLLECTION_NAME', 'sponsornews')  # Updated to use new collection
 
 # Email Configuration (using your actual Heroku config vars)
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'imap.gmail.com')
@@ -24,8 +24,11 @@ EMAIL_FOLDER = os.getenv('EMAIL_FOLDER', 'INBOX')
 if EMAIL_PASSWORD:
     EMAIL_PASSWORD = EMAIL_PASSWORD.replace(' ', '')
 
-# OpenAI Configuration (using your actual Heroku config vars)
-OPENAI_API_KEY = os.getenv('sponsorDB_openAIKey')  # This matches your Heroku config
+# Google Gemini Configuration
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY') or os.getenv('sponsorDB_geminiKey')  # Supports both env var names
+
+# OpenAI Configuration (DEPRECATED - replaced with Gemini)
+# OPENAI_API_KEY = os.getenv('sponsorDB_openAIKey')
 
 # Scraping Configuration
 MAX_EMAILS_PER_RUN = int(os.getenv('MAX_EMAILS_PER_RUN', '30'))  # Increased for higher volume processing

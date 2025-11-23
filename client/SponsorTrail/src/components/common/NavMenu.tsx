@@ -66,7 +66,7 @@ const NavMenu = ({ isAdmin, isSubscribed, isLocalDev = false }: NavMenuProps) =>
                     </span>
                 </Link>
             </div>
-            {isSubscribed && (
+            {(isSubscribed || isAdmin) && (
                 <div className={`nav-menu__item ${location.pathname === '/analytics' ? 'active' : ''}`}>
                     <Link 
                         to="/analytics" 

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle, faCrown, faStar } from '@fortawesome/free-solid-svg-icons';
 import { trackPageView, trackButtonClick, trackUserJourney } from '../utils/analytics';
+import { trackSubscriptionScreenViewed } from '../utils/funnelTracking';
 import config from '../config';
 import axios from 'axios';
 
@@ -26,6 +27,8 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
             userAuth: userAuth ? 'yes' : 'no',
             isSubscribed: isSubscribed ? 'yes' : 'no'
         });
+        // Funnel tracking
+        trackSubscriptionScreenViewed();
     }, [userAuth, isSubscribed]);
 
     // Redirect if user is already subscribed
@@ -103,7 +106,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                             <div className="home__pricing-card home__pricing-card--featured">
                                 <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
                                 <div className="home__pricing-card__header">
-                                    <h3 className="home__pricing-card__title">Premium Access</h3>
+                                    <h3 className="home__pricing-card__title">Sponsor Access</h3>
                                     <div className="home__pricing-card__price">
                                         <span className="home__pricing-card__currency">$</span>
                                         <span className="home__pricing-card__amount">20</span>
@@ -118,7 +121,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Direct contact links for each sponsor</span>
+                                        <span>Direct contact emails to decision makers at the sponsor company</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
@@ -130,15 +133,11 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Sponsor response rate data</span>
-                                    </div>
-                                    <div className="home__pricing-card__benefit">
-                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
                                         <span>Smart sponsor matching based on your newsletter</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Advanced filtering by industry & budget</span>
+                                        <span>Advanced filtering by industry & audience size</span>
                                     </div>
                                 </div>
                                 
@@ -173,7 +172,7 @@ const Subscribe = ({ userAuth, isSubscribed, subscription }: SubscribeProps) => 
                             </div>
                             <div className="subscribe-trust__item">
                                 <FontAwesomeIcon icon={faCheckCircle} />
-                                <span>Proven response rates</span>
+                                <span>Verified contact information</span>
                             </div>
                             <div className="subscribe-trust__item">
                                 <FontAwesomeIcon icon={faCheckCircle} />

@@ -28,6 +28,28 @@
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   
+  /* Font Sizing System - Professional B2B Minimalist */
+  --font-size-xs: 0.625rem;      /* 10px - Notes, labels */
+  --font-size-sm: 0.75rem;       /* 12px - Small text, captions */
+  --font-size-base: 0.875rem;     /* 14px - Body text, default */
+  --font-size-md: 1rem;           /* 16px - Emphasized text */
+  --font-size-lg: 1.125rem;       /* 18px - Section headers */
+  --font-size-xl: 1.25rem;        /* 20px - Subsection headers */
+  --font-size-2xl: 1.5rem;        /* 24px - Page headers */
+  --font-size-3xl: 1.875rem;      /* 30px - Large page headers */
+  --font-size-4xl: 2.25rem;       /* 36px - Hero headers (desktop only) */
+  
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
   /* Spacing - 8px grid system */
   --spacing-xs: 0.25rem;   /* 4px */
   --spacing-sm: 0.5rem;    /* 8px */
@@ -60,7 +82,9 @@ body {
   scroll-behavior: smooth;
   height: 100%;
   color: var(--var-color-text);
-  line-height: 1.6;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-normal);
 }
 
 body,
@@ -161,6 +185,23 @@ html {
   content: "";
   display: table;
   clear: both;
+}
+
+/* Mobile: Full-width backgrounds, no horizontal padding */
+@media screen and (max-width: 767px) {
+  .web-section {
+    padding-left: 0;
+    padding-right: 0;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+  }
+  
+  .web-section__container,
+  .web-section-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 }
 
 @media screen and (min-width: 768px) {
@@ -770,75 +811,279 @@ html, body {
   line-height: 1.5;
 }
 
-/* Image Showcase */
-.problems-solved-showcase {
-  margin-bottom: 3rem;
+/* Feature Screenshots Showcase */
+.feature-screenshots-showcase {
+  margin-bottom: 4rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding: 0 1rem;
+  width: calc(100% + 2rem);
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.feature-screenshots-masonry {
+  column-count: 2 !important;
+  column-gap: 2rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.feature-screenshot-item {
+  display: inline-block;
+  width: 100%;
   text-align: center;
+  transition: transform 0.3s ease;
+  break-inside: avoid;
+  margin-bottom: 3rem;
+  page-break-inside: avoid;
+  vertical-align: top;
 }
 
-.problems-solved-image-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0;
-  margin: 0 auto;
-  max-width: 400px;
-  position: relative;
+.feature-screenshot-item:hover {
+  transform: translateY(-4px);
 }
 
-.problems-solved-image-placeholder {
-  width: 140px;
-  height: 100px;
+.feature-screenshot-image-wrapper {
+  width: 100%;
+  margin-bottom: 1.25rem;
   border-radius: 12px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
-  cursor: pointer;
-  z-index: 1;
+  background: #fff;
 }
 
-.problems-solved-image--database {
-  background: #f1f1f1;
-  transform: translateY(0) rotate(-5deg);
-  z-index: 3;
-  border: 1px solid #e0e0e0;
+.feature-screenshot-image-wrapper:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
-.problems-solved-image--application {
-  background: #f1f1f1;
-  transform: translateY(-12px) translateX(-20px);
-  z-index: 2;
-  border: 1px solid #e0e0e0;
+.feature-screenshot-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
 
-.problems-solved-image--developer {
-  background: #f1f1f1;
-  transform: translateY(-6px) translateX(-40px) rotate(5deg);
-  z-index: 1;
-  border: 1px solid #e0e0e0;
-}
-
-.problems-solved-image-placeholder:hover {
-  transform: translateY(-20px) scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-}
-
-.problems-solved-image-overlay {
+.feature-screenshot-caption {
+  width: 100%;
+  padding: 0 0.5rem;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #666;
-  font-size: 0.9rem;
-  font-weight: 600;
 }
 
-.problems-solved-image-overlay svg {
-  font-size: 1.8rem;
-  margin-bottom: 0.25rem;
+.feature-screenshot-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.feature-screenshot-description {
+  font-size: 0.95rem;
   color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive adjustments for feature screenshots */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .feature-screenshots-masonry {
+    column-count: 2 !important;
+    column-gap: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .feature-screenshots-showcase {
+    margin-bottom: 3rem;
+  }
+
+  .feature-screenshots-masonry {
+    column-count: 1 !important;
+    column-gap: 2rem;
+    max-width: 100%;
+  }
+
+  .feature-screenshot-item {
+    margin-bottom: 3rem;
+  }
+
+  .feature-screenshot-caption {
+    margin-top: 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .feature-screenshot-title {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-screenshot-description {
+    font-size: 0.9rem;
+  }
+}
+
+/* Bridge Section: See SponsorDB in Action */
+.bridge-section {
+  background: #f8f9fa;
+  padding: 4rem 1rem;
+}
+
+.bridge-section-container {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.bridge-section-header {
+  margin-bottom: 3rem;
+}
+
+.bridge-section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 1rem 0;
+  line-height: 1.2;
+}
+
+.bridge-section-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.bridge-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.bridge-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.bridge-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-color: #dee2e6;
+}
+
+.bridge-card-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 12px;
+  color: #666;
+  font-size: 1.75rem;
+}
+
+.bridge-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.3;
+}
+
+.bridge-card-description {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.bridge-section-cta {
+  margin-top: 2rem;
+}
+
+.bridge-cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--var-color-accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2);
+}
+
+.bridge-cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+  color: white;
+}
+
+.bridge-cta-button svg {
+  transition: transform 0.3s ease;
+}
+
+.bridge-cta-button:hover svg {
+  transform: translateX(4px);
+}
+
+/* Responsive adjustments for bridge section */
+@media screen and (max-width: 768px) {
+  .bridge-section {
+    padding: 3rem 1rem;
+  }
+
+  .bridge-section-title {
+    font-size: 1.75rem;
+  }
+
+  .bridge-section-subtitle {
+    font-size: 1rem;
+  }
+
+  .bridge-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .bridge-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .bridge-card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .bridge-card-title {
+    font-size: 1.1rem;
+  }
+
+  .bridge-card-description {
+    font-size: 0.9rem;
+  }
 }
 
 .problems-solved-comparison {

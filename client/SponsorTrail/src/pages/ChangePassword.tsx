@@ -26,7 +26,7 @@ const ChangePassword = () => {
             setUser(res.data);
             setAuthedUser(true);
         }).catch((err) => {
-            console.log(err);
+            // Error handled silently
         })
     }
 

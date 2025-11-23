@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLink, faSpinner, faExclamationTriangle, faSort, faSortUp, faSortDown, faEdit, faEnvelope, faArrowRight, faHandshake } from '@fortawesome/free-solid-svg-icons';
+import { faExternalLink, faSpinner, faExclamationTriangle, faSort, faSortUp, faSortDown, faEdit, faEnvelope, faArrowRight, faHandshake, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import config from '../config';
 import { useNavigate } from 'react-router-dom';
 import AffiliateProgramsTable from './AffiliateProgramsTable';
 import '../css/PaidSponsorTable.css';
 import '../css/components/AffiliateProgramsTable.css';
+import { trackSponsorCardClicked } from '../utils/funnelTracking';
+
+interface NewsletterSponsored {
+    newsletterName: string;
+    estimatedAudience: number;
+    contentTags: string[];
+    dateSponsored: string;
+    emailAddress?: string;
+}
 
 interface Sponsor {
     _id: string;
@@ -14,12 +23,21 @@ interface Sponsor {
     sponsorLink: string;
     rootDomain: string;
     tags: string[];
-    newsletterSponsored: string;
-    subscriberCount: number;
+    newsletterSponsored: string; // Legacy field for backward compatibility
+    subscriberCount: number; // Legacy field
+    newslettersSponsored?: NewsletterSponsored[]; // New field
+    dateSponsored?: string | Date; // Most recent newsletter date
+    mostRecentNewsletterDate?: string | Date; // Most recent newsletter date
+    totalPlacements?: number; // Total number of newsletter placements
+    avgAudienceSize?: number; // Average audience size across all newsletters
     businessContact: string;
     sponsorEmail?: string;
-    sponsorApplication?: string;
-    contactMethod?: 'email' | 'application' | 'both' | 'none';
+    contactMethod?: 'email' | 'none';
+    // Detailed contact info from Gemini
+    contactPersonName?: string;
+    contactPersonTitle?: string;
+    contactType?: 'named_person' | 'business_email' | 'generic_email' | 'not_found';
+    confidence?: number;
     analysisStatus?: 'complete' | 'manual_review_required' | 'pending';
     status?: 'pending' | 'approved' | 'rejected' | 'reviewed';
     dateAdded: string;
@@ -27,6 +45,9 @@ interface Sponsor {
     isApplied?: boolean;
     dateViewed?: string;
     dateApplied?: string;
+    // New structure fields
+    contentTags?: string[]; // Tags for this specific newsletter placement
+    placementId?: string; // Unique ID for this placement
     // Affiliate program fields
     isAffiliateProgram?: boolean;
     affiliateSignupLink?: string;
@@ -88,6 +109,35 @@ const CATEGORY_TAGS = {
 } as const;
 
 type CategoryType = keyof typeof CATEGORY_TAGS;
+
+// Placements Cell Component - Simple count display only (no expand functionality)
+const PlacementsCell: React.FC<{ sponsor: Sponsor }> = ({ sponsor }) => {
+    const newsletters = sponsor.newslettersSponsored || [];
+    
+    // Fallback to legacy format if newslettersSponsored doesn't exist
+    const hasPlacements = newsletters.length > 0 || sponsor.newsletterSponsored;
+    
+    if (!hasPlacements) {
+        return <span className="no-placements">No placements</span>;
+    }
+    
+    // If only legacy format, show single newsletter count
+    if (newsletters.length === 0 && sponsor.newsletterSponsored) {
+        return (
+            <span className="placements-count">
+                1 newsletter
+            </span>
+        );
+    }
+    
+    const count = newsletters.length;
+    
+    return (
+        <span className="placements-count">
+            {count} newsletter{count !== 1 ? 's' : ''}
+        </span>
+    );
+};
 
 // Sample sponsors for testing
 const SAMPLE_SPONSORS: Sponsor[] = [
@@ -229,13 +279,42 @@ const SAMPLE_SPONSORS: Sponsor[] = [
     }
 ];
 
-const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateAdded', sortOrder = 'desc', showAffiliatePrograms = false, statusFilter = 'all', matchedSponsors, showOneTime = true, user }) => {
+// Helper function to format contact information display as single button
+const formatContactDisplay = (sponsor: Sponsor, onEmailClick: (sponsor: Sponsor) => void) => {
+    const email = sponsor.sponsorEmail || (sponsor.businessContact && sponsor.businessContact.includes('@') ? sponsor.businessContact : null);
+    
+    if (!email) {
+        return <span className="no-contact">No contact</span>;
+    }
+    
+    return (
+        <button 
+            className="sponsor-contact-btn"
+            onClick={(e) => {
+                e.stopPropagation();
+                onEmailClick(sponsor);
+            }}
+            title={`Email: ${email}`}
+        >
+            <FontAwesomeIcon icon={faEnvelope} className="sponsor-contact-icon" />
+            <div className="sponsor-contact-content">
+                {sponsor.contactPersonTitle && (
+                    <div className="sponsor-contact-title">{sponsor.contactPersonTitle}</div>
+                )}
+                <div className="sponsor-contact-email">{email}</div>
+            </div>
+        </button>
+    );
+};
+
+const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilter, isAdmin, searchQuery, sortBy = 'dateSponsored', sortOrder = 'desc', showAffiliatePrograms = false, statusFilter = 'all', matchedSponsors, showOneTime = true, user }) => {
     const navigate = useNavigate();
     const [allSponsors, setAllSponsors] = useState<Sponsor[]>([]);
     const [displayedSponsors, setDisplayedSponsors] = useState<Sponsor[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [error, setError] = useState<string | null>(null);
+    const [expandedSponsors, setExpandedSponsors] = useState<Set<string>>(new Set());
     const [hasMore, setHasMore] = useState(true);
     const ITEMS_PER_PAGE = 50;
     
@@ -274,12 +353,6 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
                     affiliateOnly: showAffiliatePrograms.toString()
                 }
             });
-            console.log('Client: Fetched sponsors from server:', response.data);
-            console.log('Client: Number of sponsors:', response.data.length);
-            if (response.data.length > 0) {
-                console.log('Client: First sponsor ID:', response.data[0]._id);
-                console.log('Client: First sponsor name:', response.data[0].sponsorName);
-            }
             setAllSponsors(response.data);      
         } catch (err) {
             let errorMessage = 'Something went wrong while loading sponsors.';
@@ -318,15 +391,15 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         } else {
             fetchAllSponsors();
         }
+        // Reset page when filters change
+        setPage(1);
     }, [showAffiliatePrograms, matchedSponsors]); // Refetch when affiliate toggle changes or matched sponsors update
 
     // Helper function to determine sponsor status
     const getSponsorStatus = (sponsor: Sponsor) => {
         const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
-        const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
-        const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
-        const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
-        const hasContactInfo = hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
+        const hasBusinessContactEmail = sponsor.businessContact && sponsor.businessContact.includes('@') && sponsor.businessContact.trim() !== '';
+        const hasContactInfo = hasEmail || hasBusinessContactEmail;
         
         const isApproved = sponsor.status === 'approved' || sponsor.analysisStatus === 'complete';
         
@@ -355,10 +428,8 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         if (!isAdmin && !showAffiliatePrograms) {
             filtered = filtered.filter(sponsor => {
                 const hasEmail = sponsor.sponsorEmail && sponsor.sponsorEmail.trim() !== '';
-                const hasApplication = sponsor.sponsorApplication && sponsor.sponsorApplication.trim() !== '';
-                const hasAffiliateLink = sponsor.affiliateSignupLink && sponsor.affiliateSignupLink.trim() !== '';
-                const hasBusinessContact = sponsor.businessContact && sponsor.businessContact.trim() !== '';
-                return hasEmail || hasApplication || hasAffiliateLink || hasBusinessContact;
+                const hasBusinessContactEmail = sponsor.businessContact && sponsor.businessContact.includes('@') && sponsor.businessContact.trim() !== '';
+                return hasEmail || hasBusinessContactEmail;
             });
         }
         
@@ -393,20 +464,25 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         return filtered;
     }, [allSponsors, activeFilter, searchQuery, showAffiliatePrograms, isAdmin]);
 
-    const sortedSponsors = [...filteredSponsors].sort((a, b) => {
-        if (sortBy === 'subscriberCount') {
-            return sortOrder === 'asc' ? a.subscriberCount - b.subscriberCount : b.subscriberCount - a.subscriberCount;
-        } else if (sortBy === 'dateAdded') {
-            return sortOrder === 'asc' ? new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime() : new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
-        } else if (sortBy === 'sponsorName') {
-            return sortOrder === 'asc' ? a.sponsorName.localeCompare(b.sponsorName) : b.sponsorName.localeCompare(a.sponsorName);
-        } else if (sortBy === 'matchScore') {
-            const scoreA = (a as any).matchScore || 0;
-            const scoreB = (b as any).matchScore || 0;
-            return sortOrder === 'asc' ? scoreA - scoreB : scoreB - scoreA;
-        }
-        return 0;
-    });
+    const sortedSponsors = useMemo(() => {
+        return [...filteredSponsors].sort((a, b) => {
+            if (sortBy === 'subscriberCount') {
+                return sortOrder === 'asc' ? a.subscriberCount - b.subscriberCount : b.subscriberCount - a.subscriberCount;
+            } else if (sortBy === 'dateAdded' || sortBy === 'dateSponsored') {
+                // Use mostRecentNewsletterDate if available, otherwise fall back to dateSponsored or dateAdded
+                const dateA = new Date(a.mostRecentNewsletterDate || a.dateSponsored || a.dateAdded || 0).getTime();
+                const dateB = new Date(b.mostRecentNewsletterDate || b.dateSponsored || b.dateAdded || 0).getTime();
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            } else if (sortBy === 'sponsorName') {
+                return sortOrder === 'asc' ? a.sponsorName.localeCompare(b.sponsorName) : b.sponsorName.localeCompare(a.sponsorName);
+            } else if (sortBy === 'matchScore') {
+                const scoreA = (a as any).matchScore || 0;
+                const scoreB = (b as any).matchScore || 0;
+                return sortOrder === 'asc' ? scoreA - scoreB : scoreB - scoreA;
+            }
+            return 0;
+        });
+    }, [filteredSponsors, sortBy, sortOrder]);
 
     // Update displayed sponsors when filter changes or page changes
     useEffect(() => {
@@ -414,17 +490,60 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         const endIndex = page * ITEMS_PER_PAGE;
         const newDisplayedSponsors = sortedSponsors.slice(startIndex, endIndex);
         setDisplayedSponsors(newDisplayedSponsors);
-        setHasMore(newDisplayedSponsors.length < sortedSponsors.length);
+        setHasMore(endIndex < sortedSponsors.length);
+        console.log(`Pagination: Showing ${newDisplayedSponsors.length} of ${sortedSponsors.length} sponsors (page ${page} of ${Math.ceil(sortedSponsors.length / ITEMS_PER_PAGE)})`);
     }, [sortedSponsors, page]);
 
-    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-        const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+    // Calculate total pages
+    const totalPages = Math.ceil(sortedSponsors.length / ITEMS_PER_PAGE);
+    
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const maxVisible = 7; // Show max 7 page buttons
         
-        // Load more when user scrolls to 80% of the current content
-        if (scrollHeight - scrollTop <= clientHeight * 1.2 && !loading && hasMore) {
-            setPage(prev => prev + 1);
+        if (totalPages <= maxVisible) {
+            // Show all pages if total is less than max
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Always show first page
+            pages.push(1);
+            
+            if (page > 3) {
+                pages.push('...');
+            }
+            
+            // Show pages around current page
+            const start = Math.max(2, page - 1);
+            const end = Math.min(totalPages - 1, page + 1);
+            
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            
+            if (page < totalPages - 2) {
+                pages.push('...');
+            }
+            
+            // Always show last page
+            pages.push(totalPages);
         }
-    }, [loading, hasMore]);
+        
+        return pages;
+    };
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setPage(newPage);
+            // Scroll to top of table when page changes
+            const tableContainer = document.querySelector('.sponsor-table-container');
+            if (tableContainer) {
+                tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    };
 
     const getTagClass = (tag: string) => {
         const tagClass = tag.toLowerCase().replace(/\s+/g, '-');
@@ -529,7 +648,6 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
 
     const markAsApplied = async (sponsorId: string) => {
         try {
-            console.log('Client: Attempting to mark sponsor as applied, ID:', sponsorId);
             const token = localStorage.getItem('token');
             if (!token) {
                 navigate('/login');
@@ -546,7 +664,6 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
                 }
             );
 
-            console.log('Client: Server response:', response.data);
 
             // Update the sponsor in the local state using the server response
             const updatedSponsor = response.data;
@@ -570,7 +687,23 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         }
     };
 
+    // Toggle sponsor row expansion
+    const toggleSponsorExpansion = (sponsorId: string) => {
+        setExpandedSponsors(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(sponsorId)) {
+                newSet.delete(sponsorId);
+            } else {
+                newSet.add(sponsorId);
+            }
+            return newSet;
+        });
+    };
+
     const handleSponsorClick = (sponsor: Sponsor) => {
+        // Track sponsor card clicked (funnel tracking)
+        trackSponsorCardClicked(sponsor.sponsorName || sponsor.rootDomain || 'unknown');
+        
         if (!sponsor.isViewed) {
             markAsViewed(sponsor._id);
         }
@@ -578,22 +711,6 @@ const PaidSponsorTable: React.FC<PaidSponsorTableProps> = ({ onError, activeFilt
         window.open(`https://${sponsor.rootDomain}`, '_blank');
     };
 
-    const handleContactClick = (sponsor: Sponsor) => {
-        if (!sponsor.isApplied) {
-            markAsApplied(sponsor._id);
-        }
-        if (!sponsor.isViewed) {
-            markAsViewed(sponsor._id);
-        }
-        
-        // Open the application link if it exists
-        if (sponsor.sponsorApplication) {
-            window.open(sponsor.sponsorApplication, '_blank');
-        } else if (sponsor.businessContact && !sponsor.businessContact.includes('@')) {
-            // Fallback to businessContact if it's not an email
-            window.open(sponsor.businessContact, '_blank');
-        }
-    };
 
     const generateEmailTemplate = (sponsor: Sponsor) => {
         const newsletterName = user?.newsletterInfo?.name || 'My Newsletter';
@@ -661,7 +778,12 @@ ${newsletterName}`;
         const mailtoLink = `mailto:${email}?subject=${template.subject}&body=${template.body}`;
         
         // Mark as applied and viewed
-        handleContactClick(sponsor);
+        if (!sponsor.isApplied) {
+            markAsApplied(sponsor._id);
+        }
+        if (!sponsor.isViewed) {
+            markAsViewed(sponsor._id);
+        }
         
         // Open email client
         window.location.href = mailtoLink;
@@ -694,92 +816,134 @@ ${newsletterName}`;
         );
     }
 
-    // Mobile view - Sponsor cards
-    if (isMobile) {
-        console.log('Mobile view active, displayedSponsors:', displayedSponsors);
-        return (
-            <div className="mobile-sponsors-grid">
-                {displayedSponsors.length > 0 ? (
-                    displayedSponsors.map((sponsor) => (
-                        <div key={sponsor._id} className="sponsor-card">
-                            <div className="sponsor-card-header">
-                                <div>
-                                    <h3 className="sponsor-name">{sponsor.sponsorName}</h3>
-                                    <p className="sponsor-domain">{sponsor.rootDomain}</p>
-                                </div>
-                                {(sponsor as any).matchScore !== undefined && (
-                                    <div className="sponsor-match-badge">
-                                        <span className="match-score">{(sponsor as any).matchScore}% Match</span>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="sponsor-tags">
-                                {sponsor.tags?.map((tag, index) => (
-                                    <span key={index} className="sponsor-tag">{tag}</span>
-                                ))}
-                                {(sponsor as any).matchedTags && (sponsor as any).matchedTags.length > 0 && (
-                                    <span className="sponsor-tag sponsor-tag--matched">
-                                        Matches: {(sponsor as any).matchedTags.slice(0, 2).join(', ')}
-                                    </span>
-                                )}
-                            </div>
-                            
-                            <div className="sponsor-details">
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Newsletter</span>
-                                    <span className="sponsor-detail-value">{sponsor.newsletterSponsored}</span>
-                                </div>
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Audience</span>
-                                    <span className="sponsor-detail-value">{sponsor.subscriberCount.toLocaleString()}</span>
-                                </div>
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Contact</span>
-                                    <span className="sponsor-detail-value">{sponsor.businessContact}</span>
-                                </div>
-                                <div className="sponsor-detail">
-                                    <span className="sponsor-detail-label">Added</span>
-                                    <span className="sponsor-detail-value">{new Date(sponsor.dateAdded).toLocaleDateString()}</span>
-                                </div>
-                            </div>
-                            
-                            <div className="sponsor-actions">
-                                <button 
-                                    className="sponsor-action-btn sponsor-view-btn"
-                                    onClick={() => handleSponsorClick(sponsor)}
-                                >
-                                    <FontAwesomeIcon icon={faExternalLink} />
-                                    View
-                                </button>
-                                <button 
-                                    className="sponsor-action-btn sponsor-apply-btn"
-                                    onClick={() => handleContactClick(sponsor)}
-                                >
-                                    <FontAwesomeIcon icon={faHandshake} />
-                                    {sponsor.isApplied ? 'Applied' : 'Apply'}
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="mobile-no-results">
-                        <p>No sponsors found. Try adjusting your filters or search terms.</p>
-                        <p>Debug: displayedSponsors length: {displayedSponsors.length}</p>
-                        <p>Debug: isMobile: {isMobile.toString()}</p>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    // Show affiliate programs table if toggle is on
+    // Show affiliate programs table if toggle is on (check BEFORE mobile/desktop view)
     if (showAffiliatePrograms) {
         return (
             <AffiliateProgramsTable 
                 onError={onError || (() => {})} 
                 user={user}
+                isMobile={isMobile}
             />
+        );
+    }
+
+    // Mobile view - Sponsor cards
+    if (isMobile) {
+        return (
+            <div className="mobile-sponsors-grid">
+                {displayedSponsors.length > 0 ? (
+                    displayedSponsors.map((sponsor) => {
+                        const newsletters = sponsor.newslettersSponsored || [];
+                        const isExpanded = expandedSponsors.has(sponsor._id);
+                        // Collect all unique contentTags from newsletters
+                        const allTags = new Set<string>();
+                        newsletters.forEach(newsletter => {
+                            if (newsletter.contentTags && newsletter.contentTags.length > 0) {
+                                newsletter.contentTags.forEach(tag => allTags.add(tag));
+                            }
+                        });
+                        const displayTags = Array.from(allTags).length > 0 
+                            ? Array.from(allTags) 
+                            : (sponsor.tags || []);
+                        
+                        return (
+                            <div key={sponsor._id} className="sponsor-card">
+                                <div className="sponsor-card-header">
+                                    <div>
+                                        <h3 
+                                            className="sponsor-name sponsor-name-clickable"
+                                            onClick={() => handleSponsorClick(sponsor)}
+                                        >
+                                            {sponsor.sponsorName}
+                                            <FontAwesomeIcon icon={faExternalLink} className="sponsor-name-link-icon" />
+                                        </h3>
+                                    </div>
+                                    {(sponsor as any).matchScore !== undefined && (
+                                        <div className="sponsor-match-badge">
+                                            <span className="match-score">{(sponsor as any).matchScore}% Match</span>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Market Tags */}
+                                {displayTags.length > 0 && (
+                                    <div className="sponsor-tags">
+                                        {displayTags.slice(0, 5).map((tag, index) => (
+                                            <span key={index} className="sponsor-tag">{tag}</span>
+                                        ))}
+                                        {displayTags.length > 5 && (
+                                            <span className="sponsor-tag">+{displayTags.length - 5}</span>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {/* Contact Section */}
+                                <div className="sponsor-contact-section">
+                                    {formatContactDisplay(sponsor, handleEmailClick)}
+                                </div>
+                                
+                                {/* Expandable Newsletter Placements Section */}
+                                {newsletters.length > 0 && (
+                                    <>
+                                        <button 
+                                            className="sponsor-expand-newsletters-btn"
+                                            onClick={() => toggleSponsorExpansion(sponsor._id)}
+                                        >
+                                            <span>{isExpanded ? 'Hide' : 'Show'} Newsletter Placements ({newsletters.length})</span>
+                                            <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} />
+                                        </button>
+                                        {isExpanded && (
+                                            <div className="sponsor-newsletters-section">
+                                                <div className="sponsor-newsletters-header">
+                                                    <h4>Newsletter Placements ({newsletters.length})</h4>
+                                                    {sponsor.avgAudienceSize && newsletters.length > 1 && (
+                                                        <span className="avg-audience-badge-mobile">
+                                                            Avg: {sponsor.avgAudienceSize.toLocaleString()} readers
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="sponsor-newsletters-list">
+                                                    {newsletters.map((newsletter, idx) => (
+                                                        <div key={idx} className="sponsor-newsletter-item-mobile">
+                                                            <div className="newsletter-item-header-mobile">
+                                                                <strong className="newsletter-name-mobile">
+                                                                    {newsletter.newsletterName || 'Unnamed Newsletter'}
+                                                                </strong>
+                                                            </div>
+                                                            <span className="newsletter-date-mobile">
+                                                                    {new Date(newsletter.dateSponsored || sponsor.dateAdded).toLocaleDateString()}
+                                                            </span>
+                                                            <div className="newsletter-item-body-mobile">
+                                                                <div className="newsletter-stat-mobile">
+                                                                    <span className="stat-label-mobile">Audience:</span>
+                                                                    <span className="stat-value-mobile">
+                                                                        {newsletter.estimatedAudience ? newsletter.estimatedAudience.toLocaleString() : 'N/A'}
+                                                                    </span>
+                                                                </div>
+                                                                {newsletter.contentTags && newsletter.contentTags.length > 0 && (
+                                                                    <div className="newsletter-tags-mobile">
+                                                                        {newsletter.contentTags.map((tag, tagIdx) => (
+                                                                            <span key={tagIdx} className="content-tag-badge-mobile">{tag}</span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="mobile-no-results">
+                        <p>No sponsors found. Try adjusting your filters or search terms.</p>
+                    </div>
+                )}
+            </div>
         );
     }
 
@@ -798,170 +962,237 @@ ${newsletterName}`;
                                     className={`sponsor-table__sort-icon ${sortBy === 'sponsorName' ? 'active' : ''}`}
                                 />
                             </th>
-                            <th className="sponsor-table__column-header sponsor-domain-col">Domain</th>
-                            <th className="sponsor-table__column-header sponsor-contact-col">Contact Method</th>
-                            <th className="sponsor-table__column-header sponsor-newsletter-col">Newsletter Source</th>
+                            {/* <th className="sponsor-table__column-header sponsor-domain-col">Domain</th> */}
+                            <th className="sponsor-table__column-header sponsor-contact-col">Sponsor Contact</th>
+                            <th className="sponsor-table__column-header sponsor-placements-col">Placements</th>
+                            <th className="sponsor-table__column-header sponsor-market-col">Market</th>
                             <th className="sponsor-table__column-header sponsor-actions-col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {displayedSponsors.map((sponsor, index) => (
-                            <tr key={`${sponsor.sponsorName || index}-${index}`} 
-                                className={`sponsor-table__row ${sponsor.isViewed || sponsor.isApplied ? 'sponsor-table__row--inactive' : ''} ${(sponsor as any).matchScore ? 'sponsor-table__row--matched' : ''}`}>
-                                
-                                {/* Sponsor Name */}
-                                <td className="sponsor-table__cell sponsor-name-cell">
-                                    <div className="sponsor-name-container">
-                                        <a 
-                                            href={`https://${sponsor.rootDomain}`} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="sponsor-table__link sponsor-name-link"
-                                            onClick={() => handleSponsorClick(sponsor)}
-                                        >
-                                            {sponsor.sponsorName}
-                                            <FontAwesomeIcon 
-                                                icon={faExternalLink} 
-                                                className="sponsor-table__link-icon" 
-                                            />
-                                        </a>
-                                        {(sponsor as any).matchScore !== undefined && (
-                                            <span className="match-score-badge">{(sponsor as any).matchScore}% Match</span>
-                                        )}
-                                    </div>
-                                </td>
-                                
-                                {/* Domain */}
-                                <td className="sponsor-table__cell sponsor-domain-cell">
-                                    <span className="sponsor-domain">{sponsor.rootDomain}</span>
-                                </td>
-                                
-                                {/* Contact Method */}
-                                <td className="sponsor-table__cell sponsor-contact-cell">
-                                    {sponsor.sponsorEmail ? (
-                                        <div className="contact-method">
-                                            <FontAwesomeIcon icon={faEnvelope} className="contact-icon" />
-                                            <button 
-                                                className="contact-link contact-button"
-                                                onClick={() => handleEmailClick(sponsor)}
-                                            >
-                                                Send Email
-                                            </button>
-                                        </div>
-                                    ) : sponsor.sponsorApplication ? (
-                                        <div className="contact-method">
-                                            <FontAwesomeIcon icon={faArrowRight} className="contact-icon" />
-                                            <a 
-                                                href={sponsor.sponsorApplication}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="sponsor-table__link contact-link"
-                                                onClick={() => handleContactClick(sponsor)}
-                                            >
-                                                Complete their partnership form
-                                            </a>
-                                        </div>
-                                    ) : sponsor.businessContact ? (
-                                        // Fallback to legacy businessContact field
-                                        sponsor.businessContact.includes('@') ? (
-                                            <div className="contact-method">
-                                                <FontAwesomeIcon icon={faEnvelope} className="contact-icon" />
-                                                <button 
-                                                    className="contact-link contact-button"
-                                                    onClick={() => handleEmailClick(sponsor)}
-                                                >
-                                                    Send Email
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="contact-method">
-                                                <FontAwesomeIcon icon={faArrowRight} className="contact-icon" />
+                        {displayedSponsors.map((sponsor, index) => {
+                            const isExpanded = expandedSponsors.has(sponsor._id);
+                            const newsletters = sponsor.newslettersSponsored || [];
+                            
+                            return (
+                                <React.Fragment key={`${sponsor._id}-${index}`}>
+                                    <tr 
+                                        className={`sponsor-table__row ${sponsor.isViewed || sponsor.isApplied ? 'sponsor-table__row--inactive' : ''} ${(sponsor as any).matchScore ? 'sponsor-table__row--matched' : ''} ${isExpanded ? 'sponsor-table__row--expanded' : ''}`}
+                                    >
+                                        {/* Sponsor Name */}
+                                        <td className="sponsor-table__cell sponsor-name-cell">
+                                            <div className="sponsor-name-container">
+                                                {newsletters.length > 0 && (
+                                                    <button
+                                                        className="sponsor-expand-toggle"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleSponsorExpansion(sponsor._id);
+                                                        }}
+                                                        title={isExpanded ? 'Collapse details' : `Expand to see ${newsletters.length} newsletter${newsletters.length !== 1 ? 's' : ''}`}
+                                                    >
+                                                        <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} />
+                                                    </button>
+                                                )}
                                                 <a 
-                                                    href={sponsor.businessContact}
-                                                    target="_blank"
+                                                    href={`https://${sponsor.rootDomain}`} 
+                                                    target="_blank" 
                                                     rel="noopener noreferrer"
-                                                    className="sponsor-table__link contact-link"
-                                                    onClick={() => handleContactClick(sponsor)}
+                                                    className="sponsor-table__link sponsor-name-link"
+                                                    onClick={() => handleSponsorClick(sponsor)}
                                                 >
-                                                    Complete their partnership form
+                                                    {sponsor.sponsorName}
+                                                    <FontAwesomeIcon 
+                                                        icon={faExternalLink} 
+                                                        className="sponsor-table__link-icon" 
+                                                    />
                                                 </a>
+                                                {(sponsor as any).matchScore !== undefined && (
+                                                    <span className="match-score-badge">{(sponsor as any).matchScore}% Match</span>
+                                                )}
                                             </div>
-                                        )
-                                    ) : (
-                                        <span className="no-contact">No contact</span>
-                                    )}
-                                </td>
-                                
-                                {/* Newsletter Source */}
-                                <td className="sponsor-table__cell sponsor-newsletter-cell">
-                                    <span className="sponsor-table__newsletter">{sponsor.newsletterSponsored}</span>
-                                </td>
-                                
-                                {/* Actions */}
-                                <td className="sponsor-table__cell sponsor-actions-cell">
-                                    <div className="sponsor-actions">
-                                        <button 
-                                            className="sponsor-action-btn sponsor-view-btn"
-                                            onClick={() => handleSponsorClick(sponsor)}
-                                            title="View Website"
-                                        >
-                                            <FontAwesomeIcon icon={faExternalLink} />
-                                        </button>
-                                        {(sponsor.sponsorEmail || sponsor.sponsorApplication || sponsor.businessContact) && (
-                                            <button 
-                                                className="sponsor-action-btn sponsor-apply-btn"
-                                                onClick={() => {
-                                                    if (sponsor.sponsorEmail) {
-                                                        handleEmailClick(sponsor);
-                                                    } else if (sponsor.sponsorApplication) {
-                                                        handleContactClick(sponsor);
-                                                    } else if (sponsor.businessContact) {
-                                                        sponsor.businessContact.includes('@') ? handleEmailClick(sponsor) : handleContactClick(sponsor);
+                                        </td>
+                                        
+                                        {/* Domain */}
+                                        {/* <td className="sponsor-table__cell sponsor-domain-cell">
+                                            <span className="sponsor-domain">{sponsor.rootDomain}</span>
+                                        </td> */}
+                                        
+                                        {/* Sponsor Contact */}
+                                        <td className="sponsor-table__cell sponsor-contact-cell">
+                                            {formatContactDisplay(sponsor, handleEmailClick)}
+                                        </td>
+                                        
+                                        {/* Placements Column */}
+                                        <td className="sponsor-table__cell sponsor-placements-cell">
+                                            <PlacementsCell sponsor={sponsor} />
+                                        </td>
+                                        
+                                        {/* Market Column - Aggregate tags from all newsletters */}
+                                        <td className="sponsor-table__cell sponsor-market-cell">
+                                            {(() => {
+                                                // Collect all unique contentTags from newsletters
+                                                const allTags = new Set<string>();
+                                                newsletters.forEach(newsletter => {
+                                                    if (newsletter.contentTags && newsletter.contentTags.length > 0) {
+                                                        newsletter.contentTags.forEach(tag => allTags.add(tag));
                                                     }
-                                                }}
-                                                title={
-                                                    sponsor.sponsorEmail ? 'Send Email with Template' : 
-                                                    sponsor.sponsorApplication ? 'Open Application' :
-                                                    sponsor.businessContact?.includes('@') ? 'Send Email with Template' : 'Open Application'
+                                                });
+                                                // Fallback to sponsor tags if no newsletter tags
+                                                const displayTags = Array.from(allTags).length > 0 
+                                                    ? Array.from(allTags) 
+                                                    : (sponsor.tags || []);
+                                                
+                                                if (displayTags.length === 0) {
+                                                    return <span className="no-tags">No tags</span>;
                                                 }
-                                            >
-                                                <FontAwesomeIcon icon={
-                                                    sponsor.sponsorEmail ? faEnvelope :
-                                                    sponsor.sponsorApplication ? faHandshake :
-                                                    sponsor.businessContact?.includes('@') ? faEnvelope : faHandshake
-                                                } />
-                                            </button>
-                                        )}
-                                        {isAdmin && (
-                                            <button
-                                                className="sponsor-action-btn sponsor-edit-btn"
-                                                onClick={() => handleEdit(sponsor)}
-                                                title="Edit Sponsor"
-                                            >
-                                                <FontAwesomeIcon icon={faEdit} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                                
+                                                return (
+                                                    <div className="market-tags-inline">
+                                                        {displayTags.slice(0, 3).map((tag, idx) => (
+                                                            <span key={idx} className="market-tag-inline">{tag}</span>
+                                                        ))}
+                                                        {displayTags.length > 3 && (
+                                                            <span className="more-tags" title={displayTags.slice(3).join(', ')}>
+                                                                +{displayTags.length - 3}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </td>
+                                        
+                                        {/* Actions */}
+                                        <td className="sponsor-table__cell sponsor-actions-cell">
+                                            <div className="sponsor-actions">
+                                                <button 
+                                                    className="sponsor-action-btn sponsor-view-btn"
+                                                    onClick={() => handleSponsorClick(sponsor)}
+                                                    title="View Website"
+                                                >
+                                                    <FontAwesomeIcon icon={faExternalLink} />
+                                                </button>
+                                                {(sponsor.sponsorEmail || (sponsor.businessContact && sponsor.businessContact.includes('@'))) && (
+                                                    <button 
+                                                        className="sponsor-action-btn sponsor-apply-btn"
+                                                        onClick={() => handleEmailClick(sponsor)}
+                                                        title="Send Email with Template"
+                                                    >
+                                                        <FontAwesomeIcon icon={faEnvelope} />
+                                                    </button>
+                                                )}
+                                                {isAdmin && (
+                                                    <button
+                                                        className="sponsor-action-btn sponsor-edit-btn"
+                                                        onClick={() => handleEdit(sponsor)}
+                                                        title="Edit Sponsor"
+                                                    >
+                                                        <FontAwesomeIcon icon={faEdit} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {isExpanded && newsletters.length > 0 && (
+                                        <tr className="sponsor-table__details-row">
+                                            <td colSpan={6}>
+                                                <div className="sponsor-expanded-details">
+                                                    <div className="expanded-details-header">
+                                                        <h4>Newsletter Placements ({newsletters.length})</h4>
+                                                        {sponsor.avgAudienceSize && newsletters.length > 1 && (
+                                                            <span className="avg-audience-badge">
+                                                                Avg Audience: {sponsor.avgAudienceSize.toLocaleString()} readers
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="newsletters-grid">
+                                                        {newsletters.map((newsletter, idx) => (
+                                                            <div key={idx} className="newsletter-card">
+                                                                <div className="newsletter-card-header">
+                                                                    <strong className="newsletter-name">{newsletter.newsletterName || 'Unnamed Newsletter'}</strong>
+                                                                    <span className="newsletter-date">
+                                                                        {new Date(newsletter.dateSponsored || sponsor.dateAdded).toLocaleDateString()}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="newsletter-card-body">
+                                                                    <div className="newsletter-stat">
+                                                                        <span className="stat-label">Audience:</span>
+                                                                        <span className="stat-value">{newsletter.estimatedAudience ? newsletter.estimatedAudience.toLocaleString() : 'N/A'}</span>
+                                                                    </div>
+                                                                    {newsletter.contentTags && newsletter.contentTags.length > 0 && (
+                                                                        <div className="newsletter-tags">
+                                                                            {newsletter.contentTags.map((tag, tagIdx) => (
+                                                                                <span key={tagIdx} className="content-tag-badge">{tag}</span>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
                     </tbody>
                 </table>
                 
                 {loading && allSponsors.length > 0 && (
                     <div className="sponsor-table__loading">
                         <FontAwesomeIcon icon={faSpinner} spin className="sponsor-table__loading-icon" />
-                        Loading more sponsors...
+                        Loading sponsors...
                     </div>
                 )}
-                {!loading && hasMore && (
-                    <div className="sponsor-table__loading">
-                        <span>Scroll to load more sponsors</span>
+                
+                {/* Pagination Controls */}
+                {!loading && totalPages > 1 && (
+                    <div className="sponsor-table__pagination">
+                        <button
+                            className="pagination-btn"
+                            onClick={() => handlePageChange(page - 1)}
+                            disabled={page === 1}
+                            aria-label="Previous page"
+                        >
+                            Previous
+                        </button>
+                        
+                        <div className="pagination-pages">
+                            {getPageNumbers().map((pageNum, idx) => {
+                                if (pageNum === '...') {
+                                    return <span key={`ellipsis-${idx}`} className="pagination-ellipsis">...</span>;
+                                }
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        className={`pagination-page ${page === pageNum ? 'active' : ''}`}
+                                        onClick={() => handlePageChange(pageNum as number)}
+                                        aria-label={`Go to page ${pageNum}`}
+                                        aria-current={page === pageNum ? 'page' : undefined}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        
+                        <button
+                            className="pagination-btn"
+                            onClick={() => handlePageChange(page + 1)}
+                            disabled={page === totalPages}
+                            aria-label="Next page"
+                        >
+                            Next
+                        </button>
                     </div>
                 )}
-                {!loading && !hasMore && displayedSponsors.length > 0 && (
-                    <div className="sponsor-table__loading">
-                        {displayedSponsors.length} of {sortedSponsors.length} sponsors
+                
+                {!loading && displayedSponsors.length > 0 && (
+                    <div className="sponsor-table__pagination-info">
+                        Showing {displayedSponsors.length} of {sortedSponsors.length} sponsors
+                        {totalPages > 1 && ` (Page ${page} of ${totalPages})`}
                     </div>
                 )}
             </div>

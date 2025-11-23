@@ -431,15 +431,28 @@ class EmailProcessor:
         return processed_sections
 
     def get_newsletter_name(self, email_data: Dict) -> str:
-        """Extract newsletter name from email"""
+        """Extract newsletter name from email - prioritize display name over email address"""
         sender = email_data.get('sender', '')
         subject = email_data.get('subject', '')
         
-        # Try to extract from sender
+        # Try to extract display name from sender (format: "Display Name <email@domain.com>")
         if '<' in sender and '>' in sender:
-            name_match = re.search(r'<(.+?)>', sender)
-            if name_match:
-                return name_match.group(1)
+            # Extract display name (text before the < character)
+            display_name = sender.split('<')[0].strip()
+            # Remove quotes if present
+            display_name = display_name.strip('"').strip("'").strip()
+            
+            # If display name exists and is valid (not empty, not just whitespace)
+            if display_name and len(display_name) > 0:
+                logger.debug(f"Extracted display name from sender: '{display_name}'")
+                return display_name
+            
+            # Fallback: extract email address from between < and >
+            email_match = re.search(r'<(.+?)>', sender)
+            if email_match:
+                email_address = email_match.group(1).strip()
+                logger.debug(f"Using email address as fallback: '{email_address}'")
+                return email_address
         
         # Try to extract from subject (common patterns)
         subject_patterns = [
@@ -454,5 +467,5 @@ class EmailProcessor:
             if match:
                 return match.group(1).strip()
         
-        # Fallback to sender
-        return sender.split('<')[0].strip() if '<' in sender else sender
+        # Fallback to sender (if no angle brackets, use whole sender)
+        return sender.strip()

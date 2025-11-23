@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faCheckCircle, faSpinner, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import config from '../config';
+import { trackSignupScreenViewed, trackSignupStarted } from '../utils/funnelTracking';
 
 interface NewsletterSubscribeProps {
     isSubscribed?: boolean;
@@ -14,9 +15,22 @@ const NewsletterSubscribe = ({ isSubscribed = false }: NewsletterSubscribeProps)
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
+    const formRef = useRef<HTMLFormElement>(null);
+    const hasTrackedFocus = useRef(false);
+
+    // Track signup screen viewed when form gets focus
+    const handleFormFocus = () => {
+        if (!hasTrackedFocus.current) {
+            trackSignupScreenViewed();
+            hasTrackedFocus.current = true;
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Track signup started
+        trackSignupStarted();
         
         if (!email || !email.includes('@')) {
             setStatus('error');
@@ -76,12 +90,13 @@ const NewsletterSubscribe = ({ isSubscribed = false }: NewsletterSubscribeProps)
                         Join our newsletter and get the latest verified sponsors delivered to your inbox every week.
                     </p>
                     
-                    <form onSubmit={handleSubmit} className="newsletter-subscribe-form">
+                    <form ref={formRef} onSubmit={handleSubmit} className="newsletter-subscribe-form" onFocus={handleFormFocus}>
                         <div className="newsletter-input-group">
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                onFocus={handleFormFocus}
                                 placeholder="Enter your email"
                                 className="newsletter-subscribe-input"
                                 disabled={isSubmitting || status === 'success'}

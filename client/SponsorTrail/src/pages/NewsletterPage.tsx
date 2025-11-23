@@ -23,15 +23,24 @@ interface NewsletterPageProps {
 interface Newsletter {
     _id: string;
     subject: string;
+    customIntro?: string;
     sentAt: string;
     recipientCount: number;
     sponsors: Array<{
         _id: string;
         sponsorName: string;
         sponsorLink?: string;
+        rootDomain?: string;
         tags?: string[];
         sponsorEmail?: string;
         sponsorApplication?: string;
+        contactPersonTitle?: string;
+        newslettersSponsored?: Array<{
+            newsletterName: string;
+            estimatedAudience: number;
+            contentTags: string[];
+            dateSponsored: string | Date;
+        }>;
     }>;
 }
 
@@ -73,6 +82,28 @@ const NewsletterPage = ({ user, userAuth }: NewsletterPageProps) => {
             month: 'long', 
             day: 'numeric' 
         });
+    };
+
+    const getSponsorPlacementsList = (sponsor: Newsletter['sponsors'][0]): Array<{ name: string; audience: string }> | null => {
+        if (!sponsor.newslettersSponsored || sponsor.newslettersSponsored.length === 0) return null;
+        return sponsor.newslettersSponsored.slice(0, 5)
+            .map(n => {
+                if (!n || !n.newsletterName) return null;
+                const audience = n.estimatedAudience || 0;
+                const audienceStr = audience >= 1000000 
+                    ? `${(audience / 1000000).toFixed(1)}M`
+                    : audience >= 1000
+                    ? `${(audience / 1000).toFixed(0)}K`
+                    : audience > 0
+                    ? `${audience}`
+                    : '';
+                const contentTags = n.contentTags && Array.isArray(n.contentTags) && n.contentTags.length > 0
+                    ? n.contentTags.slice(0, 3).join('/')
+                    : 'readers';
+                const audiencePart = audienceStr ? ` (${audienceStr} ${contentTags})` : ` (${contentTags})`;
+                return { name: n.newsletterName, audience: audiencePart };
+            })
+            .filter((p): p is { name: string; audience: string } => p !== null);
     };
 
     return (
@@ -142,37 +173,54 @@ const NewsletterPage = ({ user, userAuth }: NewsletterPageProps) => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Custom Intro / Body */}
+                                {newsletter.customIntro && (
+                                    <div className="newsletter-card__body">
+                                        <p className="newsletter-card__intro">
+                                            {newsletter.customIntro}
+                                        </p>
+                                    </div>
+                                )}
                                 
+                                {/* Sponsors - Full Details */}
                                 <div className="newsletter-card__sponsors">
-                                    <h4 className="newsletter-card__sponsors-title">
-                                        Featured Sponsors ({newsletter.sponsors.length})
-                                    </h4>
                                     <div className="newsletter-card__sponsors-list">
                                         {newsletter.sponsors.map((sponsor, index) => (
                                             <div key={sponsor._id || index} className="newsletter-sponsor-item">
-                                                <div className="newsletter-sponsor-item__name">
+                                                <h5 className="newsletter-sponsor-item__name">
                                                     {sponsor.sponsorName}
-                                                </div>
-                                                {sponsor.tags && sponsor.tags.length > 0 && (
-                                                    <div className="newsletter-sponsor-item__tags">
-                                                        {sponsor.tags.slice(0, 3).map((tag, tagIndex) => (
-                                                            <span key={tagIndex} className="newsletter-tag">
-                                                                <FontAwesomeIcon icon={faTag} />
-                                                                {tag}
-                                                            </span>
-                                                        ))}
-                                                    </div>
+                                                </h5>
+                                                {sponsor.rootDomain && (
+                                                    <p className="newsletter-sponsor-item__domain">{sponsor.rootDomain}</p>
                                                 )}
-                                                {sponsor.sponsorLink && (
-                                                    <a 
-                                                        href={sponsor.sponsorLink} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="newsletter-sponsor-item__link"
-                                                    >
-                                                        View Sponsor
-                                                        <FontAwesomeIcon icon={faArrowRight} />
-                                                    </a>
+                                                {sponsor.tags && sponsor.tags.length > 0 && (
+                                                    <p className="newsletter-sponsor-item__tags-text">
+                                                        <strong>Markets:</strong> {sponsor.tags.join(', ')}
+                                                    </p>
+                                                )}
+                                                {sponsor.sponsorEmail && (
+                                                    <p className="newsletter-sponsor-item__contact">
+                                                        <strong>Contact:</strong> {sponsor.sponsorEmail}{sponsor.contactPersonTitle ? ` (${sponsor.contactPersonTitle})` : ''}
+                                                    </p>
+                                                )}
+                                                {(() => {
+                                                    const placements = getSponsorPlacementsList(sponsor);
+                                                    return placements && placements.length > 0 && (
+                                                        <div className="newsletter-sponsor-item__placements">
+                                                            <p><strong>Previously sponsored:</strong></p>
+                                                            <ul className="newsletter-placements-list">
+                                                                {placements.map((placement, idx) => (
+                                                                    <li key={idx}>
+                                                                        <strong>{placement.name}</strong>{placement.audience}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    );
+                                                })()}
+                                                {index < (newsletter.sponsors?.length || 0) - 1 && (
+                                                    <hr className="newsletter-sponsor-divider" />
                                                 )}
                                             </div>
                                         ))}

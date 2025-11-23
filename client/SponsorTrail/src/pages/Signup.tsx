@@ -28,6 +28,7 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
     const [showNewsletterOnboarding, setShowNewsletterOnboarding] = useState(false);
     const [userToken, setUserToken] = useState('');
     const [isInSignupFlow, setIsInSignupFlow] = useState(false);
+    const [newsletterOptIn, setNewsletterOptIn] = useState(false);
 
     const navigate = useNavigate();
 
@@ -130,7 +131,8 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
 
         await axios.post(`${config.backendUrl}users/`, {
             email: email,
-            password: password
+            password: password,
+            newsletterOptIn: newsletterOptIn
         }).then((res) => {
             const token = res.headers['x-auth-token'];
             localStorage.setItem('token', token);
@@ -176,7 +178,6 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
                 });
             } else {
                 // In dev mode, just log the newsletter info
-                console.log('📧 Newsletter info (dev mode):', newsletterInfo);
                 // Store in localStorage for dev mode
                 localStorage.setItem('dev_newsletter_info', JSON.stringify(newsletterInfo));
             }
@@ -218,7 +219,7 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
         // Reset signup flow flag
         setIsInSignupFlow(false);
         trackUserJourney('newsletter_onboarding_skip', 3, { has_newsletter_info: false });
-        navigate('/sponsors');
+        navigate('/subscribe');
     };
 
     // Note: newsletter onboarding now lives at /onboarding
@@ -271,8 +272,27 @@ const Signup = ({ userAuth, isSubscribed, sponsorCount = 300, newsletterCount = 
                     />
                     {confirmPasswordError && !error && <div className="form-error">{confirmPasswordError}</div>}
                     {error && <div className="form-error">{error}</div>}
+                    
+                    {/* Newsletter Opt-in Section */}
+                    <div className="signup-newsletter-optin">
+                        <label className="signup-newsletter-checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={newsletterOptIn}
+                                onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                                className="signup-newsletter-checkbox"
+                            />
+                            <span className="signup-newsletter-label-text">
+                                Send me weekly sponsor updates
+                            </span>
+                        </label>
+                        <p className="signup-newsletter-subtext">
+                            Get the latest verified sponsors delivered to your inbox. Unsubscribe anytime.
+                        </p>
+                    </div>
+
                     <div className="login-form__btn-container">
-                        <button disabled={!!emailError || !!passwordError || !!confirmPasswordError || !!error || !email || !password || !confirmPassword} className="btn login-form__btn" type="submit">Signup</button>
+                        <button disabled={!!emailError || !!passwordError || !!confirmPasswordError || !!error || !email || !password || !confirmPassword} className="btn login-form__btn" type="submit">Start 14-Day Trial</button>
                     </div>
                     <Link to="/login" className="login-form__link" onClick={handleLoginLink}>Have an account?</Link>
                 </form>

@@ -14,67 +14,81 @@ logger = logging.getLogger(__name__)
 
 class SponsorAnalyzer:
     def __init__(self):
-        self.openai_client = None
+        self.gemini_model = None
         logger.info("=== INITIALIZING SPONSOR ANALYZER ===")
         
-        # Try to initialize OpenAI client
+        # Try to initialize Google Gemini client
         try:
-            logger.info("Attempting to import OpenAI package...")
-            import openai
-            from config import OPENAI_API_KEY
-            logger.info("OpenAI package imported successfully")
+            logger.info("Attempting to import Google Generative AI package...")
+            import google.generativeai as genai
+            from config import GEMINI_API_KEY
+            logger.info("Google Generative AI package imported successfully")
             
-            logger.info(f"Checking for OpenAI API key...")
-            if not OPENAI_API_KEY:
-                logger.error("❌ OpenAI API key not found in environment variables")
-                logger.info("Expected environment variable: sponsorDB_openAIKey")
-                logger.info("GPT analysis will be DISABLED")
-                return
+            logger.info(f"Checking for Gemini API key...")
+            if not GEMINI_API_KEY:
+                error_msg = "❌ CRITICAL: Gemini API key not found in environment variables. Expected: GEMINI_API_KEY or sponsorDB_geminiKey"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
                 
-            if not OPENAI_API_KEY.strip():
-                logger.error("❌ OpenAI API key is empty")
-                logger.info("GPT analysis will be DISABLED")
-                return
+            if not GEMINI_API_KEY.strip():
+                error_msg = "❌ CRITICAL: Gemini API key is empty. Scraper requires valid Gemini API key."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
                 
-            logger.info(f"✅ OpenAI API key found (length: {len(OPENAI_API_KEY)})")
-            logger.info("Creating OpenAI client...")
-            self.openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
-            logger.info("✅ OpenAI client created successfully")
+            logger.info(f"✅ Gemini API key found (length: {len(GEMINI_API_KEY)})")
+            logger.info("Configuring Gemini API...")
+            genai.configure(api_key=GEMINI_API_KEY)
+            logger.info("✅ Gemini API configured successfully")
             
-            # Test the client with a simple API call
-            logger.info("Testing OpenAI API connection...")
+            logger.info("Creating Gemini model...")
+            # Use gemini-2.5-flash (latest and fastest model)
+            self.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+            logger.info("✅ Gemini model created successfully")
+            
+            # Test the model with a simple API call
+            logger.info("Testing Gemini API connection...")
             try:
-                test_response = self.openai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": "test"}],
-                    max_tokens=1,
-                    temperature=0
-                )
-                logger.info("✅ OpenAI API test successful - GPT analysis ENABLED")
-                logger.info(f"Test response: {test_response.choices[0].message.content}")
+                test_response = self.gemini_model.generate_content("test")
+                logger.info("✅ Gemini API test successful - Gemini analysis ENABLED")
+                logger.info(f"Test response: {test_response.text[:50]}...")
             except Exception as test_error:
-                logger.error(f"❌ OpenAI API test failed: {test_error}")
-                if "insufficient_quota" in str(test_error).lower():
-                    logger.error("❌ OpenAI account needs funding! Visit: https://platform.openai.com/account/billing")
-                elif "invalid_api_key" in str(test_error).lower():
-                    logger.error("❌ Invalid OpenAI API key!")
-                elif "rate_limit" in str(test_error).lower():
-                    logger.error("❌ OpenAI rate limit exceeded!")
+                logger.error(f"❌ Gemini API test failed: {test_error}")
+                error_msg = None
+                if "quota" in str(test_error).lower() or "quota_exceeded" in str(test_error).lower():
+                    error_msg = "❌ CRITICAL: Gemini API quota exceeded! Check your Google Cloud billing. Scraper requires working Gemini API."
+                    logger.error(error_msg)
+                elif "invalid" in str(test_error).lower() or "api_key" in str(test_error).lower():
+                    error_msg = "❌ CRITICAL: Invalid Gemini API key! Scraper requires valid Gemini API key."
+                    logger.error(error_msg)
+                elif "rate_limit" in str(test_error).lower() or "rate limit" in str(test_error).lower():
+                    error_msg = "❌ CRITICAL: Gemini API rate limit exceeded! Scraper requires working Gemini API."
+                    logger.error(error_msg)
                 else:
-                    logger.error(f"❌ Unknown OpenAI error: {test_error}")
-                self.openai_client = None
-                logger.info("GPT analysis will be DISABLED due to API test failure")
+                    error_msg = f"❌ CRITICAL: Gemini API test failed: {test_error}. Scraper requires working Gemini API."
+                    logger.error(error_msg)
+                
+                self.gemini_model = None
+                raise RuntimeError(error_msg or f"Gemini API test failed: {test_error}")
                 
         except ImportError as e:
-            logger.error(f"❌ OpenAI package not available: {e}")
-            logger.info("GPT analysis will be DISABLED")
+            logger.error(f"❌ Google Generative AI package not available: {e}")
+            logger.error("Install with: pip install google-generativeai")
+            logger.error("❌ CRITICAL: Gemini is REQUIRED. Scraper will not run without it.")
+            raise ImportError("Google Generative AI package (google-generativeai) is required but not installed. Install with: pip install google-generativeai")
         except Exception as e:
-            logger.error(f"❌ OpenAI client initialization failed: {e}")
-            logger.info("GPT analysis will be DISABLED")
+            logger.error(f"❌ Gemini client initialization failed: {e}")
+            logger.error("❌ CRITICAL: Gemini initialization failed. Scraper will not run without Gemini.")
+            raise RuntimeError(f"Failed to initialize Gemini: {e}")
+        
+        # Verify Gemini is actually available
+        if not self.gemini_model:
+            error_msg = "❌ CRITICAL: Gemini model is not available. Scraper requires Gemini to function."
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
         
         logger.info("=== SPONSOR ANALYZER INITIALIZATION COMPLETE ===")
     
-    def analyze_sponsor_section(self, section_data: Dict, newsletter_name: str) -> List[Dict]:
+    def analyze_sponsor_section(self, section_data: Dict, newsletter_name: str, cached_subscriber_count: Optional[int] = None) -> List[Dict]:
         """Analyze a sponsor section and extract sponsor information"""
         try:
             section_text = section_data.get('section_text', '')
@@ -87,7 +101,7 @@ class SponsorAnalyzer:
             sponsors = []
             for link in links:
                 try:
-                    sponsor = self._analyze_single_link(link, section_text, newsletter_name)
+                    sponsor = self._analyze_single_link(link, section_text, newsletter_name, cached_subscriber_count)
                     if sponsor:
                         sponsors.append(sponsor)
                 except Exception as e:
@@ -105,7 +119,7 @@ class SponsorAnalyzer:
             logger.error(f"Failed to analyze sponsor section: {e}")
             return []
     
-    def _analyze_single_link(self, link: str, context: str, newsletter_name: str) -> Optional[Dict]:
+    def _analyze_single_link(self, link: str, context: str, newsletter_name: str, cached_subscriber_count: Optional[int] = None) -> Optional[Dict]:
         """Analyze a single link and extract sponsor information"""
         try:
             # Parse URL
@@ -165,19 +179,23 @@ class SponsorAnalyzer:
                 url_for_scraping = link if link.startswith(('http://', 'https://')) else f"https://{domain_for_scraping}"
             
             # Create sponsor data
+            # Note: newsletterSponsored and estimatedSubscribers will be converted to 
+            # newslettersSponsored array format by database.py create_sponsor method
             sponsor_data = {
                 'sponsorName': company_name,
                 'sponsorLink': link,  # Keep original link (affiliate redirect)
                 'rootDomain': domain_for_scraping,  # Use real domain if found
-                'newsletterSponsored': newsletter_name,
-                'sourceNewsletter': newsletter_name,
+                'newsletterSponsored': newsletter_name,  # Will be converted to newslettersSponsored array
+                'sourceNewsletter': newsletter_name,  # Fallback for newsletter name
                 'discoveryMethod': 'email_scraper',
                 'analysisStatus': 'pending',
-                'confidence': 0.0
+                'confidence': 0.0,
+                '_cached_subscriber_count': cached_subscriber_count  # Pass cached count for estimation
             }
             
             # Try to get additional info from the website (use real domain for email search)
-            additional_info = self._scrape_website_info(url_for_scraping, domain_for_scraping, newsletter_name)
+            # Pass company_name so Gemini can use it for better email finding
+            additional_info = self._scrape_website_info(url_for_scraping, domain_for_scraping, newsletter_name, company_name)
             if additional_info:
                 sponsor_data.update(additional_info)
             
@@ -190,9 +208,13 @@ class SponsorAnalyzer:
                 # Don't return None - allow it to be saved as pending
             
             # 8. NEWSLETTER AUDIENCE SIZE ESTIMATION
-            estimated_subscribers = self._estimate_subscriber_count(context, newsletter_name)
+            # Use cached subscriber count if provided, otherwise estimate
+            cached_subscriber_count = sponsor_data.get('_cached_subscriber_count')
+            estimated_subscribers = self._estimate_subscriber_count(context, newsletter_name, cached_subscriber_count)
             sponsor_data['estimatedSubscribers'] = estimated_subscribers['count']
             sponsor_data['subscriberReasoning'] = estimated_subscribers['reasoning']
+            # Remove the cached value as it's no longer needed
+            sponsor_data.pop('_cached_subscriber_count', None)
             
             # 9. AFFILIATE PROGRAM DETECTION
             is_affiliate = self._detect_affiliate_program(sponsor_data, context)
@@ -629,28 +651,8 @@ class SponsorAnalyzer:
         
         return False
 
-    def _is_newsletter_sponsor_page(self, application_url: str, newsletter_name: str, sponsor_domain: str) -> bool:
-        """Check if this is the newsletter's 'sponsor us' page instead of the sponsor company's page"""
-        if not application_url:
-            return False
-        
-        # Extract domain from application URL
-        app_domain = urlparse(application_url).netloc.lower()
-        
-        # Get newsletter domain
-        newsletter_domain = self._extract_newsletter_domain(newsletter_name)
-        
-        # If application URL is on the NEWSLETTER'S domain, it's wrong
-        if newsletter_domain and newsletter_domain.lower() in app_domain:
-            logger.debug(f"Application URL is on newsletter domain - rejecting: {application_url}")
-            return True
-        
-        # If application URL is NOT on the sponsor's domain, it's suspicious
-        if sponsor_domain.lower() not in app_domain:
-            logger.debug(f"Application URL is not on sponsor domain - potential issue: {application_url} vs {sponsor_domain}")
-            return True
-        
-        return False
+    # REMOVED: _is_newsletter_sponsor_page method - we no longer check application URLs
+    # Only storing email contacts now
     
     def _is_legitimate_company(self, company_name: str, domain: str, url: str) -> bool:
         """Check if this is a legitimate business that could sponsor newsletters"""
@@ -744,21 +746,12 @@ class SponsorAnalyzer:
         return False
     
     def _has_contact_info(self, sponsor_data: Dict) -> bool:
-        """Check if sponsor has required contact information"""
+        """Check if sponsor has required contact information (email only now)"""
         has_email = sponsor_data.get('sponsorEmail') and sponsor_data.get('sponsorEmail').strip()
-        has_application = sponsor_data.get('sponsorApplication') and sponsor_data.get('sponsorApplication').strip()
         
-        # Must have either valid email OR application page URL
-        if has_email or has_application:
-            # Update contact method and set as complete
-            if has_email and has_application:
-                sponsor_data['contactMethod'] = 'both'
-            elif has_email:
-                sponsor_data['contactMethod'] = 'email'
-            else:
-                sponsor_data['contactMethod'] = 'application'
-            
-            # Only mark as complete if we have contact info
+        # Must have valid email
+        if has_email:
+            sponsor_data['contactMethod'] = 'email'
             sponsor_data['analysisStatus'] = 'complete'
             return True
         
@@ -767,11 +760,19 @@ class SponsorAnalyzer:
         sponsor_data['analysisStatus'] = 'pending'
         return False
     
-    def _estimate_subscriber_count(self, context: str, newsletter_name: str) -> Dict:
-        """Estimate newsletter audience size with conservative estimates"""
+    def _estimate_subscriber_count(self, context: str, newsletter_name: str, cached_count: Optional[int] = None) -> Dict:
+        """Estimate newsletter audience size - check cached DB value first, then context, then Gemini"""
+        # PRIORITY 1: Use cached value from database if available and > 0
+        if cached_count and cached_count > 0:
+            logger.info(f"Using cached subscriber count from database for '{newsletter_name}': {cached_count:,}")
+            return {
+                'count': cached_count,
+                'reasoning': f'Using existing database record: {cached_count:,} subscribers'
+            }
+        
         context_lower = context.lower()
         
-        # Look for explicit subscriber mentions
+        # PRIORITY 2: Look for explicit subscriber mentions in context
         subscriber_patterns = [
             r'(\d{1,3}(?:,\d{3})*)\s*subscribers?',
             r'(\d{1,3}(?:,\d{3})*)\s*readers?',
@@ -787,6 +788,7 @@ class SponsorAnalyzer:
                 try:
                     count = int(count_str)
                     if count >= 1000:  # Only trust counts >= 1000
+                        logger.info(f"Found explicit subscriber count in context: {count:,}")
                         return {
                             'count': count,
                             'reasoning': f'Found explicit subscriber count: {count:,}'
@@ -794,6 +796,22 @@ class SponsorAnalyzer:
                 except ValueError:
                     continue
         
+        # PRIORITY 3: Try Gemini estimation if no DB value and no explicit count found
+        if not cached_count or cached_count == 0:
+            logger.info(f"Attempting Gemini estimation for newsletter '{newsletter_name}'")
+            gemini_result = self.gemini_estimate_newsletter_audience(newsletter_name, context)
+            if gemini_result and gemini_result.get('count', 0) > 0:
+                confidence = gemini_result.get('confidence', 0.0)
+                if confidence >= 0.8:  # High confidence threshold
+                    logger.info(f"Using Gemini estimate (confidence {confidence:.2f}): {gemini_result['count']:,}")
+                    return {
+                        'count': gemini_result['count'],
+                        'reasoning': gemini_result.get('reasoning', 'Gemini estimation')
+                    }
+                else:
+                    logger.debug(f"Gemini estimate confidence too low ({confidence:.2f}), falling back to pattern matching")
+        
+        # PRIORITY 4: Fallback to pattern-based estimates
         # Look for social proof indicators
         social_proof_indicators = [
             'thousands of', 'millions of', 'hundreds of',
@@ -826,83 +844,102 @@ class SponsorAnalyzer:
                 'reasoning': 'Conservative default estimate - 5K subscribers'
             }
     
-    def _scrape_website_info(self, url: str, domain: str, newsletter_name: str = None) -> Optional[Dict]:
-        """Scrape additional information from the website"""
-        try:
-            # Only scrape if we have a reasonable URL
-            if not url.startswith(('http://', 'https://')):
-                return None
-            
-            # CHANGED: Reduced timeout from 10 to 5 seconds
-            response = requests.get(url, timeout=5, headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            })
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Extract title
-            title = soup.find('title')
-            title_text = title.get_text().strip() if title else ""
-            
-            # Extract meta description
-            meta_desc = soup.find('meta', attrs={'name': 'description'})
-            description = meta_desc.get('content', '').strip() if meta_desc else ""
-            
-            # Try to find contact email and application page
-            logger.info(f"🔍 Searching for contact email on website: {url}")
-            contact_email = self._find_contact_email(soup, domain)
-            application_url = self._find_application_url(soup, domain, url)
-            
-            info = {}
-            if title_text and self._is_valid_company_name(title_text):
-                info['extractedTitle'] = title_text
-            if description:
-                info['extractedDescription'] = description
-            
-            # Set contact information
-            if contact_email:
-                logger.info(f"✅ Contact email found and set: {contact_email} for domain: {domain}")
-                info['sponsorEmail'] = contact_email
-            else:
-                logger.warning(f"⚠️ No contact email found for domain: {domain}")
-            if application_url:
-                # Validate it's not the newsletter's sponsor page
-                if newsletter_name and self._is_newsletter_sponsor_page(application_url, newsletter_name, domain):
-                    logger.info(f"Rejecting application URL - it's the newsletter's sponsor page, not the company's: {application_url}")
-                    application_url = None
+    def _scrape_website_info(self, url: str, domain: str, newsletter_name: str = None, company_name: str = None) -> Optional[Dict]:
+        """Scrape additional information from the website - Try Gemini first, then web scraping"""
+        info = {}
+        contact_email = None
+        
+        # STEP 1: Try Gemini FIRST to find contact email (prioritizes named contacts)
+        if self.gemini_model:
+            logger.info(f"🔍 Trying Gemini first to find BEST contact for: {domain}")
+            try:
+                contact_result = self.gemini_find_contact_email(domain, company_name, newsletter_name)
+                if contact_result and contact_result.get('email'):
+                    contact_email = contact_result['email']
+                    contact_type = contact_result.get('contact_type', 'generic_email')
+                    confidence = contact_result.get('confidence', 0.5)
+                    
+                    # Store contact information with metadata
+                    info['sponsorEmail'] = contact_email
+                    info['contactMethod'] = 'email'
+                    info['contactType'] = contact_type
+                    info['confidence'] = confidence
+                    
+                    # Store named person details if available
+                    if contact_type == 'named_person':
+                        info['contactPersonName'] = contact_result.get('name')
+                        info['contactPersonTitle'] = contact_result.get('title')
+                        info['analysisStatus'] = 'complete'
+                        info['confidence'] = max(confidence, 0.85)
+                    elif contact_type == 'business_email':
+                        info['analysisStatus'] = 'complete'
+                        info['confidence'] = max(confidence, 0.6)
+                    elif contact_type == 'generic_email':
+                        info['analysisStatus'] = 'needs_review'  # Mark for manual verification
+                        info['confidence'] = max(confidence, 0.4)
+                    
+                    logger.info(f"✅ Gemini found {contact_type} contact: {contact_email}")
+            except Exception as e:
+                logger.warning(f"⚠️ Gemini email finding failed: {e}, falling back to web scraping")
+        
+        # STEP 2: If Gemini didn't find email, try web scraping as fallback
+        if not contact_email:
+            logger.info(f"🔍 Gemini didn't find email, trying web scraping for: {url}")
+            try:
+                # Only scrape if we have a reasonable URL
+                if url.startswith(('http://', 'https://')):
+                    # CHANGED: Reduced timeout from 10 to 5 seconds
+                    response = requests.get(url, timeout=5, headers={
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    })
+                    response.raise_for_status()
+                    
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    
+                    # Extract title
+                    title = soup.find('title')
+                    title_text = title.get_text().strip() if title else ""
+                    
+                    # Extract meta description
+                    meta_desc = soup.find('meta', attrs={'name': 'description'})
+                    description = meta_desc.get('content', '').strip() if meta_desc else ""
+                    
+                    # Try to find contact email via web scraping
+                    contact_email = self._find_contact_email(soup, domain)
+                    
+                    if title_text and self._is_valid_company_name(title_text):
+                        info['extractedTitle'] = title_text
+                    if description:
+                        info['extractedDescription'] = description
+                    
+                    # Set contact information (email only - no application links)
+                    if contact_email:
+                        logger.info(f"✅ Web scraping found contact email: {contact_email} for domain: {domain}")
+                        info['sponsorEmail'] = contact_email
+                        info['contactMethod'] = 'email'
+                        info['analysisStatus'] = 'complete'
+                        info['confidence'] = 0.8  # High confidence with web-scraped email
+                    else:
+                        logger.warning(f"⚠️ No contact email found via web scraping for domain: {domain}")
+                        # No contact found - mark as pending for manual review
+                        info['contactMethod'] = 'none'
+                        info['analysisStatus'] = 'pending'
+                        info['confidence'] = 0.0  # No confidence without contact
                 else:
-                    info['sponsorApplication'] = application_url
-            
-            # Determine contact method and confidence
-            if contact_email and application_url:
-                info['contactMethod'] = 'both'
-                info['analysisStatus'] = 'complete'
-                info['confidence'] = 0.9  # Very high confidence with both
-            elif contact_email:
-                info['contactMethod'] = 'email'
-                info['analysisStatus'] = 'complete'
-                info['confidence'] = 0.8  # High confidence with email
-            elif application_url:
-                info['contactMethod'] = 'application'
-                info['analysisStatus'] = 'complete'
-                info['confidence'] = 0.7  # Good confidence with application
-            else:
-                # No contact found - mark as pending for manual review
-                info['contactMethod'] = 'none'
-                info['analysisStatus'] = 'pending'
-                info['confidence'] = 0.0  # No confidence without contact
-            
-            return info if info else None
-            
-        except Exception as e:
-            logger.debug(f"Failed to scrape website {url}: {e}")
-            # CHANGED: If scraping fails, DON'T reject the sponsor - just mark as pending
-            return {
-                'contactMethod': 'none',
-                'analysisStatus': 'pending',
-                'confidence': 0.5  # Medium confidence - needs manual review
-            }
+                    logger.warning(f"⚠️ Invalid URL for web scraping: {url}")
+                    info['contactMethod'] = 'none'
+                    info['analysisStatus'] = 'pending'
+                    info['confidence'] = 0.5
+                    
+            except Exception as e:
+                logger.debug(f"Failed to scrape website {url}: {e}")
+                # If scraping fails, mark as pending
+                if 'contactMethod' not in info:
+                    info['contactMethod'] = 'none'
+                    info['analysisStatus'] = 'pending'
+                    info['confidence'] = 0.5  # Medium confidence - needs manual review
+        
+        return info if info else None
     
     def _find_contact_email(self, soup: BeautifulSoup, domain: str) -> Optional[str]:
         """Find contact email on the website - check multiple sources with priority"""
@@ -1312,121 +1349,473 @@ class SponsorAnalyzer:
         
         return None
     
-    def _find_application_url(self, soup: BeautifulSoup, domain: str, base_url: str) -> Optional[str]:
-        """Find application/partnership page URL - ONLY specific sponsor pages"""
-        # STRICT application page patterns - must be sponsor-specific
-        application_patterns = [
-            r'/partners', r'/advertise', r'/advertising', r'/media-kit',
-            r'/partnership', r'/sponsor', r'/business', r'/enterprise'
-        ]
-        
-        # DO NOT include generic /contact or /pricing pages
-        
-        for link in soup.find_all('a', href=True):
-            href = link['href'].lower()
-            for pattern in application_patterns:
-                if re.search(pattern, href):
-                    # Make sure it's a full URL
-                    if href.startswith('http'):
-                        logger.debug(f"Found sponsor application page: {href}")
-                        return href
-                    elif href.startswith('/'):
-                        url = f"https://{domain}{href}"
-                        logger.debug(f"Found sponsor application page: {url}")
-                        return url
-                    else:
-                        url = f"https://{domain}/{href}"
-                        logger.debug(f"Found sponsor application page: {url}")
-                        return url
-        
-        logger.debug(f"No sponsor-specific application page found for {domain}")
-        return None
+    # REMOVED: _find_application_url method - we no longer store sponsorApplication links
+    # Only storing email contacts now
     
-    def gpt_analyze_sponsor(self, sponsor_data: Dict) -> Dict:
-        """Use GPT to analyze and enhance sponsor data"""
-        if not self.openai_client:
-            logger.warning("⚠️ OpenAI client not available for GPT analysis - skipping GPT enhancement")
+    def gemini_analyze_sponsor(self, sponsor_data: Dict) -> Dict:
+        """
+        Use Gemini to analyze and enhance sponsor data.
+        Gemini provides better contact email discovery than GPT.
+        """
+        if not self.gemini_model:
+            logger.warning("⚠️ Gemini model not available - skipping AI analysis")
             return sponsor_data
         
         try:
-            logger.info(f"🤖 Starting GPT analysis for: {sponsor_data.get('sponsorName', 'Unknown')}")
+            company_name = sponsor_data.get('sponsorName', 'Unknown')
+            domain = sponsor_data.get('rootDomain', 'N/A')
             
-            # Create a prompt for GPT analysis
+            logger.info(f"🤖 Starting Gemini analysis for: {company_name}")
+            
+            # STEP 1: Find contact email (Gemini's strength - prioritizes named contacts)
+            if not sponsor_data.get('sponsorEmail'):
+                newsletter_name = sponsor_data.get('newsletterSponsored') or sponsor_data.get('sourceNewsletter')
+                contact_result = self.gemini_find_contact_email(domain, company_name, newsletter_name)
+                if contact_result and contact_result.get('email'):
+                    contact_type = contact_result.get('contact_type', 'generic_email')
+                    confidence = contact_result.get('confidence', 0.5)
+                    
+                    sponsor_data['sponsorEmail'] = contact_result['email']
+                    sponsor_data['contactMethod'] = 'email'
+                    sponsor_data['contactType'] = contact_type
+                    sponsor_data['confidence'] = confidence
+                    
+                    # Store named person details if available
+                    if contact_type == 'named_person':
+                        sponsor_data['contactPersonName'] = contact_result.get('name')
+                        sponsor_data['contactPersonTitle'] = contact_result.get('title')
+                        sponsor_data['analysisStatus'] = 'complete'
+                        sponsor_data['confidence'] = max(confidence, 0.85)
+                    elif contact_type == 'business_email':
+                        sponsor_data['analysisStatus'] = 'complete'
+                        sponsor_data['confidence'] = max(confidence, 0.6)
+                    elif contact_type == 'generic_email':
+                        sponsor_data['analysisStatus'] = 'needs_review'  # Mark for manual verification
+                        sponsor_data['confidence'] = max(confidence, 0.4)
+            
+            # STEP 2: Comprehensive sponsor analysis
             prompt = f"""
-            Analyze this potential sponsor and provide structured information:
+Analyze this potential newsletter sponsor and provide structured information:
+
+Company: {company_name}
+Website: {sponsor_data.get('sponsorLink', 'N/A')}
+Domain: {domain}
+Description: {sponsor_data.get('extractedDescription', 'N/A')}
+
+Available tags: {', '.join(TAGS)}
+
+Determine:
+1. Is this a legitimate business that would pay to sponsor newsletters? (yes/no)
+2. Is this an AFFILIATE PROGRAM (commission-based, not direct sponsorship)? (yes/no)
+3. What type of business is this?
+4. What are the 1-3 most relevant tags from the available list?
+
+CRITICAL RULES:
+- An AFFILIATE PROGRAM offers commission/referral payments, not direct sponsorship
+- If affiliate program detected, include "Affiliate" in tags
+- Choose tags from the exact list provided
+- Be specific and accurate
+
+Respond in JSON format:
+{{
+    "isLegitimate": true/false,
+    "isAffiliateProgram": true/false,
+    "businessType": "string",
+    "tags": ["tag1", "tag2"],
+    "confidence": 0.0-1.0,
+    "reasoning": "brief explanation"
+}}
+"""
             
-            Company: {sponsor_data.get('sponsorName', 'Unknown')}
-            Website: {sponsor_data.get('sponsorLink', 'N/A')}
-            Domain: {sponsor_data.get('rootDomain', 'N/A')}
-            Description: {sponsor_data.get('extractedDescription', 'N/A')}
-            Title: {sponsor_data.get('extractedTitle', 'N/A')}
-            
-            Available tags: {', '.join(TAGS)}
-            
-            Please provide:
-            1. A clean, professional company name
-            2. What type of business this is (Technology, Finance, etc.)
-            3. Whether this appears to be a legitimate business that could sponsor newsletters
-            4. Whether this is an affiliate program (look for referral/commission language)
-            5. 1-3 relevant tags from the available list above
-            
-            Rules for tags:
-            - Select 1-3 tags that best describe this company's business
-            - Choose from the exact tag names provided above
-            - If it's an affiliate program, always include "Affiliate" as one of the tags
-            - Be specific and accurate - don't guess
-            
-            Respond in JSON format with: companyName, businessType, isLegitimate, isAffiliateProgram, tags
-            """
-            
-            response = self.openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=300,
-                temperature=0.3
-            )
-            
-            # Parse GPT response and update sponsor data
-            gpt_response = response.choices[0].message.content
-            logger.info(f"✅ GPT analysis completed for {sponsor_data.get('sponsorName', 'Unknown')}")
-            
-            # Try to extract JSON from response
+            # Use Gemini's structured output feature for reliable JSON responses
+            import json
             try:
-                import json
-                gpt_data = json.loads(gpt_response)
+                # Request JSON format using response_mime_type
+                generation_config = {
+                    "response_mime_type": "application/json",
+                }
+                response = self.gemini_model.generate_content(
+                    prompt,
+                    generation_config=generation_config
+                )
+                result_text = response.text.strip()
                 
-                # Update sponsor data with GPT insights
-                if 'companyName' in gpt_data:
-                    sponsor_data['sponsorName'] = gpt_data['companyName']
-                if 'businessType' in gpt_data:
-                    sponsor_data['businessType'] = gpt_data['businessType']
-                if 'tags' in gpt_data and isinstance(gpt_data['tags'], list):
-                    # Validate tags are in the allowed list
-                    valid_tags = [tag for tag in gpt_data['tags'] if tag in TAGS]
-                    sponsor_data['tags'] = valid_tags[:3]  # Limit to 3 tags
-                if 'isAffiliateProgram' in gpt_data:
-                    sponsor_data['isAffiliateProgram'] = gpt_data['isAffiliateProgram']
-                    # If GPT detected affiliate program, ensure Affiliate tag is included
-                    if gpt_data['isAffiliateProgram'] and 'Affiliate' not in sponsor_data.get('tags', []):
-                        if 'tags' not in sponsor_data:
-                            sponsor_data['tags'] = []
-                        sponsor_data['tags'].append('Affiliate')
-                        # Keep only 3 tags maximum
-                        sponsor_data['tags'] = sponsor_data['tags'][:3]
-                if 'isLegitimate' in gpt_data:
-                    if not gpt_data['isLegitimate']:
-                        sponsor_data['analysisStatus'] = 'rejected'
+                # Parse JSON response (should be clean JSON now)
+                gemini_data = json.loads(result_text)
+            except json.JSONDecodeError as json_error:
+                # Fallback: try to extract JSON from markdown code blocks if structured output fails
+                logger.warning(f"⚠️ Failed to parse JSON from structured output, trying fallback parsing: {json_error}")
+                result_text = response.text.strip()
+                # Handle potential markdown code blocks
+                if "```json" in result_text:
+                    result_text = result_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in result_text:
+                    result_text = result_text.split("```")[1].split("```")[0].strip()
                 
-                sponsor_data['gptAnalyzed'] = True
-                
-            except json.JSONDecodeError:
-                logger.warning("Failed to parse GPT response as JSON")
+                try:
+                    gemini_data = json.loads(result_text)
+                except json.JSONDecodeError as fallback_error:
+                    logger.error(f"❌ Failed to parse JSON even with fallback: {fallback_error}")
+                    logger.debug(f"Raw response: {result_text[:500]}")
+                    return sponsor_data  # Return original data if parsing fails
+            
+            # Update sponsor data with Gemini insights
+            if gemini_data.get('businessType'):
+                sponsor_data['businessType'] = gemini_data['businessType']
+            
+            if gemini_data.get('tags') and isinstance(gemini_data['tags'], list):
+                valid_tags = [tag for tag in gemini_data['tags'] if tag in TAGS]
+                sponsor_data['tags'] = valid_tags[:3]
+            
+            # Handle affiliate detection
+            if gemini_data.get('isAffiliateProgram'):
+                sponsor_data['isAffiliateProgram'] = True
+                if 'Affiliate' not in sponsor_data.get('tags', []):
+                    if 'tags' not in sponsor_data:
+                        sponsor_data['tags'] = []
+                    sponsor_data['tags'].append('Affiliate')
+                    sponsor_data['tags'] = sponsor_data['tags'][:3]
+            
+            # Update legitimacy status
+            if not gemini_data.get('isLegitimate', True):
+                sponsor_data['analysisStatus'] = 'rejected'
+                logger.warning(f"Gemini marked as not legitimate: {company_name}")
+            
+            if gemini_data.get('confidence'):
+                sponsor_data['confidence'] = max(
+                    sponsor_data.get('confidence', 0), 
+                    gemini_data['confidence']
+                )
+            
+            sponsor_data['geminiAnalyzed'] = True
+            logger.info(f"✅ Gemini analysis completed for {company_name}")
             
             return sponsor_data
             
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Gemini JSON response: {e}")
+            return sponsor_data
         except Exception as e:
-            logger.error(f"GPT analysis failed: {e}")
+            logger.error(f"Gemini analysis failed: {e}")
             return sponsor_data
+    
+    def _extract_newsletter_context(self, newsletter_name: str) -> str:
+        """
+        Extract newsletter context/category from newsletter name to help find relevant contacts.
+        Returns a context string like "technology/developer", "business/startup", "marketing/growth"
+        """
+        if not newsletter_name:
+            return "general"
+        
+        newsletter_lower = newsletter_name.lower()
+        
+        # Technology/Developer newsletters
+        if any(keyword in newsletter_lower for keyword in ['tech', 'developer', 'engineering', 'code', 'dev', 'programming', 'software']):
+            return "technology/developer"
+        
+        # Business/Startup newsletters
+        if any(keyword in newsletter_lower for keyword in ['business', 'startup', 'entrepreneur', 'founder', 'venture', 'vc']):
+            return "business/startup"
+        
+        # Marketing/Growth newsletters
+        if any(keyword in newsletter_lower for keyword in ['marketing', 'growth', 'growthhack', 'growthhackers', 'growth marketing']):
+            return "marketing/growth"
+        
+        # Finance newsletters
+        if any(keyword in newsletter_lower for keyword in ['finance', 'fintech', 'money', 'investing', 'trading']):
+            return "finance/fintech"
+        
+        # Design/Creative newsletters
+        if any(keyword in newsletter_lower for keyword in ['design', 'creative', 'ui', 'ux', 'product design']):
+            return "design/creative"
+        
+        # Default
+        return "general"
+    
+    def gemini_find_contact_email(self, domain: str, company_name: str = None, newsletter_name: str = None) -> Optional[Dict]:
+        """
+        Use Gemini to find the BEST contact for newsletter sponsorship inquiries.
+        Prioritizes named individuals over generic emails.
+        
+        Returns a dictionary with contact details:
+        {
+            'contact_type': 'named_person'|'business_email'|'generic_email'|'not_found',
+            'name': 'Full Name' or None,
+            'title': 'Job Title' or None,
+            'email': 'email@domain.com' or None,
+            'confidence': 0.0-1.0,
+            'source': 'where found',
+            'reasoning': 'explanation'
+        }
+        """
+        if not self.gemini_model:
+            logger.warning("⚠️ Gemini model not available for email finding")
+            return None
+        
+        try:
+            logger.info(f"🔍 Using Gemini to find BEST contact for: {domain}")
+            
+            # Extract newsletter context
+            newsletter_context = self._extract_newsletter_context(newsletter_name) if newsletter_name else "general"
+            
+            company_info = f"Company: {company_name}\n" if company_name else ""
+            newsletter_info = f"Newsletter Context: This company sponsors newsletters in the {newsletter_context} space\n" if newsletter_name else ""
+            
+            prompt = f"""You are helping find the best contact person for newsletter sponsorship inquiries.
+
+{company_info}Website: https://{domain}
+{newsletter_info}
+TASK: Find the MOST DIRECT contact for someone pitching newsletter sponsorship.
+
+SEARCH PRIORITY:
+1. Named Partnership/Marketing Manager (e.g., "Sarah Chen, Head of Partnerships, sarah.chen@{domain}")
+2. Named Marketing/Growth Lead (e.g., "John Smith, VP Marketing, john.smith@{domain}")  
+3. Business Development Email (e.g., "partnerships@{domain}")
+4. Press/Marketing Email ONLY as fallback (e.g., "press@{domain}")
+
+SEARCH LOCATIONS:
+- LinkedIn profiles for current employees
+- Company "Team" or "About" pages
+- Blog post author pages
+- Press release contact info
+- Standard email patterns (firstname.lastname@{domain})
+
+COMPANY SIZE HINTS:
+- Small startup: Founder/CEO often handles partnerships
+- Medium company: Look for Marketing Director or Partnership Manager
+- Large company: Look for dedicated Sponsorship/Partnership Manager
+
+OUTPUT (JSON only, no other text):
+{{
+    "contact_type": "named_person|business_email|generic_email|not_found",
+    "name": "Full Name or null",
+    "title": "Job Title or null",
+    "email": "email@{domain} or null",
+    "confidence": 0.0-1.0,
+    "source": "LinkedIn|Company website|Standard pattern|etc",
+    "reasoning": "Brief explanation"
+}}
+
+RULES:
+- ONLY emails from domain "{domain}"
+- Named person = 0.8-1.0 confidence
+- Business email = 0.5-0.7 confidence
+- Generic email = 0.3-0.5 confidence
+- Verify role is relevant to partnerships/marketing/sponsorships
+- If named person, name should be 2+ words (first + last name)
+- If named person, title should contain relevant keywords (marketing, partnership, growth, brand, business, sponsorship)
+"""
+            
+            # Use Gemini's structured output feature for reliable JSON responses
+            import json
+            try:
+                # Request JSON format using response_mime_type
+                generation_config = {
+                    "response_mime_type": "application/json",
+                }
+                response = self.gemini_model.generate_content(
+                    prompt,
+                    generation_config=generation_config
+                )
+                result_text = response.text.strip()
+                
+                # Parse JSON response (should be clean JSON now)
+                contact_data = json.loads(result_text)
+            except json.JSONDecodeError as json_error:
+                # Fallback: try to extract JSON from markdown code blocks if structured output fails
+                logger.warning(f"⚠️ Failed to parse JSON from structured output, trying fallback parsing: {json_error}")
+                result_text = response.text.strip()
+                # Handle potential markdown code blocks
+                if "```json" in result_text:
+                    result_text = result_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in result_text:
+                    result_text = result_text.split("```")[1].split("```")[0].strip()
+                
+                try:
+                    contact_data = json.loads(result_text)
+                except json.JSONDecodeError as fallback_error:
+                    logger.error(f"❌ Failed to parse JSON even with fallback: {fallback_error}")
+                    logger.debug(f"Raw response: {result_text[:500]}")
+                    return None
+            
+            # Validate the response
+            contact_type = contact_data.get('contact_type', 'not_found')
+            email = contact_data.get('email')
+            name = contact_data.get('name')
+            title = contact_data.get('title')
+            confidence = contact_data.get('confidence', 0.0)
+            
+            # Validation rules
+            if contact_type == 'not_found' or not email:
+                logger.warning(f"⚠️ Gemini could not find contact for {domain}")
+                return {
+                    'contact_type': 'not_found',
+                    'name': None,
+                    'title': None,
+                    'email': None,
+                    'confidence': 0.0,
+                    'source': contact_data.get('source', 'unknown'),
+                    'reasoning': contact_data.get('reasoning', 'No contact found')
+                }
+            
+            # Validate email format
+            if not self._is_valid_email(email):
+                logger.warning(f"⚠️ Gemini returned invalid email format: {email}")
+                return None
+            
+            # Double-check email belongs to the domain
+            if domain.lower() not in email.lower():
+                logger.warning(f"⚠️ Gemini returned email not matching domain: {email} vs {domain}")
+                return None
+            
+            # Validate named person requirements
+            if contact_type == 'named_person':
+                # Name should be 2+ words
+                if not name or len(name.split()) < 2:
+                    logger.warning(f"⚠️ Named person but invalid name format: {name}")
+                    # Downgrade to business_email
+                    contact_type = 'business_email'
+                    confidence = min(confidence, 0.7)
+                
+                # Title should contain relevant keywords
+                if title:
+                    title_lower = title.lower()
+                    relevant_keywords = ['marketing', 'partnership', 'growth', 'brand', 'business', 'sponsorship', 'director', 'manager', 'lead', 'head', 'vp', 'vice president']
+                    if not any(keyword in title_lower for keyword in relevant_keywords):
+                        logger.warning(f"⚠️ Named person title may not be relevant: {title}")
+                        # Still accept but lower confidence slightly
+                        confidence = max(confidence - 0.1, 0.6)
+            
+            # Log success with quality indicator
+            if contact_type == 'named_person':
+                logger.info(f"💎 HIGH VALUE: Found {name} ({title}) at {domain} - {email}")
+            elif contact_type == 'business_email':
+                logger.info(f"📧 MEDIUM VALUE: Found business email at {domain} - {email}")
+            elif contact_type == 'generic_email':
+                logger.info(f"📮 LOW VALUE: Only generic email at {domain} - {email}")
+            
+            return {
+                'contact_type': contact_type,
+                'name': name,
+                'title': title,
+                'email': email,
+                'confidence': confidence,
+                'source': contact_data.get('source', 'unknown'),
+                'reasoning': contact_data.get('reasoning', 'Contact found via Gemini')
+            }
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Gemini JSON response for {domain}: {e}")
+            logger.debug(f"Raw response: {result_text[:200]}")
+            return None
+        except Exception as e:
+            logger.error(f"Gemini email search failed for {domain}: {e}")
+            return None
+    
+    def gemini_estimate_newsletter_audience(self, newsletter_name: str, context: str) -> Optional[Dict]:
+        """
+        Use Gemini to estimate newsletter audience size based on context.
+        
+        Returns:
+            Dict with 'count' (int), 'reasoning' (str), 'confidence' (float) or None if failed
+        """
+        if not self.gemini_model:
+            logger.warning("Gemini model not available for newsletter audience estimation")
+            return None
+        
+        try:
+            logger.info(f"🔍 Using Gemini to estimate audience for newsletter: {newsletter_name}")
+            
+            # Truncate context to avoid token limits (keep first 2000 chars)
+            context_truncated = context[:2000] if len(context) > 2000 else context
+            
+            prompt = f"""Analyze this newsletter email content and estimate the subscriber/audience size.
+
+Newsletter Name: {newsletter_name}
+Email Content (excerpt): {context_truncated}
+
+TASK: Estimate the newsletter's subscriber count based on:
+1. Explicit mentions of audience size (e.g., "50,000 subscribers", "100K readers")
+2. Social proof indicators (e.g., "thousands of readers", "growing community")
+3. Newsletter reputation and typical size for this type
+4. Context clues about audience engagement
+
+OUTPUT (JSON only, no other text):
+{{
+    "count": <integer estimate>,
+    "confidence": <0.0-1.0>,
+    "reasoning": "<brief explanation of how you arrived at this estimate>"
+}}
+
+RULES:
+- If explicit count found, use it with confidence 0.9+
+- If strong indicators found, estimate with confidence 0.7-0.8
+- If weak indicators, estimate with confidence 0.5-0.6
+- Be realistic - most newsletters have 1K-100K subscribers
+- Only return high confidence (0.8+) if you find strong evidence
+"""
+            
+            import json
+            try:
+                # Use structured output for reliable JSON
+                generation_config = {
+                    "response_mime_type": "application/json",
+                }
+                response = self.gemini_model.generate_content(
+                    prompt,
+                    generation_config=generation_config
+                )
+                result_text = response.text.strip()
+                
+                # Parse JSON response
+                result = json.loads(result_text)
+                
+                # Validate result
+                count = result.get('count', 0)
+                confidence = result.get('confidence', 0.0)
+                reasoning = result.get('reasoning', 'Gemini estimation')
+                
+                if count > 0 and isinstance(count, (int, float)):
+                    logger.info(f"✅ Gemini estimated {count:,} subscribers (confidence: {confidence:.2f})")
+                    return {
+                        'count': int(count),
+                        'confidence': float(confidence),
+                        'reasoning': reasoning
+                    }
+                else:
+                    logger.warning(f"⚠️ Gemini returned invalid count: {count}")
+                    return None
+                    
+            except json.JSONDecodeError as json_error:
+                # Fallback: try to extract JSON from markdown code blocks
+                logger.warning(f"⚠️ Failed to parse JSON from structured output, trying fallback: {json_error}")
+                result_text = response.text.strip()
+                if "```json" in result_text:
+                    result_text = result_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in result_text:
+                    result_text = result_text.split("```")[1].split("```")[0].strip()
+                
+                try:
+                    result = json.loads(result_text)
+                    count = result.get('count', 0)
+                    confidence = result.get('confidence', 0.0)
+                    reasoning = result.get('reasoning', 'Gemini estimation')
+                    
+                    if count > 0 and isinstance(count, (int, float)):
+                        logger.info(f"✅ Gemini estimated {count:,} subscribers (confidence: {confidence:.2f})")
+                        return {
+                            'count': int(count),
+                            'confidence': float(confidence),
+                            'reasoning': reasoning
+                        }
+                except json.JSONDecodeError as fallback_error:
+                    logger.error(f"❌ Failed to parse JSON even with fallback: {fallback_error}")
+                    logger.debug(f"Raw response: {result_text[:500]}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Gemini newsletter audience estimation failed: {e}")
+            return None
     
     def _detect_affiliate_program(self, sponsor_data: Dict, context: str) -> bool:
         """Detect if this is an affiliate program based on context and website content"""
@@ -1489,67 +1878,44 @@ class SponsorAnalyzer:
             return None
     
     def _assign_tags_ai(self, sponsor_data: Dict) -> List[str]:
-        """Use AI to assign 1-3 relevant tags to the sponsor"""
-        if not self.openai_client:
-            logger.warning("OpenAI client not available for tag assignment")
+        """Use Gemini to assign 1-3 relevant tags to the sponsor"""
+        if not self.gemini_model:
+            logger.warning("Gemini not available for tag assignment")
             return self._assign_tags_fallback(sponsor_data)
         
         try:
-            # Create a prompt for tag assignment
             prompt = f"""
-            Analyze this sponsor and assign 1-3 relevant tags from the following list:
+Assign 1-3 tags from this list: {', '.join(TAGS)}
+
+Company: {sponsor_data.get('sponsorName', 'Unknown')}
+Domain: {sponsor_data.get('rootDomain', 'N/A')}
+Description: {sponsor_data.get('extractedDescription', 'N/A')}
+
+Rules:
+1. Select 1-3 tags that best describe the business
+2. Use exact tag names from the list
+3. If affiliate program, include "Affiliate"
+4. Be specific and accurate
+
+Respond with ONLY the tag names separated by commas (e.g., "Technology, Software, AI")
+"""
             
-            Available tags: {', '.join(TAGS)}
+            response = self.gemini_model.generate_content(prompt)
+            tags_text = response.text.strip()
             
-            Sponsor Information:
-            - Company: {sponsor_data.get('sponsorName', 'Unknown')}
-            - Website: {sponsor_data.get('sponsorLink', 'N/A')}
-            - Domain: {sponsor_data.get('rootDomain', 'N/A')}
-            - Description: {sponsor_data.get('extractedDescription', 'N/A')}
-            - Title: {sponsor_data.get('extractedTitle', 'N/A')}
-            
-            Rules:
-            1. Select 1-3 tags that best describe this company's business
-            2. Choose from the exact tag names provided above
-            3. If it's an affiliate program, always include "Affiliate" as one of the tags
-            4. Be specific and accurate - don't guess
-            5. Return only the tag names separated by commas
-            
-            Respond with just the tag names (e.g., "Technology, Software, AI")
-            """
-            
-            response = self.openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=100,
-                temperature=0.3
-            )
-            
-            # Parse the response
-            gpt_response = response.choices[0].message.content.strip()
-            logger.info(f"GPT tag assignment response: {gpt_response}")
-            
-            # Extract tags from response
             assigned_tags = []
-            for tag in gpt_response.split(','):
+            for tag in tags_text.split(','):
                 tag = tag.strip()
                 if tag in TAGS:
                     assigned_tags.append(tag)
-                else:
-                    logger.warning(f"Invalid tag from GPT: {tag}")
             
-            # Ensure we have at least one tag
             if not assigned_tags:
                 assigned_tags = self._assign_tags_fallback(sponsor_data)
             
-            # Limit to 3 tags maximum
-            assigned_tags = assigned_tags[:3]
-            
-            logger.info(f"Assigned tags: {assigned_tags}")
-            return assigned_tags
+            return assigned_tags[:3]
             
         except Exception as e:
-            logger.error(f"AI tag assignment failed: {e}")
+            logger.error(f"Gemini tag assignment failed: {e}")
             return self._assign_tags_fallback(sponsor_data)
     
     def _assign_tags_fallback(self, sponsor_data: Dict) -> List[str]:

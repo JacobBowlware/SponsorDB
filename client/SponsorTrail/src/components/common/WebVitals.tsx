@@ -5,27 +5,27 @@ const WebVitals: React.FC = () => {
   useEffect(() => {
     // Track Core Web Vitals
     getCLS((metric) => {
-      console.log('CLS:', metric);
+      // CLS metric logged
       // You can send this to your analytics service
     });
 
     getFID((metric) => {
-      console.log('FID:', metric);
+      // FID metric logged
       // You can send this to your analytics service
     });
 
     getFCP((metric) => {
-      console.log('FCP:', metric);
+      // FCP metric logged
       // You can send this to your analytics service
     });
 
     getLCP((metric) => {
-      console.log('LCP:', metric);
+      // LCP metric logged
       // You can send this to your analytics service
     });
 
     getTTFB((metric) => {
-      console.log('TTFB:', metric);
+      // TTFB metric logged
       // You can send this to your analytics service
     });
   }, []);

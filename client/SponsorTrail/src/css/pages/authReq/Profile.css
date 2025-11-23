@@ -463,3 +463,11 @@
     font-weight: 600;
     font-size: 0.95rem;
 }
+
+/* Newsletter Subscription Styles */
+.newsletter-description {
+    font-size: 0.85rem;
+    color: var(--var-color-text-light);
+    line-height: 1.5;
+    margin: 0.5rem 0;
+}

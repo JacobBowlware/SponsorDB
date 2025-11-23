@@ -10,6 +10,7 @@ const deniedSponsorLinks = require('../routes/deniedSponsorLinks');
 const admin = require('../routes/admin');
 const sponsorAgent = require('../routes/sponsorAgent');
 const userApplications = require('../routes/userApplications');
+const migration = require('../routes/migration');
 
 module.exports = (app) => {
     app.use('/api/stripeWebhook', express.raw({ type: 'application/json' }), stripeWebhook);
@@ -23,6 +24,7 @@ module.exports = (app) => {
     app.use('/api/admin', admin);
     app.use('/api/sponsorAgent', sponsorAgent);
     app.use('/api/userApplications', userApplications);
+    app.use('/api/migration', migration);
     app.use('/api/auth', auth);
     app.use((err, req, res, next) => {
         error(err, req, res, next);

@@ -48,9 +48,10 @@ interface AffiliateProgramsTableProps {
             };
         } | null;
     };
+    isMobile?: boolean;
 }
 
-const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError, user }) => {
+const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError, user, isMobile = false }) => {
     // Component for displaying affiliate programs
     const [affiliatePrograms, setAffiliatePrograms] = useState<AffiliateProgram[]>([]);
     const [loading, setLoading] = useState(false);
@@ -93,22 +94,6 @@ const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError
 
             setAffiliatePrograms(response.data);
             
-            // Debug: Log the affiliate programs data to see what we're getting
-            console.log('Affiliate programs data:', response.data);
-            response.data.forEach((program: AffiliateProgram, index: number) => {
-                const signupLink = getSignupLink(program);
-                console.log(`Program ${index + 1}:`, {
-                    name: program.sponsorName,
-                    affiliateSignupLink: program.affiliateSignupLink,
-                    sponsorApplication: program.sponsorApplication,
-                    sponsorLink: program.sponsorLink,
-                    businessContact: program.businessContact,
-                    bestLink: signupLink,
-                    domain: program.rootDomain,
-                    commission: program.commissionInfo
-                });
-            });
-            
             // Track which programs the user is interested in
             // Note: This requires user._id which may not be available in the current user object
             // For now, we'll skip this functionality until user ID is properly available
@@ -119,7 +104,7 @@ const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError
             //     setInterestedPrograms(new Set(userInterested));
             // }
         } catch (err: any) {
-            console.error('Error fetching affiliate programs:', err);
+            // Error fetching affiliate programs handled silently
             onError('Failed to load affiliate programs');
         } finally {
             setLoading(false);
@@ -148,7 +133,7 @@ const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError
             
             await navigator.clipboard.writeText(validLink);
             // You could add a toast notification here
-            console.log(`Copied ${program.sponsorName} signup link to clipboard`);
+            // Link copied to clipboard
         } catch (err) {
             console.error('Failed to copy link:', err);
             onError('Failed to copy link to clipboard');
@@ -235,7 +220,7 @@ const AffiliateProgramsTable: React.FC<AffiliateProgramsTableProps> = ({ onError
                 </div>
             </div>
 
-            <div className="affiliate-programs-grid">
+            <div className={`affiliate-programs-grid ${isMobile ? 'affiliate-programs-grid--mobile' : ''}`}>
                 {affiliatePrograms.map((program) => (
                     <div key={program._id} className="affiliate-program-card">
                         <div className="affiliate-program-header">

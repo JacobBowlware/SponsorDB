@@ -26,6 +26,59 @@
     line-height: 1.6;
 }
 
+/* Desktop responsive sizing - using hero as template */
+@media screen and (max-width: 1200px) {
+    .subscribe-title {
+        font-size: 2.25rem;
+    }
+    
+    .subscribe-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .home__pricing-card {
+        padding: 1.75rem;
+    }
+    
+    .home__pricing-card__title {
+        font-size: 1.35rem;
+    }
+    
+    .home__pricing-card__amount {
+        font-size: 2.75rem;
+    }
+    
+    .home__pricing-card__benefit span {
+        font-size: 0.9rem;
+    }
+}
+
+@media screen and (max-width: 968px) {
+    .subscribe-title {
+        font-size: 2rem;
+    }
+    
+    .subscribe-subtitle {
+        font-size: 1rem;
+    }
+    
+    .home__pricing-card {
+        padding: 1.5rem;
+    }
+    
+    .home__pricing-card__title {
+        font-size: 1.25rem;
+    }
+    
+    .home__pricing-card__amount {
+        font-size: 2.5rem;
+    }
+    
+    .home__pricing-card__benefit span {
+        font-size: 0.85rem;
+    }
+}
+
 .subscribe-cards {
     display: flex;
     justify-content: center;
@@ -288,15 +341,33 @@
     }
     
     .subscribe-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
     }
     
     .subscribe-subtitle {
-        font-size: 1.1rem;
+        font-size: 0.9rem;
     }
     
     .subscribe-cards {
         justify-content: center;
+    }
+    
+    .home__pricing-card {
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+    
+    .home__pricing-card__title {
+        font-size: 1.25rem;
+    }
+    
+    .home__pricing-card__amount {
+        font-size: 2.5rem;
+    }
+    
+    .home__pricing-card__benefit {
+        font-size: 0.85rem;
+        padding: 0.5rem 0;
     }
     
     .subscribe-trust {

@@ -20,6 +20,10 @@
     margin: 0 0 0rem 0;
 }
 
+.navbar-wrap.navbar__dark {
+    background: var(--var-color-text);
+}
+
 #navbarNav {
     justify-content: flex-end;
 }
@@ -144,6 +148,34 @@
     }
 }
 
+
+@media screen and (max-width: 768px) {
+    .navbar-wrap {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .navbar {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    #navbarNav {
+        padding-left: 0;
+        padding-right: 0;
+        margin-top: 1rem;
+    }
+    
+    .navbar-nav {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .nav-link {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
 
 @media screen and (min-width: 985px) {
     .navbar {

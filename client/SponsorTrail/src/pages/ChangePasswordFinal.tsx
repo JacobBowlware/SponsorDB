@@ -23,7 +23,7 @@ const ChangePasswordFinal = () => {
         }
         catch (error) {
             setError("An error occured... Please try again later.");
-            console.log(error);
+            // Error handled silently
         }
 
         setLoading(false);

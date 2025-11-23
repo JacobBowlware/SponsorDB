@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Joi = require('joi');
 const { Sponsor, validateSponsor } = require('../models/sponsor');
+const { SponsorNew, validateSponsorNew } = require('../models/sponsorNew');
+const { Affiliate } = require('../models/affiliate');
 const { PotentialSponsor } = require('../models/potentialSponsor');
 const csv = require('csv-parser');
 const fs = require('fs');
@@ -9,6 +11,58 @@ const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const { getMatchedSponsors } = require('../utils/sponsorMatching');
 const { User } = require('../models/user');
+
+// Helper function to get collapsed sponsors (one per company) with most recent newsletter date
+const getCollapsedSponsorsForFrontend = (sponsors, userId = null) => {
+    const collapsed = [];
+    
+    sponsors.forEach(sponsor => {
+        const sponsorObj = sponsor.toObject ? sponsor.toObject() : sponsor;
+        const newsletters = sponsorObj.newslettersSponsored || [];
+        
+        // Find most recent newsletter date
+        let mostRecentDate = sponsorObj.dateAdded;
+        let mostRecentNewsletter = null;
+        
+        if (newsletters.length > 0) {
+            newsletters.forEach(newsletter => {
+                const date = newsletter.dateSponsored ? new Date(newsletter.dateSponsored) : null;
+                if (date && (!mostRecentDate || date > new Date(mostRecentDate))) {
+                    mostRecentDate = date;
+                    mostRecentNewsletter = newsletter;
+                }
+            });
+        }
+        
+        // Create collapsed sponsor record
+        const collapsedSponsor = {
+            ...sponsorObj,
+            // Show most recent newsletter info
+            newsletterSponsored: mostRecentNewsletter ? mostRecentNewsletter.newsletterName : (sponsorObj.newsletterSponsored || ''),
+            subscriberCount: mostRecentNewsletter ? mostRecentNewsletter.estimatedAudience : (sponsorObj.subscriberCount || 0),
+            dateSponsored: mostRecentDate, // Most recent newsletter date
+            mostRecentNewsletterDate: mostRecentDate,
+            // Keep full newslettersSponsored array for reference
+            newslettersSponsored: newsletters,
+            // Count of total placements
+            totalPlacements: newsletters.length || (sponsorObj.newsletterSponsored ? 1 : 0),
+            // User tracking
+            isViewed: userId && sponsorObj.viewedBy ? sponsorObj.viewedBy.some(id => id.toString() === userId.toString()) : false,
+            isApplied: userId && sponsorObj.appliedBy ? sponsorObj.appliedBy.some(id => id.toString() === userId.toString()) : false
+        };
+        
+        collapsed.push(collapsedSponsor);
+    });
+    
+    // Sort by most recent newsletter date (most recent first)
+    collapsed.sort((a, b) => {
+        const dateA = new Date(a.mostRecentNewsletterDate || a.dateAdded || 0).getTime();
+        const dateB = new Date(b.mostRecentNewsletterDate || b.dateAdded || 0).getTime();
+        return dateB - dateA; // Descending order
+    });
+    
+    return collapsed;
+};
 
 // Import sponsors csv
 var Airtable = require('airtable');
@@ -44,108 +98,172 @@ const saveToAirtable = async (sponsor) => {
     }
 };
 
-// Get all sponsors
+// Get all sponsors - uses new structure, falls back to old if needed
 router.get('/', auth, async (req, res) => {
     try {
-        // Build query based on affiliate filter
-        // Default: Only show sponsors with email, application, or businessContact (NOT affiliate-only)
-        let query = {
-            $or: [
-                { sponsorEmail: { $exists: true, $ne: '' } },
-                { sponsorApplication: { $exists: true, $ne: '' } },
-                { businessContact: { $exists: true, $ne: '' } }
-            ]
-        };
+        // Try to use new structure first
+        let sponsors = [];
+        let useNewStructure = true;
         
-        // Add affiliate filter if requested - only show affiliates when checkbox is checked
-        if (req.query.affiliateOnly === 'true') {
-            console.log('🔍 Backend: Filtering for affiliate sponsors only');
-            const affiliateQuery = {
-                $and: [
-                    {
-                        $or: [
-                            { sponsorEmail: { $exists: true, $ne: '' } },
-                            { sponsorApplication: { $exists: true, $ne: '' } },
-                            { businessContact: { $exists: true, $ne: '' } },
-                            { affiliateSignupLink: { $exists: true, $ne: '' } }  // Include affiliate links when filtering for affiliates
-                        ]
-                    },
-                    {
-                        $or: [
-                            { isAffiliateProgram: true },
-                            { tags: { $in: ['Affiliate'] } }
-                        ]
-                    }
+        try {
+            // Build query based on affiliate filter
+            // Default: Only show sponsors with email or businessContact (NOT affiliate-only)
+            // For regular users, only show approved sponsors
+            let query = {
+                status: 'approved', // Only show approved sponsors to regular users
+                $or: [
+                    { sponsorEmail: { $exists: true, $ne: '' } },
+                    { businessContact: { $exists: true, $ne: '' } }
                 ]
             };
-            query = affiliateQuery;
-            console.log('🔍 Backend: Affiliate query created');
-        }
-        
-        // Fetch all sponsors with contact info and include whether the current user has viewed/applied to them
-        const sponsors = await Sponsor.find(query);
-        console.log(`🔍 Backend: Found ${sponsors.length} sponsors`);
-        
-        if (req.query.affiliateOnly === 'true') {
-            console.log('🔍 Backend: Affiliate sponsors found:');
-            sponsors.forEach(sponsor => {
-                console.log(`  - ${sponsor.sponsorName}: isAffiliateProgram=${sponsor.isAffiliateProgram}, tags=${JSON.stringify(sponsor.tags)}`);
-            });
-        }
-        
-        const sponsorsWithStatus = sponsors.map(sponsor => {
-            const sponsorObj = sponsor.toObject();
-            const isViewed = sponsor.viewedBy.includes(req.user._id);
-            const isApplied = sponsor.appliedBy.includes(req.user._id);
             
-            // Get user's view and apply dates
-            const userViewData = sponsor.userViewDates.find(d => d.user.toString() === req.user._id.toString());
-            const userApplyData = sponsor.userApplyDates.find(d => d.user.toString() === req.user._id.toString());
+            // Add affiliate filter if requested
+            if (req.query.affiliateOnly === 'true') {
+                // For affiliates, query the Affiliate collection instead
+                const affiliates = await Affiliate.find({
+                    status: 'approved'
+                });
+                
+                const affiliatesWithStatus = affiliates.map(affiliate => {
+                    const affiliateObj = affiliate.toObject();
+                    return {
+                        ...affiliateObj,
+                        sponsorName: affiliateObj.affiliateName,
+                        sponsorLink: affiliateObj.affiliateLink,
+                        affiliateSignupLink: affiliateObj.affiliateLink,
+                        isAffiliateProgram: true,
+                        newslettersSponsored: affiliateObj.affiliatedNewsletters || [],
+                        newsletterSponsored: affiliateObj.affiliatedNewsletters?.[0]?.newsletterName || '',
+                        subscriberCount: affiliateObj.affiliatedNewsletters?.[0]?.estimatedAudience || 0,
+                        isViewed: false,
+                        isApplied: false
+                    };
+                });
+                
+                return res.status(200).send(affiliatesWithStatus);
+            }
             
-            return {
-                ...sponsorObj,
-                isViewed,
-                isApplied,
-                dateViewed: userViewData ? userViewData.dateViewed : null,
-                dateApplied: userApplyData ? userApplyData.dateApplied : null
+            // Fetch from new collection
+            sponsors = await SponsorNew.find(query);
+            console.log(`🔍 Backend: Found ${sponsors.length} sponsors from new collection`);
+        } catch (error) {
+            console.log('New collection not available, falling back to old structure:', error);
+            useNewStructure = false;
+            
+            // Fallback to old structure
+            let query = {
+                status: 'approved',
+                $or: [
+                    { sponsorEmail: { $exists: true, $ne: '' } },
+                    { businessContact: { $exists: true, $ne: '', $regex: '@' } }
+                ]
             };
+            
+            sponsors = await Sponsor.find(query);
+            console.log(`🔍 Backend: Found ${sponsors.length} sponsors from old collection`);
+        }
+        
+        // Return collapsed view (one per company) sorted by most recent newsletter date
+        const collapsedSponsors = getCollapsedSponsorsForFrontend(sponsors, req.user._id);
+        
+        // Add user view/apply dates
+        collapsedSponsors.forEach(sponsor => {
+            const originalSponsor = sponsors.find(s => s._id.toString() === sponsor._id.toString());
+            if (originalSponsor) {
+                const userViewData = originalSponsor.userViewDates?.find(d => d.user.toString() === req.user._id.toString());
+                const userApplyData = originalSponsor.userApplyDates?.find(d => d.user.toString() === req.user._id.toString());
+                sponsor.dateViewed = userViewData ? userViewData.dateViewed : null;
+                sponsor.dateApplied = userApplyData ? userApplyData.dateApplied : null;
+            }
         });
-        res.status(200).send(sponsorsWithStatus);
+        
+        res.status(200).send(collapsedSponsors);
     } catch (e) {
         console.log("Error getting sponsors", e);
         res.status(500).send("Error getting sponsors");
     }
 });
 
-// Get DB info {approved sponsor count, newsletter count, last updated date}
+// Get DB info {sponsor company count, unique newsletter count, last updated date}
 router.get('/db-info', async (req, res) => {
     try {
-        // Count only approved sponsors for public display
-        const sponsorCount = await Sponsor.countDocuments({ status: 'approved' });
-
-        // Get newsletter count from approved sponsors only
-        const newsletters = await Sponsor.distinct("newsletterSponsored", { status: 'approved' });
-        const newsletterCount = newsletters.length;
-
-        // Get last updated date among approved sponsors
-        const lastSponsor = await Sponsor.find({ status: 'approved' }).sort({ _id: -1 }).limit(1);
-        
-        // Use _id timestamp if dateAdded is not available or is old
+        let sponsorCompaniesCount = 0; // Total number of unique sponsor companies
+        let newsletterCount = 0;
         let lastUpdated = null;
-        if (lastSponsor[0]) {
-            const sponsor = lastSponsor[0];
-            const idTimestamp = new Date(parseInt(sponsor._id.toString().substring(0, 8), 16) * 1000);
-            const dateAdded = sponsor.dateAdded ? new Date(sponsor.dateAdded) : null;
+        
+        // Try new structure first
+        try {
+            const newSponsorCount = await SponsorNew.countDocuments({ status: 'approved' });
             
-            // Use the more recent date between _id timestamp and dateAdded
-            if (dateAdded && dateAdded > idTimestamp) {
-                lastUpdated = dateAdded;
+            // Only use new structure if it has data, otherwise fall back
+            if (newSponsorCount > 0) {
+                sponsorCompaniesCount = newSponsorCount;
+                
+                // Get unique newsletters from newslettersSponsored arrays
+                const sponsors = await SponsorNew.find({ status: 'approved' });
+                const newsletterSet = new Set();
+                
+                sponsors.forEach(sponsor => {
+                    if (sponsor.newslettersSponsored && sponsor.newslettersSponsored.length > 0) {
+                        sponsor.newslettersSponsored.forEach(n => {
+                            if (n.newsletterName && n.newsletterName.trim()) {
+                                newsletterSet.add(n.newsletterName.trim());
+                            }
+                        });
+                    }
+                });
+                
+                newsletterCount = newsletterSet.size;
+                
+                // Get last updated date - find most recent newsletterSponsored date
+                let mostRecentDate = null;
+                sponsors.forEach(sponsor => {
+                    if (sponsor.newslettersSponsored && sponsor.newslettersSponsored.length > 0) {
+                        sponsor.newslettersSponsored.forEach(n => {
+                            const date = n.dateSponsored ? new Date(n.dateSponsored) : null;
+                            if (date && (!mostRecentDate || date > mostRecentDate)) {
+                                mostRecentDate = date;
+                            }
+                        });
+                    }
+                });
+                
+                if (!mostRecentDate) {
+                    // Fallback to dateAdded if no newsletter dates
+                    const lastSponsor = await SponsorNew.find({ status: 'approved' }).sort({ _id: -1 }).limit(1);
+                    if (lastSponsor[0]) {
+                        const sponsor = lastSponsor[0];
+                        const idTimestamp = new Date(parseInt(sponsor._id.toString().substring(0, 8), 16) * 1000);
+                        const dateAdded = sponsor.dateAdded ? new Date(sponsor.dateAdded) : null;
+                        mostRecentDate = dateAdded && dateAdded > idTimestamp ? dateAdded : idTimestamp;
+                    }
+                }
+                
+                lastUpdated = mostRecentDate;
             } else {
-                lastUpdated = idTimestamp;
+                // Fallback to old structure if new structure is empty
+                throw new Error('New structure empty, using old structure');
+            }
+        } catch (error) {
+            // Fallback to old structure
+            sponsorCompaniesCount = await Sponsor.countDocuments({ status: 'approved' });
+            const newsletters = await Sponsor.distinct("newsletterSponsored", { status: 'approved' });
+            newsletterCount = newsletters.filter(n => n && n.trim()).length;
+            
+            const lastSponsor = await Sponsor.find({ status: 'approved' }).sort({ _id: -1 }).limit(1);
+            if (lastSponsor[0]) {
+                const sponsor = lastSponsor[0];
+                const idTimestamp = new Date(parseInt(sponsor._id.toString().substring(0, 8), 16) * 1000);
+                const dateAdded = sponsor.dateAdded ? new Date(sponsor.dateAdded) : null;
+                lastUpdated = dateAdded && dateAdded > idTimestamp ? dateAdded : idTimestamp;
             }
         }
 
-        res.status(200).send({ "sponsors": sponsorCount, "newsletters": newsletterCount, "lastUpdated": lastUpdated });
+        res.status(200).send({ 
+            "sponsors": sponsorCompaniesCount, // Number of unique companies
+            "newsletters": newsletterCount, 
+            "lastUpdated": lastUpdated 
+        });
     }
     catch (e) {
         console.log("Error getting DB info", e);
@@ -266,74 +384,141 @@ router.get('/analytics', async (req, res) => {
     }
 });
 
-// Create a new sponsor
+// Create a new sponsor - uses new structure
 router.post('/', auth, async (req, res) => {
     const sponsor = req.body;
 
-    // Validate the request body
-    const { sponsorError } = validateSponsor(sponsor);
-    if (sponsorError) {
-        return res.status(400).send(sponsorError);
-    }
-
-
     try {
-        let sponsorExists = await Sponsor.findOne({ sponsorName: sponsor.sponsorName, newsletterSponsored: sponsor.newsletterSponsored });
-        if (sponsorExists) {
-            console.log("Sponsor already exists");
-            return res.status(400).send("Sponsor already exists");
+        const rootDomain = sponsor.rootDomain || sponsor.sponsorLink?.replace(/^https?:\/\//, '').split('/')[0] || '';
+        
+        if (!rootDomain) {
+            return res.status(400).send("rootDomain is required");
         }
 
-        // If the sponsor does not already exist with the same newsletter sponsorship, create a new sponsor
-        const newSponsor = new Sponsor({
+        // Check if sponsor with same rootDomain already exists
+        let existingSponsor = await SponsorNew.findOne({ rootDomain: rootDomain });
+        
+        if (existingSponsor) {
+            // Append newsletter to existing sponsor
+            const newsletterName = sponsor.newsletterSponsored || sponsor.newslettersSponsored?.[0]?.newsletterName;
+            
+            if (newsletterName) {
+                const newsletterEntry = {
+                    newsletterName: newsletterName,
+                    estimatedAudience: sponsor.subscriberCount || sponsor.newslettersSponsored?.[0]?.estimatedAudience || 0,
+                    contentTags: sponsor.tags || [],
+                    dateSponsored: new Date(),
+                    emailAddress: ''
+                };
+                
+                // Check if newsletter already exists
+                const exists = existingSponsor.newslettersSponsored.some(
+                    n => n.newsletterName === newsletterName
+                );
+                
+                if (!exists) {
+                    existingSponsor.newslettersSponsored.push(newsletterEntry);
+                    await existingSponsor.save();
+                    console.log("Updated existing sponsor with new newsletter");
+                }
+            }
+            
+            // Update contact info if provided
+            if (sponsor.sponsorEmail && !existingSponsor.sponsorEmail) {
+                existingSponsor.sponsorEmail = sponsor.sponsorEmail;
+                existingSponsor.contactMethod = 'email';
+            }
+            if (sponsor.businessContact && !existingSponsor.businessContact) {
+                existingSponsor.businessContact = sponsor.businessContact;
+            }
+            
+            await existingSponsor.save();
+            const collapsed = getCollapsedSponsorsForFrontend([existingSponsor]);
+            return res.status(200).send(collapsed.length > 0 ? collapsed[0] : existingSponsor);
+        }
+
+        // Create new sponsor
+        const newslettersSponsored = [];
+        if (sponsor.newsletterSponsored) {
+            newslettersSponsored.push({
+                newsletterName: sponsor.newsletterSponsored,
+                estimatedAudience: sponsor.subscriberCount || 0,
+                contentTags: sponsor.tags || [],
+                dateSponsored: new Date(),
+                emailAddress: ''
+            });
+        } else if (sponsor.newslettersSponsored && sponsor.newslettersSponsored.length > 0) {
+            newslettersSponsored.push(...sponsor.newslettersSponsored);
+        }
+
+        const newSponsor = new SponsorNew({
             sponsorName: sponsor.sponsorName,
             sponsorLink: sponsor.sponsorLink,
-            tags: sponsor.tags,
-            newsletterSponsored: sponsor.newsletterSponsored,
-            subscriberCount: sponsor.subscriberCount,
-            businessContact: sponsor.businessContact,
-            rootDomain: sponsor.rootDomain
+            rootDomain: rootDomain,
+            tags: sponsor.tags || [],
+            newslettersSponsored: newslettersSponsored,
+            sponsorEmail: sponsor.sponsorEmail || '',
+            businessContact: sponsor.businessContact || '',
+            contactMethod: sponsor.sponsorEmail ? 'email' : 'none',
+            status: sponsor.status || 'pending'
         });
-        await newSponsor.save().then(() => {
-            console.log("Sponsor created successfully.");
-        })
+        
+        await newSponsor.save();
+        console.log("Sponsor created successfully.");
 
-        // Save to Airtable [DEPRECATED]
-        // await saveToAirtable(sponsor).then(() => {
-        //     console.log("Saved to Airtable");
-        // }).catch((e) => {
-        //     console.log("Error saving to Airtable", e);
-        // });
-
-        // Delete potential sponsor from potentialSponsors collection
-        await PotentialSponsor.findByIdAndDelete(sponsor._id).then(() => {
-            console.log("Deleted potential sponsor");
+        // Delete potential sponsor if _id provided
+        if (sponsor._id) {
+            await PotentialSponsor.findByIdAndDelete(sponsor._id).then(() => {
+                console.log("Deleted potential sponsor");
+            }).catch((e) => {
+                console.log("Error deleting potential sponsor", e);
+            });
         }
-        ).catch((e) => {
-            console.log("Error deleting potential sponsor", e);
-        });
 
-        res.status(201).send(req.body);
+        const collapsed = getCollapsedSponsorsForFrontend([newSponsor]);
+        res.status(201).send(collapsed.length > 0 ? collapsed[0] : newSponsor);
     } catch (e) {
         console.log("Error creating sponsor", e);
-        res.status(500).send("Error creating sponsor");
+        res.status(500).send("Error creating sponsor: " + e.message);
     }
 });
 
 
-// Get sample sponsors (8 random sponsors)
+// Get sample sponsors (8 random sponsors) - uses new structure with fallback
 router.get('/sample', async (req, res) => {
     try {
-        const sampleSponsors = await Sponsor.aggregate([
-            { $sample: { size: 8 } },
-            { $project: {
-                sponsorName: 1,
-                sponsorLink: 1,
-                tags: 1,
-                newsletterSponsored: 1,
-                subscriberCount: 1
-            }}
-        ]);
+        // Try SponsorNew first
+        let sampleSponsors;
+        try {
+            sampleSponsors = await SponsorNew.aggregate([
+                { $sample: { size: 8 } },
+                { $project: {
+                    sponsorName: 1,
+                    sponsorLink: 1,
+                    tags: 1,
+                    newslettersSponsored: 1
+                }}
+            ]);
+            
+            // Transform to collapsed format
+            sampleSponsors = sampleSponsors.map(sponsor => {
+                const collapsed = getCollapsedSponsorsForFrontend([sponsor]);
+                return collapsed.length > 0 ? collapsed[0] : sponsor;
+            });
+        } catch (error) {
+            // Fallback to old structure
+            sampleSponsors = await Sponsor.aggregate([
+                { $sample: { size: 8 } },
+                { $project: {
+                    sponsorName: 1,
+                    sponsorLink: 1,
+                    tags: 1,
+                    newsletterSponsored: 1,
+                    subscriberCount: 1
+                }}
+            ]);
+        }
+        
         res.status(200).send(sampleSponsors);
     } catch (e) {
         console.log("Error getting sample sponsors", e);
@@ -341,60 +526,125 @@ router.get('/sample', async (req, res) => {
     }
 });
 
-// Update a sponsor
+// Update a sponsor - uses new structure with fallback
 router.put('/:id', [auth, admin], async (req, res) => {
     try {
-        // Debug: Log raw incoming body to verify fields received from client
         console.log('Raw update body for sponsor', req.params.id, ':', req.body);
 
-        // Build update object with all fields that can be updated
+        // Try SponsorNew first, fallback to Sponsor
+        let SponsorModel = SponsorNew;
+        let sponsor = await SponsorNew.findById(req.params.id);
+        
+        if (!sponsor) {
+            SponsorModel = Sponsor;
+            sponsor = await Sponsor.findById(req.params.id);
+        }
+        
+        if (!sponsor) {
+            return res.status(404).send('The sponsor with the given ID was not found.');
+        }
+
+        // Build update object
         const updateData = {
             sponsorName: req.body.sponsorName,
             sponsorLink: req.body.sponsorLink,
             rootDomain: req.body.rootDomain,
             tags: req.body.tags,
-            newsletterSponsored: req.body.newsletterSponsored,
-            subscriberCount: req.body.subscriberCount,
-            sponsorEmail: req.body.sponsorEmail,
-            sponsorApplication: req.body.sponsorApplication,
-            businessContact: req.body.businessContact,
-            contactMethod: req.body.contactMethod,
-            status: req.body.status,
-            isAffiliateProgram: req.body.isAffiliateProgram,
-            affiliateSignupLink: req.body.affiliateSignupLink,
-            commissionInfo: req.body.commissionInfo
+            status: req.body.status
         };
 
-        // Remove undefined/null values to avoid overwriting with undefined
-        // But keep false booleans and empty strings as they are valid values
+        // Consolidate email fields - prioritize sponsorEmail, merge businessContact if it's an email
+        if (req.body.sponsorEmail) {
+            updateData.sponsorEmail = req.body.sponsorEmail;
+            updateData.businessContact = ''; // Clear businessContact when sponsorEmail is set
+        } else if (req.body.businessContact) {
+            // If businessContact is an email, move it to sponsorEmail
+            if (req.body.businessContact.includes('@')) {
+                updateData.sponsorEmail = req.body.businessContact;
+                updateData.businessContact = '';
+            } else {
+                // If it's not an email (legacy data), keep it in businessContact but prefer sponsorEmail from existing
+                updateData.sponsorEmail = sponsor.sponsorEmail || '';
+                updateData.businessContact = req.body.businessContact;
+            }
+        } else {
+            // No email provided, clear both
+            updateData.sponsorEmail = '';
+            updateData.businessContact = '';
+        }
+
+        // Handle newslettersSponsored array (new format)
+        if (req.body.newslettersSponsored && Array.isArray(req.body.newslettersSponsored)) {
+            updateData.newslettersSponsored = req.body.newslettersSponsored;
+        } else if (req.body.newsletterSponsored) {
+            // Convert old format to new format
+            const existingNewsletters = sponsor.newslettersSponsored || [];
+            const newsletterName = req.body.newsletterSponsored.trim();
+            
+            // Check if newsletter already exists
+            const existingIndex = existingNewsletters.findIndex(n => n.newsletterName === newsletterName);
+            
+            if (existingIndex >= 0) {
+                // Update existing newsletter entry
+                existingNewsletters[existingIndex] = {
+                    newsletterName: newsletterName,
+                    estimatedAudience: req.body.subscriberCount || existingNewsletters[existingIndex].estimatedAudience || 0,
+                    contentTags: req.body.tags || existingNewsletters[existingIndex].contentTags || [],
+                    dateSponsored: existingNewsletters[existingIndex].dateSponsored || new Date(),
+                    emailAddress: existingNewsletters[existingIndex].emailAddress || ''
+                };
+            } else {
+                // Add new newsletter entry
+                existingNewsletters.push({
+                    newsletterName: newsletterName,
+                    estimatedAudience: req.body.subscriberCount || 0,
+                    contentTags: req.body.tags || [],
+                    dateSponsored: new Date(),
+                    emailAddress: ''
+                });
+            }
+            updateData.newslettersSponsored = existingNewsletters;
+        }
+
+        // Handle contactMethod
+        if (req.body.contactMethod) {
+            // Convert old contactMethod values to new ones
+            if (req.body.contactMethod === 'email' || req.body.contactMethod === 'both') {
+                updateData.contactMethod = 'email';
+            } else {
+                updateData.contactMethod = 'none';
+            }
+        } else if (updateData.sponsorEmail && updateData.sponsorEmail.trim()) {
+            updateData.contactMethod = 'email';
+        } else {
+            updateData.contactMethod = 'none';
+        }
+
+        // Remove undefined/null values
         Object.keys(updateData).forEach(key => {
             if (updateData[key] === undefined || updateData[key] === null) {
                 delete updateData[key];
             }
-            // Handle empty arrays - remove them if they're empty
-            if (Array.isArray(updateData[key]) && updateData[key].length === 0 && key !== 'tags') {
-                // Keep tags even if empty, remove other empty arrays
-                delete updateData[key];
-            }
         });
 
-        // Basic validation - make all fields optional for updates
+        // Validation
         const validationSchema = Joi.object({
             sponsorName: Joi.string().min(2).max(256).optional(),
             sponsorLink: Joi.string().min(0).max(256).allow('').optional(),
             rootDomain: Joi.string().max(256).allow('').optional(),
-            tags: Joi.array().items(Joi.string()).max(5).optional(),
-            newsletterSponsored: Joi.string().max(1000).allow('').optional(),
-            subscriberCount: Joi.number().optional(),
-            sponsorEmail: Joi.string().allow('').optional(),
-            sponsorApplication: Joi.string().allow('').optional(),
+            tags: Joi.array().items(Joi.string()).max(10).optional(),
+            newslettersSponsored: Joi.array().items(Joi.object({
+                newsletterName: Joi.string().min(2).max(256).required(),
+                estimatedAudience: Joi.number().min(0),
+                contentTags: Joi.array().items(Joi.string()),
+                dateSponsored: Joi.date(),
+                emailAddress: Joi.string().max(500).allow('')
+            })).optional(),
+            sponsorEmail: Joi.string().max(500).allow('').optional(),
             businessContact: Joi.string().max(500).allow('').optional(),
-            contactMethod: Joi.string().valid('email', 'application', 'both', 'none').optional(),
-            status: Joi.string().valid('pending', 'approved').optional(),
-            isAffiliateProgram: Joi.boolean().optional(),
-            affiliateSignupLink: Joi.string().max(500).allow('').optional(),
-            commissionInfo: Joi.string().max(500).allow('').optional()
-        }).unknown(false); // Don't allow unknown fields
+            contactMethod: Joi.string().valid('email', 'none').optional(),
+            status: Joi.string().valid('pending', 'approved').optional()
+        }).unknown(false);
 
         const { error } = validationSchema.validate(updateData);
         if (error) {
@@ -404,46 +654,162 @@ router.put('/:id', [auth, admin], async (req, res) => {
 
         console.log('Updating sponsor:', req.params.id, 'with data:', updateData);
 
-        const sponsor = await Sponsor.findByIdAndUpdate(
-            req.params.id,
-            { $set: updateData },
-            { new: true, runValidators: false } // Run validators false since we validated above
-        );
-
-        if (!sponsor) {
-            return res.status(404).send('The sponsor with the given ID was not found.');
+        // Check if converting to affiliate
+        if (req.body.isAffiliateProgram === true) {
+            console.log('Converting sponsor to affiliate...');
+            const sponsorObj = sponsor.toObject ? sponsor.toObject() : sponsor;
+            const rootDomain = sponsorObj.rootDomain || sponsorObj.sponsorLink?.replace(/^https?:\/\//, '').split('/')[0] || '';
+            
+            // Check if affiliate already exists
+            let affiliate = await Affiliate.findOne({ rootDomain });
+            
+            if (affiliate) {
+                // Update existing affiliate with newsletter info from sponsor
+                const newsletters = updateData.newslettersSponsored || sponsorObj.newslettersSponsored || [];
+                
+                if (newsletters.length > 0) {
+                    newsletters.forEach(newsletter => {
+                        const exists = affiliate.affiliatedNewsletters.some(
+                            n => n.newsletterName === newsletter.newsletterName
+                        );
+                        if (!exists) {
+                            affiliate.affiliatedNewsletters.push({
+                                newsletterName: newsletter.newsletterName,
+                                estimatedAudience: newsletter.estimatedAudience || 0,
+                                contentTags: newsletter.contentTags || [],
+                                dateAffiliated: newsletter.dateSponsored || new Date(),
+                                emailAddress: newsletter.emailAddress || ''
+                            });
+                        }
+                    });
+                } else if (updateData.newsletterSponsored || sponsorObj.newsletterSponsored) {
+                    // Old format - add single newsletter
+                    const newsletterName = updateData.newsletterSponsored || sponsorObj.newsletterSponsored;
+                    const exists = affiliate.affiliatedNewsletters.some(
+                        n => n.newsletterName === newsletterName
+                    );
+                    if (!exists) {
+                        affiliate.affiliatedNewsletters.push({
+                            newsletterName: newsletterName,
+                            estimatedAudience: updateData.subscriberCount || sponsorObj.subscriberCount || 0,
+                            contentTags: updateData.tags || sponsorObj.tags || [],
+                            dateAffiliated: new Date(),
+                            emailAddress: ''
+                        });
+                    }
+                }
+                
+                // Merge tags
+                if (updateData.tags && updateData.tags.length > 0) {
+                    const existingTags = new Set(affiliate.tags || []);
+                    updateData.tags.forEach(tag => existingTags.add(tag));
+                    affiliate.tags = Array.from(existingTags);
+                }
+                
+                // Update affiliate link if provided
+                if (req.body.affiliateSignupLink) {
+                    affiliate.affiliateLink = req.body.affiliateSignupLink;
+                }
+                if (req.body.commissionInfo) {
+                    affiliate.commissionInfo = req.body.commissionInfo;
+                }
+                
+                await affiliate.save();
+            } else {
+                // Create new affiliate
+                const affiliateData = {
+                    affiliateName: updateData.sponsorName || sponsorObj.sponsorName,
+                    affiliateLink: req.body.affiliateSignupLink || sponsorObj.sponsorLink || '',
+                    rootDomain: rootDomain,
+                    tags: updateData.tags || sponsorObj.tags || [],
+                    commissionInfo: req.body.commissionInfo || '',
+                    status: updateData.status || sponsorObj.status || 'pending',
+                    dateAdded: sponsorObj.dateAdded || new Date(),
+                    interestedUsers: sponsorObj.interestedUsers || []
+                };
+                
+                // Add newsletter info
+                const newsletters = updateData.newslettersSponsored || sponsorObj.newslettersSponsored || [];
+                if (newsletters.length > 0) {
+                    affiliateData.affiliatedNewsletters = newsletters.map(n => ({
+                        newsletterName: n.newsletterName,
+                        estimatedAudience: n.estimatedAudience || 0,
+                        contentTags: n.contentTags || [],
+                        dateAffiliated: n.dateSponsored || new Date(),
+                        emailAddress: n.emailAddress || ''
+                    }));
+                } else if (updateData.newsletterSponsored || sponsorObj.newsletterSponsored) {
+                    affiliateData.affiliatedNewsletters = [{
+                        newsletterName: updateData.newsletterSponsored || sponsorObj.newsletterSponsored,
+                        estimatedAudience: updateData.subscriberCount || sponsorObj.subscriberCount || 0,
+                        contentTags: updateData.tags || sponsorObj.tags || [],
+                        dateAffiliated: new Date(),
+                        emailAddress: ''
+                    }];
+                }
+                
+                affiliate = await Affiliate.create(affiliateData);
+            }
+            
+            // Delete sponsor from SponsorNew or Sponsor
+            await SponsorModel.findByIdAndDelete(req.params.id);
+            
+            console.log('Successfully converted sponsor to affiliate');
+            return res.status(200).json({
+                success: true,
+                message: 'Sponsor converted to affiliate successfully',
+                affiliate
+            });
         }
 
-        console.log('Successfully updated sponsor:', sponsor._id, 'Status:', sponsor.status, 'isAffiliate:', sponsor.isAffiliateProgram);
-        res.send(sponsor);
+        const updatedSponsor = await SponsorModel.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateData },
+            { new: true, runValidators: false }
+        );
+
+        if (!updatedSponsor) {
+            return res.status(404).send('Failed to update sponsor.');
+        }
+
+        console.log('Successfully updated sponsor:', updatedSponsor._id);
+        // Return collapsed format
+        const collapsed = getCollapsedSponsorsForFrontend([updatedSponsor]);
+        res.send(collapsed.length > 0 ? collapsed[0] : updatedSponsor);
     } catch (e) {
         console.error("Error updating sponsor:", e);
         res.status(500).json({ error: "Error updating sponsor", message: e.message });
     }
 });
 
-// Mark a sponsor as viewed by a user
+// Mark a sponsor as viewed by a user - uses new structure with fallback
 router.post('/:id/view', auth, async (req, res) => {
     try {
         console.log('View request for sponsor ID:', req.params.id);
         console.log('User ID:', req.user._id);
         
-        // Check if user has already viewed
-        const existingSponsor = await Sponsor.findById(req.params.id);
+        // Try SponsorNew first, fallback to Sponsor
+        let SponsorModel = SponsorNew;
+        let existingSponsor = await SponsorNew.findById(req.params.id);
+        
+        if (!existingSponsor) {
+            SponsorModel = Sponsor;
+            existingSponsor = await Sponsor.findById(req.params.id);
+        }
+        
         if (!existingSponsor) {
             console.log('Sponsor not found with ID:', req.params.id);
             return res.status(404).send('The sponsor with the given ID was not found.');
         }
         
-        const hasViewed = existingSponsor.viewedBy.includes(req.user._id);
+        const hasViewed = existingSponsor.viewedBy && existingSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
         
         console.log('Found sponsor:', existingSponsor.sponsorName);
         console.log('User has viewed:', hasViewed);
         
         if (!hasViewed) {
-            // Use atomic update to avoid version conflicts
             const currentDate = new Date();
-            const updatedSponsor = await Sponsor.findByIdAndUpdate(
+            const updatedSponsor = await SponsorModel.findByIdAndUpdate(
                 req.params.id,
                 {
                     $addToSet: {
@@ -464,19 +830,18 @@ router.post('/:id/view', auth, async (req, res) => {
             
             console.log('Successfully updated sponsor with view');
             
-            // Return processed sponsor data with user status
-            const sponsorObj = updatedSponsor.toObject();
-            const isViewed = updatedSponsor.viewedBy.includes(req.user._id);
-            const isApplied = updatedSponsor.appliedBy.includes(req.user._id);
+            const collapsed = getCollapsedSponsorsForFrontend([updatedSponsor], req.user._id);
+            const sponsorObj = collapsed.length > 0 ? collapsed[0] : updatedSponsor.toObject();
+            const isViewed = updatedSponsor.viewedBy && updatedSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
+            const isApplied = updatedSponsor.appliedBy && updatedSponsor.appliedBy.some(id => id.toString() === req.user._id.toString());
             
-            // Get user's view and apply dates
-            const userViewData = updatedSponsor.userViewDates.find(d => d.user.toString() === req.user._id.toString());
-            const userApplyData = updatedSponsor.userApplyDates.find(d => d.user.toString() === req.user._id.toString());
+            const userViewData = updatedSponsor.userViewDates?.find(d => d.user.toString() === req.user._id.toString());
+            const userApplyData = updatedSponsor.userApplyDates?.find(d => d.user.toString() === req.user._id.toString());
             
             const processedSponsor = {
                 ...sponsorObj,
-                isViewed,
-                isApplied,
+                isViewed: !!isViewed,
+                isApplied: !!isApplied,
                 dateViewed: userViewData ? userViewData.dateViewed : null,
                 dateApplied: userApplyData ? userApplyData.dateApplied : null
             };
@@ -485,19 +850,18 @@ router.post('/:id/view', auth, async (req, res) => {
             res.send(processedSponsor);
         } else {
             console.log('User already viewed this sponsor');
-            // Return the existing sponsor data
-            const sponsorObj = existingSponsor.toObject();
-            const isViewed = existingSponsor.viewedBy.includes(req.user._id);
-            const isApplied = existingSponsor.appliedBy.includes(req.user._id);
+            const collapsed = getCollapsedSponsorsForFrontend([existingSponsor], req.user._id);
+            const sponsorObj = collapsed.length > 0 ? collapsed[0] : existingSponsor.toObject();
+            const isViewed = existingSponsor.viewedBy && existingSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
+            const isApplied = existingSponsor.appliedBy && existingSponsor.appliedBy.some(id => id.toString() === req.user._id.toString());
             
-            // Get user's view and apply dates
-            const userViewData = existingSponsor.userViewDates.find(d => d.user.toString() === req.user._id.toString());
-            const userApplyData = existingSponsor.userApplyDates.find(d => d.user.toString() === req.user._id.toString());
+            const userViewData = existingSponsor.userViewDates?.find(d => d.user.toString() === req.user._id.toString());
+            const userApplyData = existingSponsor.userApplyDates?.find(d => d.user.toString() === req.user._id.toString());
             
             const processedSponsor = {
                 ...sponsorObj,
-                isViewed,
-                isApplied,
+                isViewed: !!isViewed,
+                isApplied: !!isApplied,
                 dateViewed: userViewData ? userViewData.dateViewed : null,
                 dateApplied: userApplyData ? userApplyData.dateApplied : null
             };
@@ -512,31 +876,36 @@ router.post('/:id/view', auth, async (req, res) => {
     }
 });
 
-// Mark a sponsor as applied by a user
+// Mark a sponsor as applied by a user - uses new structure with fallback
 router.post('/:id/apply', auth, async (req, res) => {
     try {
         console.log('Apply request for sponsor ID:', req.params.id);
         console.log('User ID:', req.user._id);
         
-        // Use findByIdAndUpdate with atomic operations to avoid version conflicts
-        const updateData = {};
-        const currentDate = new Date();
+        // Try SponsorNew first, fallback to Sponsor
+        let SponsorModel = SponsorNew;
+        let existingSponsor = await SponsorNew.findById(req.params.id);
         
-        // Check if user has already applied
-        const existingSponsor = await Sponsor.findById(req.params.id);
+        if (!existingSponsor) {
+            SponsorModel = Sponsor;
+            existingSponsor = await Sponsor.findById(req.params.id);
+        }
+        
         if (!existingSponsor) {
             console.log('Sponsor not found with ID:', req.params.id);
             return res.status(404).send('The sponsor with the given ID was not found.');
         }
         
-        const hasApplied = existingSponsor.appliedBy.includes(req.user._id);
-        const hasViewed = existingSponsor.viewedBy.includes(req.user._id);
+        const hasApplied = existingSponsor.appliedBy && existingSponsor.appliedBy.some(id => id.toString() === req.user._id.toString());
+        const hasViewed = existingSponsor.viewedBy && existingSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
         
         console.log('Found sponsor:', existingSponsor.sponsorName);
         console.log('User has applied:', hasApplied);
         console.log('User has viewed:', hasViewed);
         
-        // Prepare update operations
+        const updateData = {};
+        const currentDate = new Date();
+        
         if (!hasApplied) {
             updateData.$addToSet = {
                 appliedBy: req.user._id,
@@ -558,10 +927,9 @@ router.post('/:id/apply', auth, async (req, res) => {
             };
         }
         
-        // Only update if there are changes to make
         if (Object.keys(updateData).length > 0) {
             console.log('Updating sponsor with:', updateData);
-            const updatedSponsor = await Sponsor.findByIdAndUpdate(
+            const updatedSponsor = await SponsorModel.findByIdAndUpdate(
                 req.params.id,
                 updateData,
                 { new: true, runValidators: true }
@@ -582,7 +950,7 @@ router.post('/:id/apply', auth, async (req, res) => {
                         userId: req.user._id,
                         sponsorId: req.params.id,
                         sponsorName: updatedSponsor.sponsorName,
-                        contactEmail: updatedSponsor.businessContact || updatedSponsor.sponsorEmail || '',
+                        contactEmail: updatedSponsor.sponsorEmail || updatedSponsor.businessContact || '',
                         dateApplied: currentDate,
                         status: 'pending',
                         lastContactDate: currentDate
@@ -593,23 +961,21 @@ router.post('/:id/apply', auth, async (req, res) => {
                     console.log('Created user application record:', application._id);
                 } catch (appError) {
                     console.error('Error creating user application:', appError);
-                    // Don't fail the request if application record creation fails
                 }
             }
             
-            // Return processed sponsor data with user status
-            const sponsorObj = updatedSponsor.toObject();
-            const isViewed = updatedSponsor.viewedBy.includes(req.user._id);
-            const isApplied = updatedSponsor.appliedBy.includes(req.user._id);
+            const collapsed = getCollapsedSponsorsForFrontend([updatedSponsor], req.user._id);
+            const sponsorObj = collapsed.length > 0 ? collapsed[0] : updatedSponsor.toObject();
+            const isViewed = updatedSponsor.viewedBy && updatedSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
+            const isApplied = updatedSponsor.appliedBy && updatedSponsor.appliedBy.some(id => id.toString() === req.user._id.toString());
             
-            // Get user's view and apply dates
-            const userViewData = updatedSponsor.userViewDates.find(d => d.user.toString() === req.user._id.toString());
-            const userApplyData = updatedSponsor.userApplyDates.find(d => d.user.toString() === req.user._id.toString());
+            const userViewData = updatedSponsor.userViewDates?.find(d => d.user.toString() === req.user._id.toString());
+            const userApplyData = updatedSponsor.userApplyDates?.find(d => d.user.toString() === req.user._id.toString());
             
             const processedSponsor = {
                 ...sponsorObj,
-                isViewed,
-                isApplied,
+                isViewed: !!isViewed,
+                isApplied: !!isApplied,
                 dateViewed: userViewData ? userViewData.dateViewed : null,
                 dateApplied: userApplyData ? userApplyData.dateApplied : null
             };
@@ -618,19 +984,18 @@ router.post('/:id/apply', auth, async (req, res) => {
             res.send(processedSponsor);
         } else {
             console.log('No updates needed, user already applied and viewed');
-            // Return the existing sponsor data
-            const sponsorObj = existingSponsor.toObject();
-            const isViewed = existingSponsor.viewedBy.includes(req.user._id);
-            const isApplied = existingSponsor.appliedBy.includes(req.user._id);
+            const collapsed = getCollapsedSponsorsForFrontend([existingSponsor], req.user._id);
+            const sponsorObj = collapsed.length > 0 ? collapsed[0] : existingSponsor.toObject();
+            const isViewed = existingSponsor.viewedBy && existingSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
+            const isApplied = existingSponsor.appliedBy && existingSponsor.appliedBy.some(id => id.toString() === req.user._id.toString());
             
-            // Get user's view and apply dates
-            const userViewData = existingSponsor.userViewDates.find(d => d.user.toString() === req.user._id.toString());
-            const userApplyData = existingSponsor.userApplyDates.find(d => d.user.toString() === req.user._id.toString());
+            const userViewData = existingSponsor.userViewDates?.find(d => d.user.toString() === req.user._id.toString());
+            const userApplyData = existingSponsor.userApplyDates?.find(d => d.user.toString() === req.user._id.toString());
             
             const processedSponsor = {
                 ...sponsorObj,
-                isViewed,
-                isApplied,
+                isViewed: !!isViewed,
+                isApplied: !!isApplied,
                 dateViewed: userViewData ? userViewData.dateViewed : null,
                 dateApplied: userApplyData ? userApplyData.dateApplied : null
             };
@@ -661,35 +1026,41 @@ router.get('/matched', auth, async (req, res) => {
         }
         
         // Get all approved sponsors
-        const sponsors = await Sponsor.find({ 
+        const sponsors = await SponsorNew.find({ 
             status: 'approved',
             $or: [
                 { sponsorEmail: { $exists: true, $ne: '' } },
-                { sponsorApplication: { $exists: true, $ne: '' } },
-                { businessContact: { $exists: true, $ne: '' } }
+                { businessContact: { $exists: true, $ne: '', $regex: '@' } }
             ]
+        }).catch(() => {
+            // Fallback to old structure
+            return Sponsor.find({ 
+                status: 'approved',
+                $or: [
+                    { sponsorEmail: { $exists: true, $ne: '' } },
+                    { businessContact: { $exists: true, $ne: '', $regex: '@' } }
+                ]
+            });
         });
         
-        // Get matched sponsors
+        // Get matched sponsors - use collapsed view (one per company)
         const matchedSponsors = getMatchedSponsors(sponsors, user.newsletterInfo, {
             limit: 20,
             minScore: 10
         });
         
-        // Add user status (viewed/applied) to each sponsor
-        const sponsorsWithStatus = matchedSponsors.map(sponsor => {
-            const sponsorObj = sponsor.toObject ? sponsor.toObject() : sponsor;
-            // Find the original sponsor to check viewed/applied status
-            const originalSponsor = sponsors.find(s => s._id.toString() === sponsorObj._id.toString());
-            const isViewed = originalSponsor && originalSponsor.viewedBy && originalSponsor.viewedBy.some(id => id.toString() === req.user._id.toString());
-            const isApplied = originalSponsor && originalSponsor.appliedBy && originalSponsor.appliedBy.some(id => id.toString() === req.user._id.toString());
-            
+        // Convert to collapsed format with most recent newsletter date
+        const collapsedMatchedSponsors = getCollapsedSponsorsForFrontend(matchedSponsors, req.user._id);
+        
+        // Add match scores back to collapsed sponsors
+        const sponsorsWithStatus = collapsedMatchedSponsors.map(sponsor => {
+            const matchData = matchedSponsors.find(m => m._id.toString() === sponsor._id.toString());
             return {
-                ...sponsorObj,
-                isViewed: !!isViewed,
-                isApplied: !!isApplied,
-                matchScore: sponsor.matchScore,
-                matchedTags: sponsor.matchedTags || []
+                ...sponsor,
+                isViewed: sponsor.isViewed || false,
+                isApplied: sponsor.isApplied || false,
+                matchScore: matchData?.matchScore || 0,
+                matchedTags: matchData?.matchedTags || []
             };
         });
         

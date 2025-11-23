@@ -50,7 +50,7 @@ const handlePurchase = async (plan: string, isSubscribed: boolean) => {
         });
 
     } catch (error) {
-        console.log("Error subscribing", error);
+        // Error subscribing handled silently
         alert("Error creating checkout session. Please try again.");
     }
 }

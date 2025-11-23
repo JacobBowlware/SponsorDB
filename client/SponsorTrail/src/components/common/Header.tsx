@@ -19,7 +19,7 @@ const Header = () => {
 
     return (
         <div className="navbar-wrap sticky-top">
-            <nav className={`web-section navbar navbar-expand-lg navbar-light  `}>
+            <nav className={`navbar navbar-expand-lg navbar-light`}>
                 <a className="navbar-brand" href="/">SponsorDB <FontAwesomeIcon className="nav-icon" icon={faDatabase} />
                 </a>
                 <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

@@ -9,6 +9,7 @@ const FAQAccordian = () => {
     const [acc3Open, setAcc3Open] = useState(false);
     const [acc4Open, setAcc4Open] = useState(false);
     const [acc5Open, setAcc5Open] = useState(false);
+    const [acc6Open, setAcc6Open] = useState(false);
 
     const handleFAQClick = (faqTitle: string, isOpening: boolean) => {
         trackContentInteraction('faq_click', faqTitle, isOpening ? 'open' : 'close', 'home');
@@ -18,7 +19,7 @@ const FAQAccordian = () => {
         <div className="faq-accordian__container">
             <AccordianItem
                 title="What do I get with my subscription?"
-                content="Your $20/month subscription gives you access to our database of 100+ verified newsletter sponsors. Each sponsor includes direct contact information (email or application link), company details, and tags to help you find the right sponsors for your newsletter. You also get email templates and basic analytics to track your outreach."
+                content="Your $20/month subscription gives you access to our database of 100+ verified newsletter sponsors. Each sponsor includes verified contact emails for decision makers at the sponsor company—usually high-value contacts like marketing directors, partnership managers, or other key decision makers—not generic email addresses. You also get company details, market types to help you find the right sponsors, email templates, and basic analytics to track your outreach."
                 onPress={() => {
                     setAcc1Open(!acc1Open);
                     handleFAQClick("What do I get with my subscription?", !acc1Open);
@@ -27,7 +28,7 @@ const FAQAccordian = () => {
             />
             <AccordianItem
                 title="How does sponsor matching work?"
-                content="After completing your newsletter onboarding, we'll show you sponsors that match your newsletter's topic and audience. We match sponsors based on their tags and the information you provide about your newsletter (topic, audience demographics, etc.). Complete your newsletter profile to unlock personalized sponsor recommendations."
+                content="After completing your newsletter onboarding, we'll show you sponsors that match your newsletter's topic and audience. We match sponsors based on their market types and the information you provide about your newsletter (topic, audience demographics, etc.). Complete your newsletter profile to unlock personalized sponsor recommendations."
                 onPress={() => {
                     setAcc2Open(!acc2Open);
                     handleFAQClick("How does sponsor matching work?", !acc2Open);
@@ -60,6 +61,15 @@ const FAQAccordian = () => {
                     handleFAQClick("Can I cancel my subscription anytime?", !acc5Open);
                 }}
                 isOpen={acc5Open}
+            />
+            <AccordianItem
+                title="How do you source these sponsors?"
+                content="We use proprietary software that continuously monitors newsletter sponsorships across a wide range of newsletters. When we identify a company sponsoring newsletters, our system automatically verifies and collects contact information for decision makers at those companies. This ensures our database stays current with active sponsors who are actively investing in newsletter partnerships."
+                onPress={() => {
+                    setAcc6Open(!acc6Open);
+                    handleFAQClick("How do you source these sponsors?", !acc6Open);
+                }}
+                isOpen={acc6Open}
             />
         </div>
     );

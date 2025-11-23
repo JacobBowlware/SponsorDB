@@ -1,9 +1,10 @@
 import axios from "axios";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import config from '../../config';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import tokenManager from '../../utils/tokenManager';
+import apiClient from '../../utils/axiosInterceptor';
 import { 
     faCreditCard, 
     faSignOutAlt, 
@@ -12,7 +13,9 @@ import {
     faShieldAlt,
     faEnvelope,
     faCheckCircle,
-    faEdit
+    faEdit,
+    faBell,
+    faBellSlash
 } from "@fortawesome/free-solid-svg-icons";
 import { User } from '../../types/User';
 
@@ -23,6 +26,36 @@ interface ProfileProps {
 }
 
 const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
+    const [newsletterSubscribed, setNewsletterSubscribed] = useState<boolean>(user.newsletterOptIn || false);
+    const [isUpdatingNewsletter, setIsUpdatingNewsletter] = useState(false);
+
+    useEffect(() => {
+        setNewsletterSubscribed(user.newsletterOptIn || false);
+    }, [user.newsletterOptIn]);
+
+    const handleNewsletterToggle = async () => {
+        setIsUpdatingNewsletter(true);
+        try {
+            const newStatus = !newsletterSubscribed;
+            const accessToken = await tokenManager.getValidAccessToken();
+            if (!accessToken) {
+                console.error('No access token available');
+                return;
+            }
+
+            await apiClient.put(`${config.backendUrl}users/me`, {
+                newsletterOptIn: newStatus
+            });
+
+            setNewsletterSubscribed(newStatus);
+        } catch (error) {
+            console.error('Error updating newsletter subscription:', error);
+            // Revert on error
+            setNewsletterSubscribed(!newsletterSubscribed);
+        } finally {
+            setIsUpdatingNewsletter(false);
+        }
+    };
 
     const handleBillingPortal = async () => {
         try {
@@ -35,7 +68,7 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
             window.open(url, '_blank');
         }
         catch (e: any) {
-            console.log("Error getting subscription info", e);
+            // Error getting subscription info handled silently
         }
     }
 
@@ -59,11 +92,10 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                             'x-auth-token': localStorage.getItem('token')
                         }
                     });
-                    console.log("Newsletter info migrated successfully");
                     // Reload the page to get updated user data
                     window.location.reload();
                 } catch (error) {
-                    console.error("Error migrating newsletter info:", error);
+                    // Error migrating newsletter info handled silently
                 }
             }
         };
@@ -127,6 +159,48 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                             </div>
                         </div>
                     )}
+
+                    {/* Newsletter Subscription */}
+                    <div className="profile-section">
+                        <h2>Newsletter Subscription</h2>
+                        <div className="profile-field">
+                            <label>Subscription Status</label>
+                            <div className={`profile-value ${newsletterSubscribed ? 'status-active' : 'status-inactive'}`}>
+                                {newsletterSubscribed ? (
+                                    <>
+                                        <FontAwesomeIcon icon={faBell} style={{ marginRight: '0.5rem' }} />
+                                        Subscribed
+                                    </>
+                                ) : (
+                                    <>
+                                        <FontAwesomeIcon icon={faBellSlash} style={{ marginRight: '0.5rem' }} />
+                                        Not Subscribed
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <div className="profile-field">
+                            <p className="newsletter-description">
+                                {newsletterSubscribed 
+                                    ? "You're receiving weekly updates about new sponsors, tips, and opportunities."
+                                    : "Subscribe to receive weekly updates about new sponsors, tips, and opportunities delivered to your inbox."}
+                            </p>
+                        </div>
+                        <div className="profile-field">
+                            <button
+                                className={`btn profile-btn ${newsletterSubscribed ? 'profile-btn--warning' : 'profile-btn--primary'}`}
+                                onClick={handleNewsletterToggle}
+                                disabled={isUpdatingNewsletter}
+                            >
+                                <FontAwesomeIcon icon={newsletterSubscribed ? faBellSlash : faBell} />
+                                {isUpdatingNewsletter 
+                                    ? 'Updating...' 
+                                    : newsletterSubscribed 
+                                        ? 'Unsubscribe from Newsletter' 
+                                        : 'Subscribe to Newsletter'}
+                            </button>
+                        </div>
+                    </div>
 
                     {/* Newsletter Information */}
                     {user.newsletterInfo && user.newsletterInfo.name && (
@@ -221,7 +295,6 @@ const Profile = ({ userEmail, isSubscribed, user }: ProfileProps) => {
                                             className="btn profile-btn profile-btn--outline newsletter-skip-btn"
                                             onClick={() => {
                                                 // You could add analytics tracking here
-                                                console.log('User skipped newsletter setup from profile');
                                             }}
                                         >
                                             Maybe Later

@@ -39,7 +39,7 @@ const handlePurchase = async (isSubscribed: boolean) => {
         });
 
     } catch (error) {
-        console.log("Error subscribing", error);
+        // Error subscribing handled silently
     }
 }
 

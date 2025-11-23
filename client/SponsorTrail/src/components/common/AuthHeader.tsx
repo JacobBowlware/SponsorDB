@@ -27,31 +27,31 @@ const AuthHeader = ({ isAdmin, isSubscribed, isLocalDev = false }: AuthHeaderPro
     }
 
     return (
-        <div className="navbar-wrap sticky-top navbar__dark">
-            <nav className={`web-section navbar navbar-expand-lg navbar__dark `}>
-                <a className="navbar-brand navbar-brand__dark" href="/">
+        <div className="navbar-wrap sticky-top">
+            <nav className={`navbar navbar-expand-lg`}>
+                <a className="navbar-brand" href="/">
                     SponsorDB <FontAwesomeIcon className="nav-icon" icon={faDatabase} />
                     {isLocalDev && <span className="dev-badge">DEV</span>}
                 </a>
                 <button onClick={() => setNavOpen(!navOpen)} className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <FontAwesomeIcon className="nav-icon nav-icon__dark" icon={navOpen ? faXmark : faBars} />
+                    <FontAwesomeIcon className="nav-icon" icon={navOpen ? faXmark : faBars} />
                 </button>
                 <div className="collapse navbar-collapse" id="navbarNav">
-                    <ul className="navbar-nav navbar-nav__dark">
+                    <ul className="navbar-nav">
                         {isAdmin && <li className="nav-item">
-                            <Link className="nav-link nav-link__dark" to="/admin" onClick={closeNavBar}>Admin</Link>
+                            <Link className="nav-link" to="/admin" onClick={closeNavBar}>Admin</Link>
                         </li>}
                         <li className="nav-item">
-                            <Link className="nav-link nav-link__dark" to={hasSubscription ? "/sponsors/" : "/subscribe/"} onClick={closeNavBar}>Database</Link>
+                            <Link className="nav-link" to={hasSubscription ? "/sponsors/" : "/subscribe/"} onClick={closeNavBar}>Database</Link>
                         </li>
-                        {hasSubscription && <li className="nav-item">
-                            <Link className="nav-link nav-link__dark" to="/analytics/" onClick={closeNavBar}>Analytics</Link>
+                        {(hasSubscription || isAdmin) && <li className="nav-item">
+                            <Link className="nav-link" to="/analytics/" onClick={closeNavBar}>Analytics</Link>
                         </li>}
                         <li className="nav-item">
-                            <Link className="nav-link nav-link__dark" to="/profile" onClick={closeNavBar}>Profile</Link>
+                            <Link className="nav-link" to="/profile" onClick={closeNavBar}>Profile</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link nav-link__dark" to="/blog" onClick={closeNavBar}>Blog</Link>
+                            <Link className="nav-link" to="/blog" onClick={closeNavBar}>Blog</Link>
                         </li>
                     </ul>
                 </div>

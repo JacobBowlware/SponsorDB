@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import '../css/EditSponsorModal.css';
+
+interface NewsletterSponsored {
+    newsletterName: string;
+    estimatedAudience: number;
+    contentTags: string[];
+    dateSponsored: string | Date;
+    emailAddress?: string;
+}
 
 interface Sponsor {
     _id: string;
@@ -9,31 +17,60 @@ interface Sponsor {
     sponsorLink: string;
     rootDomain: string;
     tags: string[];
-    newsletterSponsored: string;
-    subscriberCount: number;
+    newsletterSponsored: string; // Legacy field for backward compatibility
+    subscriberCount: number; // Legacy field
+    dateSponsored?: string | Date;
     sponsorEmail?: string;
-    sponsorApplication?: string;
     businessContact?: string;
-    contactMethod: 'email' | 'application' | 'both' | 'none';
-    confidence: number;
+    contactMethod: 'email' | 'none';
+    contactPersonName?: string;
+    contactPersonTitle?: string;
+    contactType?: 'named_person' | 'business_email' | 'generic_email' | 'not_found';
+    confidence?: number;
     dateAdded: string;
     status: 'pending' | 'approved';
-    // Affiliate program fields
-    isAffiliateProgram?: boolean;
-    affiliateSignupLink?: string;
-    commissionInfo?: string;
-    interestedUsers?: string[];
+    // New structure fields
+    newslettersSponsored?: NewsletterSponsored[];
+    contentTags?: string[];
+    totalPlacements?: number;
+    avgAudienceSize?: number;
+    mostRecentNewsletterDate?: string | Date;
+    isViewed?: boolean;
+    isApplied?: boolean;
+    dateViewed?: string | Date;
+    dateApplied?: string | Date;
 }
 
 interface EditSponsorModalProps {
     sponsor: Sponsor;
     onClose: () => void;
     onSave: (updatedSponsor: Sponsor) => void;
+    onConvertToAffiliate?: (sponsorId: string) => Promise<void>;
 }
 
-const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, onSave }) => {
-    const [editedSponsor, setEditedSponsor] = useState<Sponsor>(sponsor);
+const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, onSave, onConvertToAffiliate }) => {
+    // Initialize newslettersSponsored array, ensuring it's always an array and all required fields are present
+    const initialNewsletters = sponsor.newslettersSponsored && sponsor.newslettersSponsored.length > 0 
+        ? sponsor.newslettersSponsored.map(n => ({
+            newsletterName: n.newsletterName || '',
+            estimatedAudience: n.estimatedAudience ?? 0,
+            contentTags: n.contentTags || [],
+            dateSponsored: n.dateSponsored || new Date().toISOString(),
+            emailAddress: n.emailAddress
+        }))
+        : [];
+
+    const [editedSponsor, setEditedSponsor] = useState<Sponsor>({
+        ...sponsor,
+        sponsorLink: sponsor.sponsorLink || '',
+        rootDomain: sponsor.rootDomain || '',
+        tags: sponsor.tags || [],
+        newsletterSponsored: sponsor.newsletterSponsored || '',
+        subscriberCount: sponsor.subscriberCount || 0,
+        newslettersSponsored: initialNewsletters
+    });
     const [errors, setErrors] = useState<{[key: string]: string}>({});
+    const [isConverting, setIsConverting] = useState(false);
 
     const validateForm = () => {
         const newErrors: {[key: string]: string} = {};
@@ -46,16 +83,23 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
             newErrors.sponsorEmail = 'Please enter a valid email address';
         }
         
-        if (editedSponsor.sponsorApplication && !editedSponsor.sponsorApplication.startsWith('http')) {
-            newErrors.sponsorApplication = 'Please enter a valid URL starting with http:// or https://';
+        if (editedSponsor.businessContact && editedSponsor.businessContact.includes('@') && !editedSponsor.businessContact.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            newErrors.businessContact = 'Please enter a valid email address';
         }
-        
-        if (editedSponsor.affiliateSignupLink && !editedSponsor.affiliateSignupLink.startsWith('http')) {
-            newErrors.affiliateSignupLink = 'Please enter a valid URL starting with http:// or https://';
-        }
-        
-        if (editedSponsor.subscriberCount && editedSponsor.subscriberCount < 0) {
-            newErrors.subscriberCount = 'Subscriber count must be a positive number';
+
+        // Validate newsletters
+        if (editedSponsor.newslettersSponsored) {
+            editedSponsor.newslettersSponsored.forEach((newsletter, index) => {
+                if (!newsletter.newsletterName || newsletter.newsletterName.trim() === '') {
+                    newErrors[`newsletter_${index}_name`] = 'Newsletter name is required';
+                }
+                if (newsletter.estimatedAudience && newsletter.estimatedAudience < 0) {
+                    newErrors[`newsletter_${index}_audience`] = 'Audience size must be positive';
+                }
+                if (newsletter.emailAddress && !newsletter.emailAddress.includes('@')) {
+                    newErrors[`newsletter_${index}_email`] = 'Please enter a valid email address';
+                }
+            });
         }
         
         setErrors(newErrors);
@@ -64,19 +108,83 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('EditSponsorModal: Form submitted');
-        console.log('EditSponsorModal: editedSponsor:', editedSponsor);
         if (validateForm()) {
-            console.log('EditSponsorModal: Validation passed, calling onSave');
-            onSave(editedSponsor);
-        } else {
-            console.log('EditSponsorModal: Validation failed');
+            // Clean up the data before saving
+            const cleanedSponsor = {
+                ...editedSponsor,
+                newslettersSponsored: editedSponsor.newslettersSponsored?.filter(n => n.newsletterName.trim() !== '')
+            };
+            onSave(cleanedSponsor);
         }
+    };
+
+    const handleConvertToAffiliate = async () => {
+        if (!onConvertToAffiliate) return;
+        
+        if (!window.confirm(`Convert "${editedSponsor.sponsorName}" to an affiliate program? This will move it from sponsors to affiliates.`)) {
+            return;
+        }
+        
+        try {
+            setIsConverting(true);
+            await onConvertToAffiliate(editedSponsor._id);
+            onClose();
+        } catch (error) {
+            alert('Failed to convert sponsor to affiliate. Please try again.');
+        } finally {
+            setIsConverting(false);
+        }
+    };
+
+    const addNewsletter = () => {
+        const newNewsletter: NewsletterSponsored = {
+            newsletterName: '',
+            estimatedAudience: 0,
+            contentTags: [],
+            dateSponsored: new Date().toISOString(),
+            emailAddress: ''
+        };
+        setEditedSponsor({
+            ...editedSponsor,
+            newslettersSponsored: [...(editedSponsor.newslettersSponsored || []), newNewsletter]
+        });
+    };
+
+    const removeNewsletter = (index: number) => {
+        const updatedNewsletters = [...(editedSponsor.newslettersSponsored || [])];
+        updatedNewsletters.splice(index, 1);
+        setEditedSponsor({
+            ...editedSponsor,
+            newslettersSponsored: updatedNewsletters
+        });
+    };
+
+    const updateNewsletter = (index: number, field: keyof NewsletterSponsored, value: any) => {
+        const updatedNewsletters = [...(editedSponsor.newslettersSponsored || [])];
+        updatedNewsletters[index] = {
+            ...updatedNewsletters[index],
+            [field]: value
+        };
+        setEditedSponsor({
+            ...editedSponsor,
+            newslettersSponsored: updatedNewsletters
+        });
+    };
+
+    const updateNewsletterTags = (index: number, tagsString: string) => {
+        const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        updateNewsletter(index, 'contentTags', tags);
+    };
+
+    const formatDateForInput = (date: string | Date | undefined): string => {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toISOString().split('T')[0];
     };
 
     return (
         <div className="edit-modal-overlay">
-            <div className="edit-modal">
+            <div className="edit-modal edit-modal-large">
                 <div className="edit-modal__header">
                     <h3>Edit Sponsor</h3>
                     <button className="edit-modal__close" onClick={onClose}>
@@ -103,7 +211,7 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
                                 <label>Sponsor Website</label>
                                 <input
                                     type="url"
-                                    value={editedSponsor.sponsorLink || ''}
+                                    value={editedSponsor.sponsorLink}
                                     onChange={(e) => setEditedSponsor({...editedSponsor, sponsorLink: e.target.value})}
                                     placeholder="https://example.com"
                                 />
@@ -112,30 +220,19 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
                                 <label>Root Domain</label>
                                 <input
                                     type="text"
-                                    value={editedSponsor.rootDomain || ''}
+                                    value={editedSponsor.rootDomain}
                                     onChange={(e) => setEditedSponsor({...editedSponsor, rootDomain: e.target.value})}
                                     placeholder="example.com"
                                 />
                             </div>
                             <div className="edit-modal__field">
-                                <label>Newsletter Sponsored</label>
+                                <label>Tags (comma-separated)</label>
                                 <input
                                     type="text"
-                                    value={editedSponsor.newsletterSponsored || ''}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, newsletterSponsored: e.target.value})}
-                                    placeholder="Newsletter name"
+                                    value={editedSponsor.tags.join(', ')}
+                                    onChange={(e) => setEditedSponsor({...editedSponsor, tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)})}
+                                    placeholder="SaaS, B2B, AI, etc."
                                 />
-                            </div>
-                            <div className="edit-modal__field">
-                                <label>Subscriber Count</label>
-                                <input
-                                    type="number"
-                                    value={editedSponsor.subscriberCount || ''}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, subscriberCount: parseInt(e.target.value) || 0})}
-                                    className={errors.subscriberCount ? 'error' : ''}
-                                    placeholder="0"
-                                />
-                                {errors.subscriberCount && <span className="error-message">{errors.subscriberCount}</span>}
                             </div>
                         </div>
 
@@ -145,13 +242,11 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
                             <div className="edit-modal__field">
                                 <label>Contact Method</label>
                                 <select
-                                    value={editedSponsor.contactMethod}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, contactMethod: e.target.value as 'email' | 'application' | 'both' | 'none'})}
+                                    value={editedSponsor.contactMethod || 'none'}
+                                    onChange={(e) => setEditedSponsor({...editedSponsor, contactMethod: e.target.value as 'email' | 'none'})}
                                 >
                                     <option value="none">No Contact</option>
-                                    <option value="email">Email Only</option>
-                                    <option value="application">Application Only</option>
-                                    <option value="both">Both Email & Application</option>
+                                    <option value="email">Email</option>
                                 </select>
                             </div>
                             <div className="edit-modal__field">
@@ -166,52 +261,148 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
                                 {errors.sponsorEmail && <span className="error-message">{errors.sponsorEmail}</span>}
                             </div>
                             <div className="edit-modal__field">
-                                <label>Sponsor Application URL</label>
+                                <label>Business Contact</label>
                                 <input
-                                    type="url"
-                                    value={editedSponsor.sponsorApplication || ''}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, sponsorApplication: e.target.value})}
-                                    placeholder="https://example.com/apply"
-                                    className={errors.sponsorApplication ? 'error' : ''}
-                                />
-                                {errors.sponsorApplication && <span className="error-message">{errors.sponsorApplication}</span>}
-                            </div>
-                            <div className="edit-modal__field">
-                                <label>Legacy Business Contact</label>
-                                <input
-                                    type="text"
+                                    type="email"
                                     value={editedSponsor.businessContact || ''}
                                     onChange={(e) => setEditedSponsor({...editedSponsor, businessContact: e.target.value})}
-                                    placeholder="Legacy contact field"
+                                    placeholder="business@example.com"
+                                    className={errors.businessContact ? 'error' : ''}
                                 />
+                                {errors.businessContact && <span className="error-message">{errors.businessContact}</span>}
+                            </div>
+                            <div className="edit-modal__field">
+                                <label>Contact Person Name</label>
+                                <input
+                                    type="text"
+                                    value={editedSponsor.contactPersonName || ''}
+                                    onChange={(e) => setEditedSponsor({...editedSponsor, contactPersonName: e.target.value})}
+                                    placeholder="John Doe"
+                                />
+                            </div>
+                            <div className="edit-modal__field">
+                                <label>Contact Person Title</label>
+                                <input
+                                    type="text"
+                                    value={editedSponsor.contactPersonTitle || ''}
+                                    onChange={(e) => setEditedSponsor({...editedSponsor, contactPersonTitle: e.target.value})}
+                                    placeholder="Head of Partnerships"
+                                />
+                            </div>
+                            <div className="edit-modal__field">
+                                <label>Contact Type</label>
+                                <select
+                                    value={editedSponsor.contactType || ''}
+                                    onChange={(e) => setEditedSponsor({...editedSponsor, contactType: e.target.value as any})}
+                                >
+                                    <option value="">Not Set</option>
+                                    <option value="named_person">Named Person</option>
+                                    <option value="business_email">Business Email</option>
+                                    <option value="generic_email">Generic Email</option>
+                                    <option value="not_found">Not Found</option>
+                                </select>
                             </div>
                         </div>
 
-                        {/* Affiliate Program Section */}
+                        {/* Newsletter Sponsorships Section */}
                         <div className="edit-modal__section">
-                            <h4 className="edit-modal__section-title">Affiliate Program</h4>
-                            <div className="edit-modal__field">
-                                <label className="edit-modal__checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={editedSponsor.isAffiliateProgram || false}
-                                        onChange={(e) => setEditedSponsor({...editedSponsor, isAffiliateProgram: e.target.checked})}
-                                    />
-                                    <span>This is an affiliate program</span>
-                                </label>
+                            <div className="edit-modal__section-header">
+                                <h4 className="edit-modal__section-title">Newsletter Sponsorships</h4>
+                                <button 
+                                    type="button" 
+                                    className="edit-modal__add-btn"
+                                    onClick={addNewsletter}
+                                >
+                                    <FontAwesomeIcon icon={faPlus} /> Add Newsletter
+                                </button>
                             </div>
-                            <div className="edit-modal__field">
-                                <label>Affiliate Signup Link</label>
-                                <input
-                                    type="url"
-                                    value={editedSponsor.affiliateSignupLink || ''}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, affiliateSignupLink: e.target.value})}
-                                    placeholder="https://example.com/affiliate"
-                                    className={errors.affiliateSignupLink ? 'error' : ''}
-                                />
-                                {errors.affiliateSignupLink && <span className="error-message">{errors.affiliateSignupLink}</span>}
-                            </div>
-                            {/* Commission info input removed to keep form simple */}
+                            
+                            {editedSponsor.newslettersSponsored && editedSponsor.newslettersSponsored.length > 0 ? (
+                                <div className="edit-modal__newsletters-list">
+                                    {editedSponsor.newslettersSponsored.map((newsletter, index) => (
+                                        <div key={index} className="edit-modal__newsletter-item">
+                                            <div className="edit-modal__newsletter-header">
+                                                <h5>Newsletter #{index + 1}</h5>
+                                                <button
+                                                    type="button"
+                                                    className="edit-modal__remove-btn"
+                                                    onClick={() => removeNewsletter(index)}
+                                                >
+                                                    <FontAwesomeIcon icon={faTrash} />
+                                                </button>
+                                            </div>
+                                            
+                                            <div className="edit-modal__field">
+                                                <label>Newsletter Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={newsletter.newsletterName || ''}
+                                                    onChange={(e) => updateNewsletter(index, 'newsletterName', e.target.value)}
+                                                    className={errors[`newsletter_${index}_name`] ? 'error' : ''}
+                                                    placeholder="Newsletter Name"
+                                                />
+                                                {errors[`newsletter_${index}_name`] && (
+                                                    <span className="error-message">{errors[`newsletter_${index}_name`]}</span>
+                                                )}
+                                            </div>
+
+                                            <div className="edit-modal__field-row">
+                                                <div className="edit-modal__field">
+                                                    <label>Estimated Audience</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newsletter.estimatedAudience}
+                                                        onChange={(e) => updateNewsletter(index, 'estimatedAudience', parseInt(e.target.value) || 0)}
+                                                        className={errors[`newsletter_${index}_audience`] ? 'error' : ''}
+                                                        placeholder="100000"
+                                                        min="0"
+                                                    />
+                                                    {errors[`newsletter_${index}_audience`] && (
+                                                        <span className="error-message">{errors[`newsletter_${index}_audience`]}</span>
+                                                    )}
+                                                </div>
+
+                                                <div className="edit-modal__field">
+                                                    <label>Date Sponsored</label>
+                                                    <input
+                                                        type="date"
+                                                        value={formatDateForInput(newsletter.dateSponsored)}
+                                                        onChange={(e) => updateNewsletter(index, 'dateSponsored', e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString())}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="edit-modal__field">
+                                                <label>Content Tags (comma-separated)</label>
+                                                <input
+                                                    type="text"
+                                                    value={newsletter.contentTags.join(', ')}
+                                                    onChange={(e) => updateNewsletterTags(index, e.target.value)}
+                                                    placeholder="AI, Tech, SaaS"
+                                                />
+                                            </div>
+
+                                            <div className="edit-modal__field">
+                                                <label>Email Address</label>
+                                                <input
+                                                    type="email"
+                                                    value={newsletter.emailAddress || ''}
+                                                    onChange={(e) => updateNewsletter(index, 'emailAddress', e.target.value)}
+                                                    className={errors[`newsletter_${index}_email`] ? 'error' : ''}
+                                                    placeholder="newsletter@example.com"
+                                                />
+                                                {errors[`newsletter_${index}_email`] && (
+                                                    <span className="error-message">{errors[`newsletter_${index}_email`]}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="edit-modal__empty-state">
+                                    <p>No newsletters added yet. Click "Add Newsletter" to add one.</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Status & Classification Section */}
@@ -228,28 +419,30 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
                                 </select>
                             </div>
                             <div className="edit-modal__field">
-                                <label>Confidence Score</label>
+                                <label>Confidence Score (0-1)</label>
                                 <input
                                     type="number"
                                     min="0"
-                                    max="100"
-                                    value={editedSponsor.confidence || 0}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, confidence: parseInt(e.target.value) || 0})}
-                                    placeholder="0-100"
-                                />
-                            </div>
-                            <div className="edit-modal__field">
-                                <label>Tags (comma-separated)</label>
-                                <input
-                                    type="text"
-                                    value={editedSponsor.tags ? editedSponsor.tags.join(', ') : ''}
-                                    onChange={(e) => setEditedSponsor({...editedSponsor, tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)})}
-                                    placeholder="SaaS, B2B, AI, etc."
+                                    max="1"
+                                    step="0.01"
+                                    value={editedSponsor.confidence !== undefined ? editedSponsor.confidence : ''}
+                                    onChange={(e) => setEditedSponsor({...editedSponsor, confidence: e.target.value ? parseFloat(e.target.value) : undefined})}
+                                    placeholder="0.0-1.0"
                                 />
                             </div>
                         </div>
                     </div>
                     <div className="edit-modal__footer">
+                        {onConvertToAffiliate && (
+                            <button 
+                                type="button" 
+                                className="edit-modal__convert"
+                                onClick={handleConvertToAffiliate}
+                                disabled={isConverting}
+                            >
+                                {isConverting ? 'Converting...' : 'Convert to Affiliate'}
+                            </button>
+                        )}
                         <button type="button" className="edit-modal__cancel" onClick={onClose}>
                             Cancel
                         </button>
@@ -263,4 +456,4 @@ const EditSponsorModal: React.FC<EditSponsorModalProps> = ({ sponsor, onClose, o
     );
 };
 
-export default EditSponsorModal; 
+export default EditSponsorModal;

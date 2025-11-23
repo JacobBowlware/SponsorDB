@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PotentialSponsor, validatePotentialSponsor } = require('../models/potentialSponsor');
 const { Sponsor } = require('../models/sponsor');
+const { SponsorNew } = require('../models/sponsorNew');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
@@ -30,21 +31,31 @@ router.get('/checkDuplicate', async (req, res) => {
             ]
         });
         
-        // Check if sponsor exists in Sponsor collection
-        const sponsorExists = await Sponsor.findOne({
-            $or: [
-                // Check by name and newsletter
-                {
-                    sponsorName: sponsorName,
-                    newsletterSponsored: newsletterSponsored
-                },
-                // Check by root domain and newsletter if rootDomain is provided
-                ...(rootDomain ? [{
-                    rootDomain: rootDomain,
-                    newsletterSponsored: newsletterSponsored
-                }] : [])
-            ]
-        });
+        // Check if sponsor exists in SponsorNew collection (new structure)
+        let sponsorExists = null;
+        try {
+            sponsorExists = await SponsorNew.findOne({
+                rootDomain: rootDomain
+            });
+        } catch (error) {
+            // Collection might not exist yet, continue to check old structure
+        }
+        
+        // Check if sponsor exists in Sponsor collection (old structure)
+        if (!sponsorExists) {
+            sponsorExists = await Sponsor.findOne({
+                $or: [
+                    {
+                        sponsorName: sponsorName,
+                        newsletterSponsored: newsletterSponsored
+                    },
+                    ...(rootDomain ? [{
+                        rootDomain: rootDomain,
+                        newsletterSponsored: newsletterSponsored
+                    }] : [])
+                ]
+            });
+        }
         
         // Return true if sponsor exists in either collection
         const exists = !!potentialSponsorExists || !!sponsorExists;
@@ -184,11 +195,40 @@ router.post('/', async (req, res) => {
         sponsors = [sponsors];
     }
 
-    const seenNewsletter = await Sponsor.findOne({
-        newsletterSponsored: sponsors[0].newsletterSponsored, subscriberCount: {
-            $gt: 0
+    // Check newsletter subscriber count from new structure first, then old
+    let seenNewsletter = null;
+    try {
+        // Try SponsorNew first - look for newsletter in newslettersSponsored array
+        const sponsorsWithNewsletter = await SponsorNew.find({
+            'newslettersSponsored.newsletterName': sponsors[0].newsletterSponsored
+        });
+        
+        if (sponsorsWithNewsletter.length > 0) {
+            // Find the newsletter with highest audience
+            let maxAudience = 0;
+            sponsorsWithNewsletter.forEach(sponsor => {
+                sponsor.newslettersSponsored.forEach(n => {
+                    if (n.newsletterName === sponsors[0].newsletterSponsored && n.estimatedAudience > maxAudience) {
+                        maxAudience = n.estimatedAudience;
+                    }
+                });
+            });
+            if (maxAudience > 0) {
+                seenNewsletter = { subscriberCount: maxAudience };
+            }
         }
-    }); // Only get if subscriberCount > 0
+    } catch (error) {
+        // Fallback to old structure
+    }
+    
+    // Fallback to old structure if not found
+    if (!seenNewsletter) {
+        seenNewsletter = await Sponsor.findOne({
+            newsletterSponsored: sponsors[0].newsletterSponsored, 
+            subscriberCount: { $gt: 0 }
+        });
+    }
+    
     if (seenNewsletter) {
         // Add the newsletters subscriber count to the potential sponsors
         sponsors.forEach(sponsor => {

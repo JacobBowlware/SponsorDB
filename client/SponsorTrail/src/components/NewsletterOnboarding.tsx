@@ -168,10 +168,8 @@ const NewsletterOnboarding: React.FC<NewsletterOnboardingProps> = ({ onComplete,
                         'x-auth-token': localStorage.getItem('token')
                     }
                 });
-                console.log('✅ Newsletter info saved successfully');
             } else {
                 // In dev mode, store in localStorage
-                console.log('📧 Newsletter info (dev mode):', newsletterInfo);
                 localStorage.setItem('dev_newsletter_info', JSON.stringify(newsletterInfo));
             }
             

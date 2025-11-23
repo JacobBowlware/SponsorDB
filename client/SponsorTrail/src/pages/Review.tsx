@@ -51,7 +51,7 @@ const Review = ({ email }: ReviewProps) => {
         } catch (error) {
             setUserError(true);
             setLoading(false);
-            console.log(error)
+            // Error handled silently
         }
     }
 

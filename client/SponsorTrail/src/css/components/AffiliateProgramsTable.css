@@ -263,6 +263,12 @@
     font-size: 10px;
 }
 
+/* Mobile Grid Override */
+.affiliate-programs-grid--mobile {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .affiliate-programs-grid {

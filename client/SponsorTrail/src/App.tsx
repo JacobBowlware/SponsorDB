@@ -30,7 +30,9 @@ import './css/pages/authReq/AuthedLayout.css'
 import './css/pages/Blog.css'
 import './css/pages/BlogPost.css'
 import './css/pages/NewsletterPage.css'
+import './css/pages/Unsubscribe.css'
 import './css/Analytics.css'
+import './css/NewsletterOptIn.css'
 
 // Components
 import Header from './components/common/Header'
@@ -60,6 +62,8 @@ import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import NewsletterPage from './pages/NewsletterPage';
 import NewsletterOnboarding from './components/NewsletterOnboarding';
+import NewsletterOptIn from './components/NewsletterOptIn';
+import Unsubscribe from './pages/Unsubscribe';
 
 // Authed Pages
 import Review from './pages/Review';
@@ -147,8 +151,9 @@ function App() {
 
   const isMobile = useMediaQuery('(max-width: 768px)');
   
-  // Helper function to determine if user is subscribed
+  // Helper function to determine if user is subscribed or is admin
   const isSubscribed = Boolean(user.subscription && user.subscription !== 'none');
+  const canAccessSponsors = isSubscribed || user.isAdmin;
 
   const getDbInfo = async () => {
     try {
@@ -156,7 +161,7 @@ function App() {
       const dbInfo = await axios.get(`${config.backendUrl}sponsors/db-info`);
       setDbInfo(dbInfo.data);
     } catch (error) {
-      console.error('Error fetching database info:', error);
+      // Error fetching database info handled silently
       // Set fallback values if the request fails
       setDbInfo({
         sponsors: 0,
@@ -180,7 +185,6 @@ function App() {
     // Get user profile information using the new token manager
     const accessToken = await tokenManager.getValidAccessToken();
     if (!accessToken) {
-      console.log('No valid access token available, clearing authentication');
       tokenManager.clearTokens();
       setUserAuth(false);
       setUser({
@@ -198,10 +202,8 @@ function App() {
       const res = await apiClient.get(`${config.backendUrl}users/me`);
       setUser(res.data);
     } catch (err) {
-      console.error('Error fetching user info:', err);
       // If we get a 401/403, the token might be invalid
       if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
-        console.log('Token invalid, clearing authentication');
         tokenManager.clearTokens();
         setUserAuth(false);
         setUser({
@@ -237,7 +239,6 @@ function App() {
           setUserAuth(true);
           await getUserInfo();
         } else {
-          console.log('No valid access token, clearing authentication');
           tokenManager.clearTokens();
           setUserAuth(false);
           setUser({
@@ -250,7 +251,7 @@ function App() {
           });
         }
       } catch (error) {
-        console.error('Error during app initialization:', error);
+        // Error during initialization handled silently
         // Set fallback values if initialization fails
         setDbInfo({
           sponsors: 0,
@@ -271,7 +272,6 @@ function App() {
       const interval = setInterval(async () => {
         const accessToken = await tokenManager.getValidAccessToken();
         if (!accessToken) {
-          console.log('No valid access token during periodic check, clearing authentication');
           tokenManager.clearTokens();
           setUserAuth(false);
           setUser({
@@ -349,15 +349,23 @@ function App() {
         {/* <Route path="/newsletter/" element={<Newsletter />} /> */}
         <Route path="/login/" element={<Login userAuth={userAuth} isSubscribed={isSubscribed} />} />
         <Route path="/signup/" element={<Signup userAuth={userAuth} isSubscribed={isSubscribed} sponsorCount={dbInfo.sponsors} newsletterCount={dbInfo.newsletters} onAuthChange={setUserAuth} onUserUpdate={getUserInfo} />} />
+        {/* Newsletter opt-in route for Google signups */}
+        {userAuth && <Route path="/newsletter-opt-in" element={<div className="web-page"><NewsletterOptIn onOptIn={async (optedIn) => {
+          // Refresh user data after opt-in
+          await getUserInfo();
+          // Route to newsletter onboarding after opt-in
+          window.location.href = '/onboarding';
+        }} onSkip={async () => {
+          // If skipped, still go to onboarding
+          await getUserInfo();
+          window.location.href = '/onboarding';
+        }} /></div>} />}
         <Route path="/onboarding" element={<div className="web-page"><div className="newsletter-onboarding-container"><NewsletterOnboarding onComplete={async (newsletterInfo) => { 
           // Refresh user data to get updated newsletter info
           await getUserInfo();
-          if (userAuth && !isSubscribed) { 
-            window.location.href = '/subscribe'; 
-          } else { 
-            window.location.href = '/sponsors'; 
-          } 
-        }} onSkip={() => { if (!userAuth) { setUserAuth(true); } if (!isSubscribed) { window.location.href = '/subscribe'; } else { window.location.href = '/sponsors'; } }} existingData={user.newsletterInfo ? {
+          // Always redirect new users to /subscribe after newsletter onboarding
+          window.location.href = '/subscribe'; 
+        }} onSkip={() => { if (!userAuth) { setUserAuth(true); } window.location.href = '/subscribe'; }} existingData={user.newsletterInfo ? {
             ...user.newsletterInfo,
             name: user.newsletterInfo.name || '',
             topic: user.newsletterInfo.topic || '',
@@ -409,6 +417,7 @@ function App() {
         <Route path="/blog/" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
         <Route path="/newsletter/" element={<NewsletterPage user={user} userAuth={userAuth} />} />
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
         {/* Authed Routes */}
         {userAuth && <Route path="/checkout/" element={<Purchase isSubscribed={isSubscribed} sponsorCount={dbInfo.sponsors} />} />}
         {userAuth && <Route path="/profile/" element={<Profile
@@ -417,10 +426,10 @@ function App() {
           user={user}
         />} />}
         {userAuth && <Route path="/payment-success/" element={<PaymentSuccess />} />}
-        {/* Subscriber Routes - Protected by authentication AND subscription */}
-        {userAuth && isSubscribed && <Route path="/sponsors/" element={<Sponsors isSubscribed={user.subscription} sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} user={user} />} />}
-        {userAuth && !isSubscribed && <Route path="/sponsors/" element={<div className="web-page"><div className="subscription-required"><h2>Subscription Required</h2><p>Please subscribe to access our sponsor database.</p><Link to="/subscribe" className="btn btn-primary">Subscribe Now</Link></div></div>} />}
-        {userAuth && <Route path="/analytics/" element={<Analytics isSubscribed={isSubscribed} user={user} />} />}
+        {/* Subscriber Routes - Protected by authentication AND subscription (or admin) */}
+        {userAuth && canAccessSponsors && <Route path="/sponsors/" element={<Sponsors isSubscribed={user.subscription} sponsors={dbInfo.sponsors} newsletters={dbInfo.newsletters} lastUpdated={dbInfo.lastUpdated} user={user} />} />}
+        {userAuth && !canAccessSponsors && <Route path="/sponsors/" element={<Subscribe userAuth={userAuth} isSubscribed={isSubscribed} subscription={user.subscription || undefined} />} />}
+        {userAuth && (isSubscribed || user.isAdmin) && <Route path="/analytics/" element={<Analytics isSubscribed={isSubscribed} user={user} />} />}
         {/* Admin Routes */}
         {userAuth && user.isAdmin && <Route path="/admin/" element={<Admin />} />}
       </Route>

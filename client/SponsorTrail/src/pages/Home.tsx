@@ -1,14 +1,23 @@
 // React
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, memo, useCallback } from 'react';
+import axios from 'axios';
 
 // Components
 import FAQAccordian from "../components/FAQAccordian";
-import NewsletterSubscribe from "../components/NewsletterSubscribe";
+import RecentSponsorsCarousel from "../components/RecentSponsorsCarousel";
 import { User } from "../types/User";
+import config from '../config';
+
+// Images
+import SponsorImage from "../assets/images/Sponsor.png";
+import BestMatchesImage from "../assets/images/BestMatches.png";
+import SearchImage from "../assets/images/Search.png";
+import AnalyticsImage from "../assets/images/Analytics.png";
+import HeroSSImage from "../assets/images/HeroSS.png";
 
 // Font Awesome Icons
-import { faArrowRight, faArrowDown, faCheckCircle, faDatabase, faEnvelope, faChartLine, faSearch, faTimes, faExclamationTriangle, faRocket, faClock, faEnvelopeOpen, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowDown, faCheckCircle, faDatabase, faEnvelope, faRocket, faClock, faEnvelopeOpen, faQuestionCircle, faMagnifyingGlass, faChartBar, faChevronLeft, faChevronRight, faBolt, faDollarSign, faPlus, faRotateRight, faXmark, faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Analytics
@@ -19,6 +28,10 @@ import {
     trackUserJourney, 
     trackTimeOnPage
 } from '../utils/analytics';
+import { trackHomePageViewed } from '../utils/funnelTracking';
+
+// Styles
+import '../css/pages/Subscribe.css';
 
 interface HomeProps {
     isSubscribed: boolean,
@@ -33,13 +46,23 @@ interface HomeProps {
 
 const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated, user }: HomeProps) => {
     const isNewsletterSubscribed = user?.newsletterOptIn === true;
-    const [arrowPosition, setArrowPosition] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
+    const [approvedCount, setApprovedCount] = useState<number>(150);
     
     // Provide fallback values if data is still loading
     const safeSponsorCount = sponsorCount || 0;
     const safeNewsletterCount = newsletterCount || 0;
     const safeLastUpdated = lastUpdated || new Date().toISOString();
+    
+    // Fetch approved sponsor count for pricing card
+    useEffect(() => {
+        let mounted = true;
+        axios.get(`${config.backendUrl}sponsors/db-info`).then(res => {
+            if (!mounted) return;
+            setApprovedCount(res.data?.sponsors || 150);
+        }).catch(() => setApprovedCount(150));
+        return () => { mounted = false; };
+    }, []);
     
     // Time tracking
     const pageLoadTime = useRef(Date.now());
@@ -58,6 +81,8 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated,
             newsletterCount: safeNewsletterCount, 
             isSubscribed: isSubscribed ? 'yes' : 'no' 
         });
+        // Funnel tracking
+        trackHomePageViewed();
 
         // Track time on page
         const interval = setInterval(() => {
@@ -90,15 +115,6 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated,
             
             if (newVisibleSections.size > 0) {
                 setVisibleSections(prev => new Set([...Array.from(prev), ...Array.from(newVisibleSections)]));
-            }
-
-            // Track arrow position for problems-solved section
-            const problemsSection = document.getElementById('problems-solved');
-            if (problemsSection) {
-                const rect = problemsSection.getBoundingClientRect();
-                const sectionHeight = problemsSection.offsetHeight;
-                const scrollProgress = Math.max(0, Math.min(1, (window.innerHeight - rect.top) / (sectionHeight + window.innerHeight)));
-                setArrowPosition(scrollProgress * 100);
             }
         };
 
@@ -158,325 +174,296 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated,
 
     return (
         <div className="web-page">
-            <div className="web-section web-section-dark mt-0" id="hero">
-                <div className="web-section__container web-section-content">
-                    <div className="hero-content">
-                        <div className="hero-text">
-                            <h1 className="web-section__container-header airtable-header text-center">
-                                Access {safeSponsorCount}+ Verified Newsletter Sponsors
+            {/* SECTION 1: HERO */}
+            <div className="web-section web-section-dark mt-0 hero-new" id="hero">
+                <div className="hero-new-container">
+                    <div className="hero-new-grid">
+                        {/* Left Column - Text */}
+                        <div className="hero-new-text">
+                            <h1 className="hero-new-title">
+                                The Fastest Way to Find Newsletter Sponsors
                             </h1>
-                            <p className="hero-text-p">
-                                Stop searching. We've compiled sponsors actively paying for newsletter placements, with direct contact information and pre-filled outreach templates.
+                            <p className="hero-new-subtitle">
+                                Find and close newsletter sponsors in minutes, not months. 80+ verified sponsors with direct contact info, updated automatically every week.
                             </p>
-                            <div className="hero-features mb-0">
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('verified_sponsors')}>
-                                    <FontAwesomeIcon icon={faDatabase} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Verified sponsor database - </span>updated weekly</p>
-                                </div>
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('direct_contact')}>
-                                    <FontAwesomeIcon icon={faEnvelope} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Direct contact info - </span>email or application links</p>
-                                </div>
-                                <div className="hero-feature-card" onClick={() => handleFeatureCardClick('email_templates')}>
-                                    <FontAwesomeIcon icon={faRocket} className="hero-feature-icon" />
-                                    <p><span className="hero-feature-card__title">Pre-filled email templates - </span>based on your newsletter</p>
-                                </div>
-                            </div>
-                            <div className="hero-buttons">
-                                <Link to="/signup" className="btn home__container-item__btn mb-3" onClick={() => handleSignupClick('hero')}>
-                                    Try Free for 14 Days &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
+                            
+                            <div className="hero-new-cta">
+                                <Link to="/signup" className="hero-new-primary-btn" onClick={() => handleSignupClick('hero')}>
+                                    Start Free Trial
+                                    <FontAwesomeIcon icon={faArrowRight} className="hero-btn-arrow" />
                                 </Link>
-                                <div className="hero-trust-container">
-                                    <p className="hero-trust-text">Join newsletter creators already earning with SponsorDB</p>
-                                </div>
+                                <p className="hero-new-secondary-text">No sales calls. Start instantly.</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* New Problem-Solving Section */}
-            <div className="web-section web-section-dark" id="problems-solved">
-                <div className="web-section__container web-section-content">
-                    <div className="problems-solved-container">
-                        <div className="problems-solved-header">
-                            <h2 className="problems-solved-title">
-                                Stop Losing Money on Failed Sponsor Outreach
-                            </h2>
-                            <p className="problems-solved-subtitle">
-                                Most newsletter creators waste time on sponsors that never respond. We help you find sponsors that actually convert.
-                            </p>
-                        </div>
-
-                        {/* Image Showcase */}
-                        <div className="problems-solved-showcase">
-                            <div className="problems-solved-image-container">
-                                <div className="problems-solved-image-placeholder problems-solved-image--database">
-                                    <div className="problems-solved-image-overlay">
-                                        <FontAwesomeIcon icon={faClock} />
-                                        <span>Time Wasted</span>
-                                    </div>
-                                </div>
-                                <div className="problems-solved-image-placeholder problems-solved-image--application">
-                                    <div className="problems-solved-image-overlay">
-                                        <FontAwesomeIcon icon={faEnvelopeOpen} />
-                                        <span>Failed Emails</span>
-                                    </div>
-                                </div>
-                                <div className="problems-solved-image-placeholder problems-solved-image--developer">
-                                    <div className="problems-solved-image-overlay">
-                                        <FontAwesomeIcon icon={faQuestionCircle} />
-                                        <span>No Tracking</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="problems-solved-comparison">
-                            <div className="problems-solved-column problems-solved-column--old">
-                                <h3 className="problems-solved-column-title">Why Most Outreach Fails</h3>
-                                <div className="problems-solved-items">
-                                    <div className="problems-solved-item">
-                                        <div className="problems-solved-icon problems-solved-icon--old">
-                                            <FontAwesomeIcon icon={faSearch} />
-                                        </div>
-                                        <div className="problems-solved-content">
-                                            <h4>Wasting time on sponsors who never respond</h4>
-                                            <p>Pitching random sponsors without knowing their response rates or audience fit</p>
-                                        </div>
-                                    </div>
-                                    <div className="problems-solved-item">
-                                        <div className="problems-solved-icon problems-solved-icon--old">
-                                            <FontAwesomeIcon icon={faTimes} />
-                                        </div>
-                                        <div className="problems-solved-content">
-                                            <h4>Generic emails that get ignored</h4>
-                                            <p>Generic emails that get ignored, wasting hours of your time</p>
-                                        </div>
-                                    </div>
-                                    <div className="problems-solved-item">
-                                        <div className="problems-solved-icon problems-solved-icon--old">
-                                            <FontAwesomeIcon icon={faExclamationTriangle} />
-                                        </div>
-                                        <div className="problems-solved-content">
-                                            <h4>No idea what's actually working</h4>
-                                            <p>No idea which sponsors convert or how much revenue you're actually generating</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="problems-solved-divider">
-                                <div 
-                                    className="problems-solved-arrow problems-solved-arrow--animated"
-                                    style={{ transform: `translateY(${arrowPosition}px)` }}
-                                >
-                                    <FontAwesomeIcon icon={isMobile ? faArrowDown : faArrowRight} />
-                                </div>
-                            </div>
-
-                            <div className="problems-solved-column problems-solved-column--new">
-                                <h3 className="problems-solved-column-title">How We Fix It</h3>
-                                <div className="problems-solved-items">
-                                    <div className="problems-solved-item">
-                                        <div className="problems-solved-icon problems-solved-icon--new">
-                                            <FontAwesomeIcon icon={faRocket} />
-                                        </div>
-                                        <div className="problems-solved-content">
-                                            <h4>Only pitch sponsors who want your audience</h4>
-                                            <p>Get matched with sponsors that match your audience demographics and have proven response rates</p>
-                                        </div>
-                                    </div>
-                                    <div className="problems-solved-item">
-                                        <div className="problems-solved-icon problems-solved-icon--new">
-                                            <FontAwesomeIcon icon={faEnvelope} />
-                                        </div>
-                                        <div className="problems-solved-content">
-                                            <h4>Email templates that actually get responses</h4>
-                                            <p>Email templates that actually get responses, tested by successful newsletter creators</p>
-                                        </div>
-                                    </div>
-                                    <div className="problems-solved-item">
-                                        <div className="problems-solved-icon problems-solved-icon--new">
-                                            <FontAwesomeIcon icon={faChartLine} />
-                                        </div>
-                                        <div className="problems-solved-content">
-                                            <h4>Track what works and optimize your earnings</h4>
-                                            <p>Track your revenue vs time spent to optimize your outreach strategy and maximize earnings</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Testimonials Section - Commented out until we have real reviews */}
-            {/* 
-            <div className="web-section web-section-dark" id="testimonials">
-                <div className="web-section__container web-section-content">
-                    <div className="testimonials-container">
-                        <div className="testimonials-header">
-                            <h2 className="testimonials-title">
-                                Trusted by Newsletter Creators
-                            </h2>
-                            <p className="testimonials-subtitle">
-                                See how other creators are using SponsorTrail to grow their revenue
-                            </p>
                         </div>
                         
-                        <div className="testimonials-grid">
-                            <div className="testimonial-card">
-                                <div className="testimonial-content">
-                                    <div className="testimonial-quote">
-                                        "SponsorTrail completely transformed my newsletter monetization. I went from struggling to find sponsors to closing deals within weeks. The AI matching is incredibly accurate."
-                                    </div>
-                                    <div className="testimonial-author">
-                                        <div className="testimonial-author-info">
-                                            <div className="testimonial-author-name">Sarah Chen</div>
-                                            <div className="testimonial-author-title">Tech Newsletter Creator</div>
-                                            <div className="testimonial-author-revenue">$2,400/month revenue</div>
-                                        </div>
-                                    </div>
+                        {/* Right Column - Demo Placeholder */}
+                        <div className="hero-new-demo">
+                            <div className="hero-new-demo-placeholder">
+                                <div className="hero-new-demo-content">
+                                    <img 
+                                        src={HeroSSImage} 
+                                        alt="SponsorDB Dashboard" 
+                                        className="hero-new-demo-image"
+                                    />
                                 </div>
                             </div>
-
-                            <div className="testimonial-card">
-                                <div className="testimonial-content">
-                                    <div className="testimonial-quote">
-                                        "The response rate analytics alone paid for the subscription. I can see exactly which sponsors respond to creators like me, saving me hours of wasted outreach."
-                                    </div>
-                                    <div className="testimonial-author">
-                                        <div className="testimonial-author-info">
-                                            <div className="testimonial-author-name">Marcus Rodriguez</div>
-                                            <div className="testimonial-author-title">Marketing Newsletter</div>
-                                            <div className="testimonial-author-revenue">$1,800/month revenue</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="testimonial-card">
-                                <div className="testimonial-content">
-                                    <div className="testimonial-quote">
-                                        "I was skeptical about another tool, but SponsorTrail's templates actually work. My response rate went from 5% to 35% in the first month."
-                                    </div>
-                                    <div className="testimonial-author">
-                                        <div className="testimonial-author-info">
-                                            <div className="testimonial-author-name">Emily Watson</div>
-                                            <div className="testimonial-author-title">Productivity Newsletter</div>
-                                            <div className="testimonial-author-revenue">$3,200/month revenue</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="testimonial-card">
-                                <div className="testimonial-content">
-                                    <div className="testimonial-quote">
-                                        "The ROI tracking feature is a game-changer. I can see exactly how much time I'm spending vs revenue generated. It's helped me optimize my entire process."
-                                    </div>
-                                    <div className="testimonial-author">
-                                        <div className="testimonial-author-info">
-                                            <div className="testimonial-author-name">David Kim</div>
-                                            <div className="testimonial-author-title">Business Newsletter</div>
-                                            <div className="testimonial-author-revenue">$4,100/month revenue</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="testimonial-card">
-                                <div className="testimonial-content">
-                                    <div className="testimonial-quote">
-                                        "Finally, a platform that understands the newsletter creator's needs. The sponsor verification process gives me confidence in every outreach."
-                                    </div>
-                                    <div className="testimonial-author">
-                                        <div className="testimonial-author-info">
-                                            <div className="testimonial-author-name">Lisa Thompson</div>
-                                            <div className="testimonial-author-title">Finance Newsletter</div>
-                                            <div className="testimonial-author-revenue">$2,700/month revenue</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="testimonial-card">
-                                <div className="testimonial-content">
-                                    <div className="testimonial-quote">
-                                        "The AI assistant for outreach optimization is incredible. It suggests improvements to my emails that I never would have thought of."
-                                    </div>
-                                    <div className="testimonial-author">
-                                        <div className="testimonial-author-info">
-                                            <div className="testimonial-author-name">Alex Johnson</div>
-                                            <div className="testimonial-author-title">Design Newsletter</div>
-                                            <div className="testimonial-author-revenue">$1,900/month revenue</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="testimonials-cta">
-                            <p className="testimonials-cta-text">Ready to join these successful creators?</p>
-                            <Link to="/signup" className="btn home__container-item__btn" onClick={() => handleSignupClick('testimonials')}>
-                                Start Your Success Story &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
-                            </Link>
                         </div>
                     </div>
                 </div>
             </div>
-            */}
 
-            {/* Demo Video Section - Commented out until we have a working video */}
-            {/* 
-            <div className="web-section web-section-dark" id="demo">
+            {/* SECTION 2: PROBLEM STATEMENT */}
+            <div className="web-section problem-statement-section" id="problem">
                 <div className="web-section__container web-section-content">
-                    <div className="demo-container">
-                        <div className="demo-header">
-                            <h2 className="demo-title">
-                                See SponsorDB in Action
-                            </h2>
-                            <p className="demo-subtitle">
-                                Watch how easy it is to find and connect with sponsors using our platform
+                    <div className="problem-statement-container">
+                        <p className="problem-statement-eyebrow">Sponsor outreach is broken</p>
+                        <h2 className="problem-statement-title">Stop wasting hours on sponsor research</h2>
+                        <p className="problem-statement-body">
+                            Most newsletter creators still track sponsors by hand, scraping newsletters one by one, buying outdated lists, and guessing who to contact. It's slow, inaccurate, and frustrating. SponsorDB fixes that with an automatically growing database of verified sponsors with direct contact info.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 3: WHAT YOU GET */}
+            <div className="web-section what-you-get-section" id="what-you-get">
+                <div className="web-section__container web-section-content">
+                    <div className="what-you-get-container">
+                        <p className="what-you-get-eyebrow">What you get</p>
+                        <h2 className="what-you-get-title">The fastest-growing newsletter sponsor database</h2>
+                        
+                        {/* Stats */}
+                        <div className="what-you-get-stats">
+                            <div className="what-you-get-stat-card">
+                                <div className="what-you-get-stat-number">80+</div>
+                                <div className="what-you-get-stat-label">Verified Sponsors found in {safeNewsletterCount || 50}+ Newsletters</div>
+                            </div>
+                            <div className="what-you-get-stat-card">
+                                <div className="what-you-get-stat-number">10+</div>
+                                <div className="what-you-get-stat-label">New Sponsors Added Weekly</div>
+                            </div>
+                            <div className="what-you-get-stat-card">
+                                <div className="what-you-get-stat-number">$800+</div>
+                                <div className="what-you-get-stat-label">Revenue Tracked</div>
+                            </div>
+                        </div>
+
+                        {/* Feature Tags */}
+                        <div className="what-you-get-tags">
+                            <div className="what-you-get-tag">
+                                <FontAwesomeIcon icon={faCheckCircle} className="what-you-get-tag-icon" />
+                                <span>Automatically growing database</span>
+                            </div>
+                            <div className="what-you-get-tag">
+                                <FontAwesomeIcon icon={faCheckCircle} className="what-you-get-tag-icon" />
+                                <span>Verified contact info</span>
+                            </div>
+                            <div className="what-you-get-tag">
+                                <FontAwesomeIcon icon={faCheckCircle} className="what-you-get-tag-icon" />
+                                <span>AI-powered matching</span>
+                            </div>
+                            <div className="what-you-get-tag">
+                                <FontAwesomeIcon icon={faCheckCircle} className="what-you-get-tag-icon" />
+                                <span>One-click outreach</span>
+                            </div>
+                            <div className="what-you-get-tag">
+                                <FontAwesomeIcon icon={faCheckCircle} className="what-you-get-tag-icon" />
+                                <span>Revenue tracking</span>
+                            </div>
+                            <div className="what-you-get-tag">
+                                <FontAwesomeIcon icon={faCheckCircle} className="what-you-get-tag-icon" />
+                                <span>Weekly updates</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* RECENTLY ADDED SPONSORS CAROUSEL */}
+            <RecentSponsorsCarousel />
+
+            {/* SECTION 4: PROCESS */}
+            <div className="web-section process-section" id="process">
+                <div className="web-section__container web-section-content">
+                    <div className="process-container">
+                        <h2 className="process-title">From discover to outreach</h2>
+                        <p className="process-subtitle">Your end-to-end sponsor workflow</p>
+
+                        <div className="process-steps">
+                            <div className="process-step-card">
+                                <div className="process-step-header">
+                                    <div className="process-step-number">1</div>
+                                    <div className="process-step-icon">
+                                        <FontAwesomeIcon icon={faMagnifyingGlass} />
+                                    </div>
+                                </div>
+                                <h3 className="process-step-title">Find sponsors in your niche</h3>
+                                <p className="process-step-description">
+                                    Browse 80+ verified sponsors or let AI match you with the best fits based on your newsletter topic and audience.
+                                </p>
+                            </div>
+
+                            <div className="process-step-card">
+                                <div className="process-step-header">
+                                    <div className="process-step-number">2</div>
+                                    <div className="process-step-icon">
+                                        <FontAwesomeIcon icon={faBolt} />
+                                    </div>
+                                </div>
+                                <h3 className="process-step-title">Send personalized pitches instantly</h3>
+                                <p className="process-step-description">
+                                    Generate pitch-ready emails in one click. We pre-fill everything based on the sponsor and your newsletter.
+                                </p>
+                            </div>
+
+                            <div className="process-step-card">
+                                <div className="process-step-header">
+                                    <div className="process-step-number">3</div>
+                                    <div className="process-step-icon">
+                                        <FontAwesomeIcon icon={faDollarSign} />
+                                    </div>
+                                </div>
+                                <h3 className="process-step-title">Track and close deals</h3>
+                                <p className="process-step-description">
+                                    Monitor every outreach, track response rates, and log revenue. Know exactly what's working.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 5: LARGE DEMO VIDEO SECTION */}
+            <div className="web-section demo-large-section" id="demo">
+                <div className="web-section__container web-section-content">
+                    <div className="demo-large-container">
+                        <p className="demo-large-eyebrow">See SponsorDB in action</p>
+                        <h2 className="demo-large-title">Everything you need to land sponsors, in one place</h2>
+                        
+                        <div className="demo-large-video-wrapper">
+                            <div className="demo-large-video-placeholder">
+                                <div className="demo-large-video-content">
+                                    <div className="demo-coming-soon">
+                                        <p className="demo-coming-soon-text">Demo Video Coming Soon</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 6: FEATURE CARDS */}
+            <div className="web-section feature-cards-section" id="features">
+                <div className="web-section__container web-section-content">
+                    <div className="feature-cards-container">
+                        <h2 className="feature-cards-title">Built for newsletter creators who want to move fast</h2>
+                        <p className="feature-cards-subtitle">SponsorDB replaces spreadsheets and guesswork with verified sponsor data.</p>
+
+                        <div className="feature-cards-grid">
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faDatabase} />
+                                </div>
+                                <h3 className="feature-card-title">Verified Sponsor Database</h3>
+                                <p className="feature-card-description">
+                                    80+ sponsors with direct contact info. No generic forms, no dead ends. Every email verified by our team.
+                                </p>
+                            </div>
+
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faRotateRight} />
+                                </div>
+                                <h3 className="feature-card-title">Database Grows Itself</h3>
+                                <p className="feature-card-description">
+                                    AI adds new sponsors weekly. Zero effort from you. Your subscription gets more valuable every month, not less.
+                                </p>
+                            </div>
+
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faRocket} />
+                                </div>
+                                <h3 className="feature-card-title">AI-Powered Matching</h3>
+                                <p className="feature-card-description">
+                                    Our AI analyzes your newsletter and suggests sponsors most likely to say yes based on niche and audience size.
+                                </p>
+                            </div>
+
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faBolt} />
+                                </div>
+                                <h3 className="feature-card-title">One-Click Outreach</h3>
+                                <p className="feature-card-description">
+                                    Generate personalized pitch emails instantly. We pre-fill everything for you based on sponsor and your content.
+                                </p>
+                            </div>
+
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faChartBar} />
+                                </div>
+                                <h3 className="feature-card-title">Revenue Tracking</h3>
+                                <p className="feature-card-description">
+                                    Track applications, responses, and earnings. Know your ROI at a glance with built-in analytics.
+                                </p>
+                            </div>
+
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faClock} />
+                                </div>
+                                <h3 className="feature-card-title">Weekly Updates</h3>
+                                <p className="feature-card-description">
+                                    New sponsors added automatically every week. Get access to fresh opportunities before your competition.
+                                </p>
+                            </div>
+
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faCheckCircle} />
+                                </div>
+                                <h3 className="feature-card-title">No Middlemen</h3>
+                                <p className="feature-card-description">
+                                    You own every relationship. No revenue sharing, no commission structures, no agencies taking a cut.
+                                </p>
+                            </div>
+
+                            <div className="feature-card-dark">
+                                <div className="feature-card-icon">
+                                    <FontAwesomeIcon icon={faRocket} />
+                                </div>
+                                <h3 className="feature-card-title">Self-Service</h3>
+                                <p className="feature-card-description">
+                                    Sign up instantly for $20/month. No lengthy sales calls, no demos, no waiting. Start pitching today.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 7: PRICING */}
+            <div className="web-section pricing-new-section" id="pricing">
+                <div className="web-section__container web-section-content">
+                    <div className="subscribe-container">
+                        <div className="subscribe-header">
+                            <h1 className="subscribe-title">
+                                Start your 14-day free trial
+                            </h1>
+                            <p className="subscribe-subtitle">
+                                Get instant access to verified newsletter sponsors with proven track records. 
+                                Find sponsors that actually respond and close deals faster.
                             </p>
                         </div>
-                        
-                        <div className="demo-video-container">
-                            <div className="demo-video-wrapper">
-                                <iframe 
-                                    className="demo-video"
-                                    src="https://www.youtube.com/embed/your-demo-video-id"
-                                    title="SponsorTrail Demo Video"
-                                    frameBorder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowFullScreen
-                                ></iframe>
-                            </div>
-                        </div>
 
-
-                        <div className="demo-cta">
-                            <Link to="/signup" className="btn home__container-item__btn" onClick={() => handleSignupClick('demo')}>
-                                Start Your Free Trial &nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            */}
-            <div className="web-section web-section-dark subscribe" id="pricing">
-                <div className="web-section__container web-section-content">
-                    <div className="home__pricing-container">
-                        <div className="home__pricing-header">
-                            <h2 className="home__pricing-title">Simple, Clear Pricing</h2>
-                            <p className="home__pricing-subtitle">One plan. Everything you need to find and connect with sponsors.</p>
-                        </div>
-                        <div className="home__pricing-cards">
+                        <div className="subscribe-cards">
                             <div className="home__pricing-card home__pricing-card--featured">
+                                <div className="home__pricing-card__trial-badge">2 Week Free Trial</div>
                                 <div className="home__pricing-card__header">
-                                    <h3 className="home__pricing-card__title">SponsorDB Access</h3>
+                                    <h3 className="home__pricing-card__title">Sponsor Access</h3>
                                     <div className="home__pricing-card__price">
                                         <span className="home__pricing-card__currency">$</span>
                                         <span className="home__pricing-card__amount">20</span>
@@ -487,11 +474,15 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated,
                                 <div className="home__pricing-card__benefits">
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Access to full sponsor database</span>
+                                        <span>Access to {approvedCount}+ verified sponsors</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Weekly updates with new sponsors</span>
+                                        <span>Direct contact emails to decision makers at the sponsor company</span>
+                                    </div>
+                                    <div className="home__pricing-card__benefit">
+                                        <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
+                                        <span>Sponsor search and filtering</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
@@ -499,24 +490,47 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated,
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Contact info for all sponsors</span>
+                                        <span>Smart sponsor matching based on your newsletter</span>
                                     </div>
                                     <div className="home__pricing-card__benefit">
                                         <FontAwesomeIcon icon={faCheckCircle} className="home__pricing-card__benefit-icon" />
-                                        <span>Cancel anytime</span>
+                                        <span>Advanced filtering by industry & audience size</span>
                                     </div>
                                 </div>
                                 
-                                <Link className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" to="/signup" onClick={handlePricingClick}>
+                                <Link 
+                                    className="home__pricing-card__cta-button home__pricing-card__cta-button--featured" 
+                                    to="/signup"
+                                    onClick={handlePricingClick}
+                                >
                                     Start Free Trial
                                 </Link>
                                 <p className="home__pricing-card__trial-note">Card required • Cancel anytime</p>
+                                {(() => {
+                                    const trialEndDate = new Date();
+                                    trialEndDate.setDate(trialEndDate.getDate() + 14);
+                                    const formattedDate = trialEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                                    return <p className="trial-charge-note">Your card will be charged $20 on {formattedDate}</p>;
+                                })()}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* SECTION 8: TRUST BANNER */}
+            <div className="web-section trust-banner-section" id="trust">
+                <div className="web-section__container web-section-content">
+                    <div className="trust-banner-container">
+                        <h2 className="trust-banner-title">Trusted by newsletter creators building profitable sponsorships</h2>
+                        <p className="trust-banner-subtitle">
+                            From solo creators to growing media brands, SponsorDB helps newsletter creators find and close sponsors faster than ever before.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 9: FAQ */}
             <div className="web-section web-section__container web-section-content" id="FAQ">
                 <h2 className="web-section__container-header-sm">
                     Frequently Asked Questions
@@ -526,13 +540,10 @@ const Home = ({ isSubscribed, email, newsletterCount, sponsorCount, lastUpdated,
             <Link to="/signup" className="btn home__container-item__btn mb-5" onClick={() => handleSignupClick('bottom')}>
                 Try Free for 14 Days&nbsp; <FontAwesomeIcon className="home__container-item__btn-arrow-icon" icon={faArrowRight} />
             </Link>
-
-            {/* Newsletter Subscribe Section */}
-            <div id="newsletter">
-                <NewsletterSubscribe isSubscribed={isNewsletterSubscribed} />
-            </div>
         </div>
     );
 };
 
 export default memo(Home);
+
+

@@ -30,6 +30,8 @@ import axios from 'axios';
 import config from '../../config';
 import { loadStripe } from '@stripe/stripe-js';
 import '../../css/Sponsors.css';
+import { trackSponsorsTabViewed } from '../../utils/funnelTracking';
+import { useNavigate } from 'react-router-dom';
 
 interface SponsorsProps {
     sponsors: number;
@@ -38,6 +40,7 @@ interface SponsorsProps {
     isSubscribed: boolean | string | null;
     user?: {
         email: string;
+        isAdmin?: boolean;
         newsletterInfo?: {
             name?: string;
             topic?: string;
@@ -78,7 +81,7 @@ const handlePurchase = async () => {
         });
 
     } catch (error) {
-        console.log("Error subscribing", error);
+        // Error subscribing handled silently
     }
 }
 
@@ -97,6 +100,7 @@ const FILTER_CATEGORIES = [
 // Status filter removed from user-facing UI (internal use only)
 
 const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: SponsorsProps) => {
+    const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -110,8 +114,29 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
     const [hasOnboarding, setHasOnboarding] = useState(false);
     // Status filter not exposed to users; filtering enforced in table
     
+    // Set admin status from user prop
+    useEffect(() => {
+        setIsAdmin(user?.isAdmin === true);
+    }, [user]);
+    
     // Convert subscription to boolean for backward compatibility
     const hasSubscription = Boolean(isSubscribed);
+    // Allow admins to access even without subscription
+    const canAccess = hasSubscription || user?.isAdmin === true;
+    
+    // CRITICAL: Redirect non-subscribed, non-admin users to /subscribe
+    useEffect(() => {
+        if (!canAccess) {
+            navigate('/subscribe', { replace: true });
+        }
+    }, [canAccess, navigate]);
+    
+    // Track sponsors tab viewed (funnel tracking)
+    useEffect(() => {
+        if (canAccess) {
+            trackSponsorsTabViewed();
+        }
+    }, [canAccess]);
     
     // Check if user has completed onboarding
     useEffect(() => {
@@ -177,18 +202,20 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
 
 
 
-    if (hasSubscription) {
+    if (canAccess) {
         return (
             <div className="sponsors-page">
                 <div className="sponsors-page-container">
                     {/* Professional Header Section */}
                     <div className="sponsors-page-header">
                         <h1 className="sponsors-page-title">
-                            Newsletter Sponsor Database
+                            Sponsors
                         </h1>
                         <p className="sponsors-page-subtitle">
-                            Access our complete database of <strong>{sponsors}</strong> sponsors from <strong>{newsletters}</strong> newsletters.
-                            Last updated: {new Date(lastUpdated).toLocaleDateString()}
+                            <strong>{sponsors}</strong> companies actively sponsoring <strong>{newsletters}</strong> newsletters.
+                        </p>
+                        <p className="sponsors-page-description">
+                            View their placements, audience stats, and contact their marketing, press, or partnership email directly.
                         </p>
                     </div>
 
@@ -418,7 +445,7 @@ const Sponsors = ({ sponsors, newsletters, lastUpdated, isSubscribed, user }: Sp
                         <div style={{ margin: '0 auto', maxWidth: 1000 }}>
                             <div style={{ textAlign: 'center', marginBottom: 24 }}>
                                 <h2>Unlock the Sponsor Database</h2>
-                                <p>Choose a plan to access {sponsors}+ sponsors from {newsletters}+ newsletters.</p>
+                                <p>Choose a plan to access {sponsors}+ companies actively sponsoring {newsletters}+ newsletters.</p>
                             </div>
                             {/* Reuse Pricing component for subscription */}
                             {/* Using dynamic import replacement to avoid circular deps */}

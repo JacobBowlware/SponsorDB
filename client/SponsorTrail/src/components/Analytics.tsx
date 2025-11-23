@@ -4,7 +4,6 @@ import {
     faCheckCircle, 
     faEye, 
     faChartLine, 
-    faArrowLeft, 
     faDatabase, 
     faEnvelope, 
     faCalendarAlt,
@@ -282,6 +281,7 @@ interface AnalyticsProps {
     isSubscribed: boolean;
     user?: {
         email: string;
+        isAdmin?: boolean;
         newsletterInfo?: {
             name?: string;
             topic?: string;
@@ -315,8 +315,8 @@ const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed, user }) => {
         fetchAnalyticsData();
     }, []);
 
-    // Show subscription prompt for unsubscribed users
-    if (!isSubscribed) {
+    // Show subscription prompt for unsubscribed users (unless admin)
+    if (!isSubscribed && !user?.isAdmin) {
         return (
             <div className="analytics-page">
                 <div className="analytics-subscription-prompt">
@@ -381,12 +381,16 @@ const Analytics: React.FC<AnalyticsProps> = ({ isSubscribed, user }) => {
         return totalApplications > 0 ? Math.round((respondedApplications / totalApplications) * 100) : 0;
     };
 
-    const getActiveConversations = () => {
-        return conversations.filter(conv => conv.status === 'active' || conv.status === 'pending_response').length;
+    const getPendingApplications = () => {
+        return applications.filter(app => app.status === 'pending').length;
     };
 
-    const getPendingFollowUps = () => {
-        return conversations.filter(conv => conv.followUpNeeded).length;
+    const getClosedWonApplications = () => {
+        return applications.filter(app => app.status === 'closed_won').length;
+    };
+
+    const getClosedLostApplications = () => {
+        return applications.filter(app => app.status === 'closed_lost').length;
     };
 
     const needsFollowUp = (application: SponsorApplication) => {
@@ -599,15 +603,6 @@ ${newsletterName}`;
 
     return (
         <div className="analytics-page">
-            <div className="analytics-header">
-                <button className="analytics-back-btn" onClick={() => navigate('/sponsors')}>
-                    <FontAwesomeIcon icon={faArrowLeft} />
-                    Back to Sponsors
-                </button>
-                <h1>Revenue Analytics</h1>
-                <p>Track your newsletter sponsorship performance and revenue</p>
-            </div>
-
             <div className="analytics-content">
                 {/* Overview Cards */}
                 <div className="analytics-overview">
@@ -637,12 +632,14 @@ ${newsletterName}`;
 
                     <div className="overview-card conversations-card">
                         <div className="card-icon">
-                            <FontAwesomeIcon icon={faComments} />
+                            <FontAwesomeIcon icon={faDatabase} />
                         </div>
                         <div className="card-content">
-                            <div className="card-title">Active Conversations</div>
-                            <div className="card-value">{getActiveConversations()}</div>
-                            <div className="card-subtitle">{getPendingFollowUps()} pending follow-ups</div>
+                            <div className="card-title">Application Status</div>
+                            <div className="card-value">{applications.length}</div>
+                            <div className="card-subtitle">
+                                {getPendingApplications()} pending • {getClosedWonApplications()} won • {getClosedLostApplications()} lost
+                            </div>
                         </div>
                     </div>
 
@@ -683,6 +680,7 @@ ${newsletterName}`;
                             <div key={app._id} className="table-row">
                                 <div className="table-col">
                                     <div className="sponsor-name">{app.sponsorName}</div>
+                                    <div className="sponsor-email-spacer"></div>
                                     <div className="sponsor-email">{app.contactEmail}</div>
                                 </div>
                                 <div className="table-col">
@@ -734,39 +732,6 @@ ${newsletterName}`;
                                                 Lost
                                             </button>
                                         </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Active Conversations */}
-                <div className="analytics-section">
-                    <h3>Active Conversations</h3>
-                    <div className="conversations-list">
-                        {conversations.map((conv) => (
-                            <div key={conv._id} className="conversation-item">
-                                <div className="conversation-info">
-                                    <div className="conversation-name">{conv.sponsorName}</div>
-                                    <div className="conversation-date">
-                                        Last contact: {new Date(conv.lastContactDate).toLocaleDateString()}
-                                    </div>
-                                </div>
-                                <div className="conversation-status">
-                                    <span className={`status-badge ${conv.status}`}>
-                                        {conv.status.replace('_', ' ').toUpperCase()}
-                                    </span>
-                                </div>
-                                <div className="conversation-actions">
-                                    {conv.followUpNeeded && (
-                                        <button 
-                                            className="follow-up-btn"
-                                            onClick={() => handleFollowUp(conv)}
-                                        >
-                                            <FontAwesomeIcon icon={faEnvelope} />
-                                            Send Follow-up
-                                        </button>
                                     )}
                                 </div>
                             </div>

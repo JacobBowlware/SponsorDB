@@ -36,7 +36,7 @@ class TokenManager {
         const refreshToken = localStorage.getItem('refreshToken');
         
         if (!refreshToken) {
-            console.log('No refresh token available');
+            // No refresh token available
             return null;
         }
 

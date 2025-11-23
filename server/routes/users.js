@@ -91,6 +91,27 @@ router.get('/me', auth, async (req, res) => {
     }
 });
 
+// Update current user (PUT endpoint for updates)
+router.put('/me', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Allow updating newsletterOptIn
+        if (req.body.newsletterOptIn !== undefined) {
+            user.newsletterOptIn = req.body.newsletterOptIn;
+        }
+
+        await user.save();
+        res.json(_.pick(user, ['_id', 'email', 'newsletterOptIn', 'subscription', 'isAdmin']));
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(400).send('Error updating user');
+    }
+});
+
 // Get newsletter info for current user
 router.get('/newsletter-info', auth, async (req, res) => {
     try {
@@ -833,11 +854,11 @@ router.get('/newsletter/list', async (req, res) => {
     try {
         const { Newsletter } = require('../models/newsletter');
         
-        // Only return sent newsletters, populate sponsor names and links
+        // Only return sent newsletters, populate sponsor names and links with full details
         const newsletters = await Newsletter.find({ status: 'sent' })
-            .populate('sponsors', 'sponsorName sponsorLink tags sponsorEmail sponsorApplication')
+            .populate('sponsors', 'sponsorName sponsorLink rootDomain tags sponsorEmail sponsorApplication newslettersSponsored')
             .sort({ sentAt: -1 })
-            .select('subject status sentAt recipientCount sponsors')
+            .select('subject customIntro status sentAt recipientCount sponsors')
             .limit(20); // Limit to most recent 20
 
         res.json({
@@ -856,10 +877,63 @@ router.get('/newsletter/list', async (req, res) => {
     }
 });
 
-// Newsletter unsubscribe endpoint
+// Newsletter unsubscribe endpoint (supports both GET and POST)
+// GET is used when clicking unsubscribe links in emails
+router.get('/newsletter/unsubscribe', async (req, res) => {
+    try {
+        const email = req.query.email;
+        
+        if (!email) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Email address is required' 
+            });
+        }
+
+        const { NewsletterSubscriber } = require('../models/newsletterSubscriber');
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check if user exists
+        const user = await User.findOne({ email: normalizedEmail });
+        if (user) {
+            user.newsletterOptIn = false;
+            await user.save();
+            return res.status(200).json({ 
+                success: true, 
+                message: 'You have been unsubscribed from our newsletter' 
+            });
+        }
+
+        // Check newsletter subscribers
+        const subscriber = await NewsletterSubscriber.findOne({ email: normalizedEmail });
+        if (subscriber) {
+            subscriber.isActive = false;
+            await subscriber.save();
+            return res.status(200).json({ 
+                success: true, 
+                message: 'You have been unsubscribed from our newsletter' 
+            });
+        }
+
+        return res.status(404).json({ 
+            success: false, 
+            error: 'Email address not found in our system' 
+        });
+
+    } catch (error) {
+        console.error('Error unsubscribing from newsletter:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to unsubscribe. Please try again.' 
+        });
+    }
+});
+
+// POST endpoint for form submissions
 router.post('/newsletter/unsubscribe', async (req, res) => {
     try {
-        const { email } = req.query;
+        // Support both query params and body for POST requests
+        const email = req.query.email || req.body.email;
         
         if (!email) {
             return res.status(400).json({ 

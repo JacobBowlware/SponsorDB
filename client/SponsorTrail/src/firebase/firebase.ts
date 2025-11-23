@@ -33,7 +33,7 @@ export const analytics: any = {
 // Simple mock implementation for logEvent
 export const logEvent = (name: string, params?: Record<string, any>): void => {
   // Just log to console - actual tracking is handled by Google Tag Manager
-  console.log(`[Event] ${name}`, params);
+  // Analytics event logged
   
   // If window.gtag exists (from Google Tag Manager), use it
   if (typeof window !== 'undefined' && window.gtag) {
